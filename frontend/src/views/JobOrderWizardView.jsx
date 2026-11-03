@@ -130,8 +130,8 @@ export default function JobOrderWizardView({
   const [form, setForm] = useState({
     joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
     joDate: todayStr,
-    joType: 'Export FCL',
-    modeOfShipment: 'Multimodal (Rail + Road)',
+    joType: '',
+    modeOfShipment: '',
     consignor: '',
     consignee: '',
     shippingLine: '',
@@ -152,8 +152,8 @@ export default function JobOrderWizardView({
     transporter: '',
     handoverLocation: '',
     noOfCont: 1,
-    size: '40',
-    type: 'HC',
+    size: '',
+    type: '',
     remarks: '',
     sellRate: '',
     buyRate: ''
@@ -164,8 +164,8 @@ export default function JobOrderWizardView({
     {
       sr: 1,
       contNo: '',
-      size: '40',
-      type: 'HC',
+      size: '',
+      type: '',
       tareWeight: '',
       cargoWeight: '',
       grossWeight: '',
@@ -330,7 +330,7 @@ export default function JobOrderWizardView({
 
   // Multiple Equipment & Commercial Rates Lines ("+ button rakho taki multiple add krsake")
   const [equipmentLines, setEquipmentLines] = useState([
-    { id: 1, noOfCont: 1, size: "40" }
+    { id: 1, noOfCont: 1, size: "" }
   ]);
 
   const syncContainersFromEquipment = (lines) => {
@@ -481,8 +481,8 @@ export default function JobOrderWizardView({
     setForm({
       joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
       joDate: todayStr,
-      joType: 'Export FCL',
-      modeOfShipment: 'Multimodal (Rail + Road)',
+      joType: '',
+      modeOfShipment: '',
       consignor: '',
       consignee: '',
       shippingLine: '',
@@ -503,8 +503,8 @@ export default function JobOrderWizardView({
       transporter: '',
       handoverLocation: '',
       noOfCont: 1,
-      size: '40',
-      type: 'HC',
+      size: '',
+      type: '',
       remarks: '',
       sellRate: '',
       buyRate: ''
@@ -513,8 +513,8 @@ export default function JobOrderWizardView({
       {
         sr: 1,
         contNo: '',
-        size: '40',
-        type: 'HC',
+        size: '',
+        type: '',
         tareWeight: '',
         cargoWeight: '',
         grossWeight: '',
@@ -525,7 +525,7 @@ export default function JobOrderWizardView({
         remarks: ''
       }
     ]);
-    setEquipmentLines([{ id: 1, noOfCont: 1, size: '40' }]);
+    setEquipmentLines([{ id: 1, noOfCont: 1, size: '' }]);
     setFormError('');
     setQuickFillNotice('Form cleared for blank entry.');
     setTimeout(() => setQuickFillNotice(''), 2500);
@@ -875,6 +875,7 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, joType: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('joType', true, form.joType)}`}
               >
+                <option value="">-- Select --</option>
                 <option value="Export FCL">Export FCL (Laden)</option>
                 <option value="Import FCL">Import FCL (Delivery)</option>
                 <option value="Domestic Movement">Domestic Movement</option>
@@ -894,6 +895,7 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, modeOfShipment: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('modeOfShipment', true, form.modeOfShipment)}`}
               >
+                <option value="">-- Select --</option>
                 <option value="Multimodal (Rail + Road)">Multimodal (Rail + Road / Both)</option>
                 <option value="By Rail">By Rail (CONCOR Rake)</option>
                 <option value="By Road">By Road (Trailer / Direct)</option>
@@ -909,7 +911,7 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, emptyPickupLocation: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.emptyPickupLocation)}`}
               >
-                <option value="">-- Select Empty Pickup Location --</option>
+                <option value="">-- Select --</option>
                 <option value="Dadri ICD Depot (CONCOR)">Dadri ICD Depot (CONCOR)</option>
                 <option value="Piyala ICD Depot">Piyala ICD Depot</option>
                 <option value="ACTL Faridabad Yard">ACTL Faridabad Yard</option>
@@ -926,7 +928,6 @@ export default function JobOrderWizardView({
               </label>
               <input
                 type="text"
-                placeholder="e.g. Shipper Factory / Aligarh Plant"
                 value={form.fromLocation}
                 onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.fromLocation)}`}
@@ -945,7 +946,7 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.handoverLocation)}`}
               >
-                <option value="">-- Select Handover Location --</option>
+                <option value="">-- Select --</option>
                 <option value="Dadri ICD CFS Complex">Dadri ICD CFS Complex</option>
                 <option value="Piyala ICD CFS Complex">Piyala ICD CFS Complex</option>
                 <option value="Nhava Sheva Buffer Yard">Nhava Sheva Buffer Yard</option>
@@ -963,7 +964,7 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.toLocation)}`}
               >
-                <option value="">-- Select Gateway Terminal --</option>
+                <option value="">-- Select --</option>
                 <option value="Nhava Sheva-NSFT (INNSA1)">Nhava Sheva-NSFT (INNSA1)</option>
                 <option value="Nhava Sheva-BMCT (INNSA1)">Nhava Sheva-BMCT (INNSA1)</option>
                 <option value="Nhava Sheva-GTI (INNSA1)">Nhava Sheva-GTI (INNSA1)</option>
@@ -988,7 +989,7 @@ export default function JobOrderWizardView({
                 }}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass(form.pol)}`}
               >
-                <option value="">-- Select POL --</option>
+                <option value="">-- Select --</option>
                 {polList.map((p) => (
                   <option key={p.code} value={p.code}>
                     {p.flag} {p.name}
@@ -1035,7 +1036,7 @@ export default function JobOrderWizardView({
                 }}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('pod', true, form.pod)}`}
               >
-                <option value="">-- Select POD --</option>
+                <option value="">-- Select --</option>
                 {podList.map((p) => (
                   <option key={p.code} value={p.code}>
                     {p.name}
@@ -1099,7 +1100,7 @@ export default function JobOrderWizardView({
                   onChange={(e) => handleConsignorChange(e.target.value)}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate ${getFieldClass('consignor', true, form.consignor)}`}
                 >
-                  <option value="">-- Select Consignor --</option>
+                  <option value="">-- Select --</option>
                   {shippersList.map((name, i) => (
                     <option key={i} value={name}>
                       {name}
@@ -1115,7 +1116,7 @@ export default function JobOrderWizardView({
                   onChange={(e) => setForm({ ...form, consignee: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none truncate font-semibold ${getFieldClass(form.consignee)}`}
                 >
-                  <option value="">-- Select Consignee --</option>
+                  <option value="">-- Select --</option>
                   {consigneesList.map((name, i) => (
                     <option key={i} value={name}>
                       {name}
@@ -1128,7 +1129,6 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Transporter</label>
                 <input
                   type="text"
-                  placeholder="e.g. SPJ Fleet Logistics / CONCOR"
                   value={form.transporter || ''}
                   onChange={(e) => setForm({ ...form, transporter: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.transporter)}`}
@@ -1139,7 +1139,6 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Set Temp (°C / Reefer)</label>
                 <input
                   type="text"
-                  placeholder="e.g. -18°C (Frozen) / Ambient"
                   value={form.temperature || ''}
                   onChange={(e) => setForm({ ...form, temperature: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass(form.temperature)}`}
@@ -1161,7 +1160,7 @@ export default function JobOrderWizardView({
                   }}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate ${getFieldClass('shippingLine', true, form.shippingLine)}`}
                 >
-                  <option value="">-- Select Line --</option>
+                  <option value="">-- Select --</option>
                   {linesList.map((name, i) => (
                     <option key={i} value={name}>
                       {name}
@@ -1177,7 +1176,6 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Line Booking No</label>
                 <input
                   type="text"
-                  placeholder="e.g. BK-982104"
                   value={form.lineBookingNo}
                   onChange={(e) => setForm({ ...form, lineBookingNo: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('lineBookingNo', false, form.lineBookingNo)}`}
@@ -1198,7 +1196,6 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Vessel Name</label>
                 <input
                   type="text"
-                  placeholder="e.g. CNC TIGER"
                   value={form.vesselName}
                   onChange={(e) => setForm({ ...form, vesselName: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass('vesselName', false, form.vesselName)}`}
@@ -1212,7 +1209,6 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Voyage</label>
                 <input
                   type="text"
-                  placeholder="e.g. 0UW4JW1MA"
                   value={form.voyage}
                   onChange={(e) => setForm({ ...form, voyage: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('voyage', false, form.voyage)}`}
@@ -1313,6 +1309,7 @@ export default function JobOrderWizardView({
                     onChange={(e) => handleEquipmentLineChange(idx, "size", e.target.value)}
                     className={`w-full px-3 py-1.5 rounded-lg text-xs font-mono font-bold outline-none ${getFieldClass(line.size)}`}
                   >
+                    <option value="">-- Select --</option>
                     <option value="40">40' (High Cube / Standard)</option>
                     <option value="20">20' (Standard Box)</option>
                     <option value="45">45' (High Cube)</option>
@@ -1396,7 +1393,6 @@ export default function JobOrderWizardView({
                     <td className="py-1.5 px-2.5">
                       <input
                         type="text"
-                        placeholder="e.g. MSKU1234567"
                         value={c.contNo}
                         onChange={(e) => handleContainerRowChange(idx, 'contNo', e.target.value.toUpperCase())}
                         className={`w-full px-2.5 py-1.5 rounded-lg font-bold text-xs uppercase outline-none ${getFieldClass(c.contNo)}`}
@@ -1404,13 +1400,12 @@ export default function JobOrderWizardView({
                     </td>
 
                     <td className="py-1.5 px-2.5 text-slate-700 font-bold whitespace-nowrap">
-                      {c.size}'{c.type}
+                      {c.size ? `${c.size}'${c.type || ''}` : '-'}
                     </td>
 
                     <td className="py-1.5 px-2.5">
                       <input
                         type="number"
-                        placeholder="e.g. 3820"
                         value={c.tareWeight}
                         onChange={(e) => handleContainerRowChange(idx, 'tareWeight', e.target.value)}
                         className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.tareWeight)}`}
@@ -1420,7 +1415,6 @@ export default function JobOrderWizardView({
                     <td className="py-1.5 px-2.5">
                       <input
                         type="number"
-                        placeholder="e.g. 24500"
                         value={c.cargoWeight}
                         onChange={(e) => handleContainerRowChange(idx, 'cargoWeight', e.target.value)}
                         className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.cargoWeight)}`}
@@ -1430,7 +1424,6 @@ export default function JobOrderWizardView({
                     <td className="py-1.5 px-2.5">
                       <input
                         type="number"
-                        placeholder="Auto Gross"
                         value={c.grossWeight}
                         onChange={(e) => handleContainerRowChange(idx, 'grossWeight', e.target.value)}
                         className={`w-full px-2.5 py-1.5 rounded-lg font-bold text-xs outline-none ${getFieldClass(c.grossWeight)}`}
@@ -1440,7 +1433,6 @@ export default function JobOrderWizardView({
                     <td className="py-1.5 px-2.5">
                       <input
                         type="text"
-                        placeholder="e.g. ML-IN-938210"
                         value={c.sealNo}
                         onChange={(e) => handleContainerRowChange(idx, 'sealNo', e.target.value.toUpperCase())}
                         className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.sealNo)}`}
@@ -1450,7 +1442,6 @@ export default function JobOrderWizardView({
                     <td className="py-1.5 px-2.5">
                       <input
                         type="text"
-                        placeholder="e.g. HR55AN2094"
                         value={c.vehicleNo}
                         onChange={(e) => handleContainerRowChange(idx, 'vehicleNo', e.target.value.toUpperCase())}
                         className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.vehicleNo)}`}
@@ -1460,7 +1451,6 @@ export default function JobOrderWizardView({
                     <td className="py-1.5 px-2.5">
                       <input
                         type="text"
-                        placeholder="e.g. GR-2026-084"
                         value={c.grNo}
                         onChange={(e) => handleContainerRowChange(idx, 'grNo', e.target.value.toUpperCase())}
                         className={`w-full px-2.5 py-1.5 rounded-lg font-semibold text-xs outline-none ${getFieldClass(c.grNo)}`}
