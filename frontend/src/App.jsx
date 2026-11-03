@@ -17,6 +17,7 @@ import LoginView from './views/LoginView.jsx';
 import CommercialTariffView from './views/CommercialTariffView.jsx';
 import FleetMovementView from './views/FleetMovementView.jsx';
 import ShipmentLifecycleHubView from './views/ShipmentLifecycleHubView.jsx';
+import VesselIntelligenceHubView from './views/VesselIntelligenceHubView.jsx';
 import AICopilot from './components/AICopilot.jsx';
 
 import {
@@ -310,6 +311,7 @@ export default function App() {
         <Header
           userRole={userRole}
           setUserRole={setUserRole}
+          onVesselClick={() => setActiveView('VesselPlanDetails')}
           onOpenCommandPalette={() => setShowCommandPalette(true)}
           onNewBookingClick={() => setActiveView('ContainerBooking')}
           onToggleSidebar={() => setSidebarOpen(prev => !prev)}
@@ -417,8 +419,13 @@ export default function App() {
             />
           )}
 
+          {/* 26: Unified Vessel Intelligence & Planning Hub (Ocean Radar + Booking Planning Tabs) */}
+          {activeView === 'VesselPlanDetails' && (
+            <VesselIntelligenceHubView initialTab="RADAR" />
+          )}
+
           {/* 24 to 34: Shipment Lifecycle & Customs Hub */}
-          {['EdiUpdate', 'RailOutStatus', 'VesselPlanDetails', 'SobUpdate', 'BlStatusUpdate', 'TelexStatusUpdate', 'TrUpdate', 'HandoverUpdate', 'EgmUpdate', 'ShipmentDischargeStatus'].includes(activeView) && (
+          {['EdiUpdate', 'RailOutStatus', 'SobUpdate', 'BlStatusUpdate', 'TelexStatusUpdate', 'TrUpdate', 'HandoverUpdate', 'EgmUpdate', 'ShipmentDischargeStatus'].includes(activeView) && (
             <ShipmentLifecycleHubView
               jobs={jobs}
               initialSection={activeView}

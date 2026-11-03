@@ -1,0 +1,1216 @@
+{
+  "origin": "INNSA",
+  "destination": "AEJEA",
+  "totalCount": 31,
+  "sailings": [
+    {
+      "carrier": "ONE",
+      "carrierCode": "ONEY",
+      "service": "Direct Ocean",
+      "vesselName": "Ocean Vessel",
+      "voyageNo": "2026-02",
+      "departure": "2026-11-02",
+      "arrival": "2026-12-05",
+      "transitTime": "33 days",
+      "transitHours": 792,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva",
+      "originLocode": "INNSA",
+      "destinationName": "New York",
+      "destinationLocode": "USNYC",
+      "cutOffs": {
+        "containerYard": "2026-11-02 18:00",
+        "shippingInstructions": "2026-11-02 18:00",
+        "vgm": "2026-11-02 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-02",
+          "toName": "New York",
+          "toLocode": "USNYC",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-05",
+          "vesselName": "Ocean Vessel",
+          "voyageNo": "2026-02",
+          "serviceName": "Direct Ocean"
+        }
+      ]
+    },
+    {
+      "carrier": "HAPAG-LLOYD",
+      "carrierCode": "HLCU",
+      "service": "Direct Ocean",
+      "vesselName": "Ocean Vessel",
+      "voyageNo": "2026-02",
+      "departure": "2026-11-02",
+      "arrival": "2026-12-05",
+      "transitTime": "33 days",
+      "transitHours": 792,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva",
+      "originLocode": "INNSA",
+      "destinationName": "New York",
+      "destinationLocode": "USNYC",
+      "cutOffs": {
+        "containerYard": "2026-11-02 18:00",
+        "shippingInstructions": "2026-11-02 18:00",
+        "vgm": "2026-11-02 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-02",
+          "toName": "New York",
+          "toLocode": "USNYC",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-05",
+          "vesselName": "Ocean Vessel",
+          "voyageNo": "2026-02",
+          "serviceName": "Direct Ocean"
+        }
+      ]
+    },
+    {
+      "carrier": "ONE",
+      "carrierCode": "ONEY",
+      "service": "Direct Ocean",
+      "vesselName": "Ocean Vessel",
+      "voyageNo": "2026-02",
+      "departure": "2026-11-02",
+      "arrival": "2026-12-22",
+      "transitTime": "50 days",
+      "transitHours": 1200,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva",
+      "originLocode": "INNSA",
+      "destinationName": "New York",
+      "destinationLocode": "USNYC",
+      "cutOffs": {
+        "containerYard": "2026-11-02 18:00",
+        "shippingInstructions": "2026-11-02 18:00",
+        "vgm": "2026-11-02 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-02",
+          "toName": "New York",
+          "toLocode": "USNYC",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-22",
+          "vesselName": "Ocean Vessel",
+          "voyageNo": "2026-02",
+          "serviceName": "Direct Ocean"
+        }
+      ]
+    },
+    {
+      "carrier": "CMA CGM GROUP",
+      "carrierCode": "CMDU",
+      "service": "India Gulf Express (BIGEX)",
+      "vesselName": "CNC TIGER",
+      "voyageNo": "0UW4JW1MA",
+      "departure": "2026-11-03",
+      "arrival": "2026-11-07",
+      "transitTime": "4 days",
+      "transitHours": 96,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (JNPT/NSICT)",
+      "originLocode": "INNSA",
+      "destinationName": "Jebel Ali",
+      "destinationLocode": "AEJEA",
+      "cutOffs": {
+        "containerYard": "2026-11-02 18:00",
+        "shippingInstructions": "2026-11-02 18:00",
+        "vgm": "2026-11-02 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (JNPT/NSICT)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-03",
+          "toName": "Jebel Ali",
+          "toLocode": "AEJEA",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-11-07",
+          "vesselName": "CNC TIGER",
+          "voyageNo": "0UW4JW1MA",
+          "serviceName": "India Gulf Express (BIGEX)"
+        }
+      ]
+    },
+    {
+      "carrier": "EVERGREEN LINE",
+      "carrierCode": "EGLV",
+      "service": "Gulf Express Loop",
+      "vesselName": "ESL WASL",
+      "voyageNo": "02640E",
+      "departure": "2026-11-03",
+      "arrival": "2026-11-15",
+      "transitTime": "12 days",
+      "transitHours": 288,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (GTIL)",
+      "originLocode": "INNSA",
+      "destinationName": "Jebel Ali",
+      "destinationLocode": "AEJEA",
+      "cutOffs": {
+        "containerYard": "2026-11-01 22:00",
+        "shippingInstructions": "2026-11-01 22:00",
+        "vgm": "2026-11-01 22:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (GTIL)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-03",
+          "toName": "Jebel Ali",
+          "toLocode": "AEJEA",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-11-15",
+          "vesselName": "ESL WASL",
+          "voyageNo": "02640E",
+          "serviceName": "Gulf Express Loop"
+        }
+      ]
+    },
+    {
+      "carrier": "CMA CGM GROUP",
+      "carrierCode": "CMDU",
+      "service": "MIDEX / West Africa",
+      "vesselName": "CMA CGM KRIBI",
+      "voyageNo": "643W",
+      "departure": "2026-11-04",
+      "arrival": "2026-12-04",
+      "transitTime": "30 days",
+      "transitHours": 720,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (JNPT/NSICT)",
+      "originLocode": "INNSA",
+      "destinationName": "Tema (Ghana)",
+      "destinationLocode": "GHNTM",
+      "cutOffs": {
+        "containerYard": "2026-11-03 20:00",
+        "shippingInstructions": "2026-11-03 20:00",
+        "vgm": "2026-11-03 20:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (JNPT/NSICT)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-04",
+          "toName": "Tema (Ghana)",
+          "toLocode": "GHNTM",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-04",
+          "vesselName": "CMA CGM KRIBI",
+          "voyageNo": "643W",
+          "serviceName": "MIDEX / West Africa"
+        }
+      ]
+    },
+    {
+      "carrier": "WAN HAI LINES",
+      "carrierCode": "WHL",
+      "service": "CI2 Asia Feeder",
+      "vesselName": "WAN HAI 502",
+      "voyageNo": "E102",
+      "departure": "2026-11-05",
+      "arrival": "2026-11-14",
+      "transitTime": "9 days",
+      "transitHours": 216,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Mundra (MDCC)",
+      "originLocode": "INMUN",
+      "destinationName": "Port Klang",
+      "destinationLocode": "MYPKG",
+      "cutOffs": {
+        "containerYard": "2026-11-04 16:00",
+        "shippingInstructions": "2026-11-04 16:00",
+        "vgm": "2026-11-04 16:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Mundra (MDCC)",
+          "fromLocode": "INMUN",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-05",
+          "toName": "Port Klang",
+          "toLocode": "MYPKG",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-11-14",
+          "vesselName": "WAN HAI 502",
+          "voyageNo": "E102",
+          "serviceName": "CI2 Asia Feeder"
+        }
+      ]
+    },
+    {
+      "carrier": "KMTC (INDIA)",
+      "carrierCode": "KMTC",
+      "service": "China India Express (CIX)",
+      "vesselName": "EVER LIFTING",
+      "voyageNo": "066E",
+      "departure": "2026-11-06",
+      "arrival": "2026-11-20",
+      "transitTime": "14 days",
+      "transitHours": 336,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (BMCT)",
+      "originLocode": "INNSA",
+      "destinationName": "Busan / Shanghai",
+      "destinationLocode": "KRPUS",
+      "cutOffs": {
+        "containerYard": "2026-11-04 18:00",
+        "shippingInstructions": "2026-11-04 18:00",
+        "vgm": "2026-11-04 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (BMCT)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-06",
+          "toName": "Busan / Shanghai",
+          "toLocode": "KRPUS",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-11-20",
+          "vesselName": "EVER LIFTING",
+          "voyageNo": "066E",
+          "serviceName": "China India Express (CIX)"
+        }
+      ]
+    },
+    {
+      "carrier": "ONE",
+      "carrierCode": "ONEY",
+      "service": "IOS - Indian Ocean Service",
+      "vesselName": "ONE INNOVATION",
+      "voyageNo": "004W",
+      "departure": "2026-11-06",
+      "arrival": "2026-11-26",
+      "transitTime": "20 days",
+      "transitHours": 480,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (BMCT)",
+      "originLocode": "INNSA",
+      "destinationName": "Rotterdam",
+      "destinationLocode": "NLRTM",
+      "cutOffs": {
+        "containerYard": "2026-11-05 18:00",
+        "shippingInstructions": "2026-11-05 18:00",
+        "vgm": "2026-11-05 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (BMCT)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-06",
+          "toName": "Rotterdam",
+          "toLocode": "NLRTM",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-11-26",
+          "vesselName": "ONE INNOVATION",
+          "voyageNo": "004W",
+          "serviceName": "IOS - Indian Ocean Service"
+        }
+      ]
+    },
+    {
+      "carrier": "HAPAG-LLOYD",
+      "carrierCode": "HLCU",
+      "service": "IMX Express",
+      "vesselName": "AL ZUBARA",
+      "voyageNo": "024E",
+      "departure": "2026-11-07",
+      "arrival": "2026-11-14",
+      "transitTime": "7 days",
+      "transitHours": 168,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Mundra (MDPT)",
+      "originLocode": "INMUN",
+      "destinationName": "Jeddah",
+      "destinationLocode": "SAJED",
+      "cutOffs": {
+        "containerYard": "2026-11-06 14:00",
+        "shippingInstructions": "2026-11-06 14:00",
+        "vgm": "2026-11-06 14:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Mundra (MDPT)",
+          "fromLocode": "INMUN",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-07",
+          "toName": "Jeddah",
+          "toLocode": "SAJED",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-11-14",
+          "vesselName": "AL ZUBARA",
+          "voyageNo": "024E",
+          "serviceName": "IMX Express"
+        }
+      ]
+    },
+    {
+      "carrier": "MSC",
+      "carrierCode": "MSCU",
+      "service": "INDUS EXPRESS",
+      "vesselName": "MSC BIANCA",
+      "voyageNo": "IP2645R",
+      "departure": "2026-11-08",
+      "arrival": "2026-11-28",
+      "transitTime": "20 days",
+      "transitHours": 480,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (JNPT)",
+      "originLocode": "INNSA",
+      "destinationName": "New York (USNYC)",
+      "destinationLocode": "USNYC",
+      "cutOffs": {
+        "containerYard": "2026-11-07 12:00",
+        "shippingInstructions": "2026-11-07 12:00",
+        "vgm": "2026-11-07 12:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (JNPT)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-08",
+          "toName": "New York (USNYC)",
+          "toLocode": "USNYC",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-11-28",
+          "vesselName": "MSC BIANCA",
+          "voyageNo": "IP2645R",
+          "serviceName": "INDUS EXPRESS"
+        }
+      ]
+    },
+    {
+      "carrier": "WAN HAI LINES",
+      "carrierCode": "WHL",
+      "service": "CI6 Asia Loop",
+      "vesselName": "WAN HAI 515",
+      "voyageNo": "W084",
+      "departure": "2026-11-10",
+      "arrival": "2026-11-21",
+      "transitTime": "11 days",
+      "transitHours": 264,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (NSICT)",
+      "originLocode": "INNSA",
+      "destinationName": "Haiphong",
+      "destinationLocode": "VNHPH",
+      "cutOffs": {
+        "containerYard": "2026-11-08 18:00",
+        "shippingInstructions": "2026-11-08 18:00",
+        "vgm": "2026-11-08 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (NSICT)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-10",
+          "toName": "Haiphong",
+          "toLocode": "VNHPH",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-11-21",
+          "vesselName": "WAN HAI 515",
+          "voyageNo": "W084",
+          "serviceName": "CI6 Asia Loop"
+        }
+      ]
+    },
+    {
+      "carrier": "MAERSK LINE",
+      "carrierCode": "MAEU",
+      "service": "MECL1 - Middle East Express",
+      "vesselName": "MAERSK KINLOSS",
+      "voyageNo": "2445E",
+      "departure": "2026-11-11",
+      "arrival": "2026-11-15",
+      "transitTime": "4 days",
+      "transitHours": 96,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (APMT/GTI)",
+      "originLocode": "INNSA",
+      "destinationName": "Jebel Ali",
+      "destinationLocode": "AEJEA",
+      "cutOffs": {
+        "containerYard": "2026-11-09 18:00",
+        "shippingInstructions": "2026-11-09 18:00",
+        "vgm": "2026-11-09 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (APMT/GTI)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-11",
+          "toName": "Jebel Ali",
+          "toLocode": "AEJEA",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-11-15",
+          "vesselName": "MAERSK KINLOSS",
+          "voyageNo": "2445E",
+          "serviceName": "MECL1 - Middle East Express"
+        }
+      ]
+    },
+    {
+      "carrier": "MSC",
+      "carrierCode": "MSCU",
+      "service": "HIMALAYA EXPRESS",
+      "vesselName": "MSC GULSUN",
+      "voyageNo": "IP2646A",
+      "departure": "2026-11-12",
+      "arrival": "2026-12-04",
+      "transitTime": "22 days",
+      "transitHours": 528,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Mundra (MDPT)",
+      "originLocode": "INMUN",
+      "destinationName": "Antwerp",
+      "destinationLocode": "BEANR",
+      "cutOffs": {
+        "containerYard": "2026-11-10 16:00",
+        "shippingInstructions": "2026-11-10 16:00",
+        "vgm": "2026-11-10 16:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Mundra (MDPT)",
+          "fromLocode": "INMUN",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-12",
+          "toName": "Antwerp",
+          "toLocode": "BEANR",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-04",
+          "vesselName": "MSC GULSUN",
+          "voyageNo": "IP2646A",
+          "serviceName": "HIMALAYA EXPRESS"
+        }
+      ]
+    },
+    {
+      "carrier": "CMA CGM GROUP",
+      "carrierCode": "CMDU",
+      "service": "MEDEX - Mediterranean Express",
+      "vesselName": "AS NORA",
+      "voyageNo": "0UW4RW1MA",
+      "departure": "2026-11-13",
+      "arrival": "2026-12-05",
+      "transitTime": "22 days",
+      "transitHours": 528,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (NSICT)",
+      "originLocode": "INNSA",
+      "destinationName": "Genova / Valencia",
+      "destinationLocode": "ITGOA",
+      "cutOffs": {
+        "containerYard": "2026-11-11 20:00",
+        "shippingInstructions": "2026-11-11 20:00",
+        "vgm": "2026-11-11 20:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (NSICT)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-13",
+          "toName": "Genova / Valencia",
+          "toLocode": "ITGOA",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-05",
+          "vesselName": "AS NORA",
+          "voyageNo": "0UW4RW1MA",
+          "serviceName": "MEDEX - Mediterranean Express"
+        }
+      ]
+    },
+    {
+      "carrier": "EVERGREEN LINE",
+      "carrierCode": "EGLV",
+      "service": "Far East Loop (FEM)",
+      "vesselName": "EVER FOREVER",
+      "voyageNo": "067E",
+      "departure": "2026-11-14",
+      "arrival": "2026-11-21",
+      "transitTime": "7 days",
+      "transitHours": 168,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (BMCT)",
+      "originLocode": "INNSA",
+      "destinationName": "Singapore",
+      "destinationLocode": "SGSIN",
+      "cutOffs": {
+        "containerYard": "2026-11-12 18:00",
+        "shippingInstructions": "2026-11-12 18:00",
+        "vgm": "2026-11-12 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (BMCT)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-14",
+          "toName": "Singapore",
+          "toLocode": "SGSIN",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-11-21",
+          "vesselName": "EVER FOREVER",
+          "voyageNo": "067E",
+          "serviceName": "Far East Loop (FEM)"
+        }
+      ]
+    },
+    {
+      "carrier": "COSCO SHIPPING",
+      "carrierCode": "COSU",
+      "service": "EPIC2 Europe Express",
+      "vesselName": "COSCO GALAXY",
+      "voyageNo": "028W",
+      "departure": "2026-11-14",
+      "arrival": "2026-12-06",
+      "transitTime": "22 days",
+      "transitHours": 528,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Mundra (MDPT)",
+      "originLocode": "INMUN",
+      "destinationName": "Hamburg",
+      "destinationLocode": "DEHAM",
+      "cutOffs": {
+        "containerYard": "2026-11-12 12:00",
+        "shippingInstructions": "2026-11-12 12:00",
+        "vgm": "2026-11-12 12:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Mundra (MDPT)",
+          "fromLocode": "INMUN",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-14",
+          "toName": "Hamburg",
+          "toLocode": "DEHAM",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-06",
+          "vesselName": "COSCO GALAXY",
+          "voyageNo": "028W",
+          "serviceName": "EPIC2 Europe Express"
+        }
+      ]
+    },
+    {
+      "carrier": "HAPAG-LLOYD",
+      "carrierCode": "HLCU",
+      "service": "GEM - Gulf East Med",
+      "vesselName": "BERLIN EXPRESS",
+      "voyageNo": "2446W",
+      "departure": "2026-11-15",
+      "arrival": "2026-11-28",
+      "transitTime": "13 days",
+      "transitHours": 312,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (GTI)",
+      "originLocode": "INNSA",
+      "destinationName": "Alexandria (EGEDK)",
+      "destinationLocode": "EGALY",
+      "cutOffs": {
+        "containerYard": "2026-11-13 14:00",
+        "shippingInstructions": "2026-11-13 14:00",
+        "vgm": "2026-11-13 14:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (GTI)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-15",
+          "toName": "Alexandria (EGEDK)",
+          "toLocode": "EGALY",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-11-28",
+          "vesselName": "BERLIN EXPRESS",
+          "voyageNo": "2446W",
+          "serviceName": "GEM - Gulf East Med"
+        }
+      ]
+    },
+    {
+      "carrier": "ONE",
+      "carrierCode": "ONEY",
+      "service": "TIP - Turkey India Pakistan",
+      "vesselName": "ONE INFINITY",
+      "voyageNo": "005E",
+      "departure": "2026-11-17",
+      "arrival": "2026-11-30",
+      "transitTime": "13 days",
+      "transitHours": 312,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (BMCT)",
+      "originLocode": "INNSA",
+      "destinationName": "Mersin (Turkey)",
+      "destinationLocode": "TRMER",
+      "cutOffs": {
+        "containerYard": "2026-11-15 16:00",
+        "shippingInstructions": "2026-11-15 16:00",
+        "vgm": "2026-11-15 16:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (BMCT)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-17",
+          "toName": "Mersin (Turkey)",
+          "toLocode": "TRMER",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-11-30",
+          "vesselName": "ONE INFINITY",
+          "voyageNo": "005E",
+          "serviceName": "TIP - Turkey India Pakistan"
+        }
+      ]
+    },
+    {
+      "carrier": "CMA CGM GROUP",
+      "carrierCode": "CMDU",
+      "service": "EPIC1 - Europe Pakistan India",
+      "vesselName": "CMA CGM LA SCALA",
+      "voyageNo": "MDX080W19",
+      "departure": "2026-11-18",
+      "arrival": "2026-12-08",
+      "transitTime": "20 days",
+      "transitHours": 480,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Mundra (MDPT)",
+      "originLocode": "INMUN",
+      "destinationName": "Rotterdam",
+      "destinationLocode": "NLRTM",
+      "cutOffs": {
+        "containerYard": "2026-11-16 14:00",
+        "shippingInstructions": "2026-11-16 14:00",
+        "vgm": "2026-11-16 14:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Mundra (MDPT)",
+          "fromLocode": "INMUN",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-18",
+          "toName": "Rotterdam",
+          "toLocode": "NLRTM",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-08",
+          "vesselName": "CMA CGM LA SCALA",
+          "voyageNo": "MDX080W19",
+          "serviceName": "EPIC1 - Europe Pakistan India"
+        }
+      ]
+    },
+    {
+      "carrier": "MSC",
+      "carrierCode": "MSCU",
+      "service": "INDUS 2 - Red Sea Loop",
+      "vesselName": "MSC BERYL",
+      "voyageNo": "IP2647R",
+      "departure": "2026-11-19",
+      "arrival": "2026-11-26",
+      "transitTime": "7 days",
+      "transitHours": 168,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (JNPT)",
+      "originLocode": "INNSA",
+      "destinationName": "Jeddah",
+      "destinationLocode": "SAJED",
+      "cutOffs": {
+        "containerYard": "2026-11-17 18:00",
+        "shippingInstructions": "2026-11-17 18:00",
+        "vgm": "2026-11-17 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (JNPT)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-19",
+          "toName": "Jeddah",
+          "toLocode": "SAJED",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-11-26",
+          "vesselName": "MSC BERYL",
+          "voyageNo": "IP2647R",
+          "serviceName": "INDUS 2 - Red Sea Loop"
+        }
+      ]
+    },
+    {
+      "carrier": "MAERSK LINE",
+      "carrierCode": "MAEU",
+      "service": "Direct Ocean",
+      "vesselName": "MAERSK MC-KINNEY",
+      "voyageNo": "2405W",
+      "departure": "2026-11-20",
+      "arrival": "2026-12-10",
+      "transitTime": "20 days",
+      "transitHours": 480,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva",
+      "originLocode": "INNSA",
+      "destinationName": "New York",
+      "destinationLocode": "USNYC",
+      "cutOffs": {
+        "containerYard": "2026-11-20 18:00",
+        "shippingInstructions": "2026-11-20 18:00",
+        "vgm": "2026-11-20 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-20",
+          "toName": "New York",
+          "toLocode": "USNYC",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-10",
+          "vesselName": "MAERSK MC-KINNEY",
+          "voyageNo": "2405W",
+          "serviceName": "Direct Ocean"
+        }
+      ]
+    },
+    {
+      "carrier": "MAERSK LINE",
+      "carrierCode": "MAEU",
+      "service": "MECL1 - US East Coast",
+      "vesselName": "MAERSK MC-KINNEY",
+      "voyageNo": "2405W",
+      "departure": "2026-11-20",
+      "arrival": "2026-12-10",
+      "transitTime": "20 days",
+      "transitHours": 480,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (GTI)",
+      "originLocode": "INNSA",
+      "destinationName": "New York (USNYC)",
+      "destinationLocode": "USNYC",
+      "cutOffs": {
+        "containerYard": "2026-11-18 18:00",
+        "shippingInstructions": "2026-11-18 18:00",
+        "vgm": "2026-11-18 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (GTI)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-20",
+          "toName": "New York (USNYC)",
+          "toLocode": "USNYC",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-10",
+          "vesselName": "MAERSK MC-KINNEY",
+          "voyageNo": "2405W",
+          "serviceName": "MECL1 - US East Coast"
+        }
+      ]
+    },
+    {
+      "carrier": "KMTC (INDIA)",
+      "carrierCode": "KMTC",
+      "service": "Korea Express",
+      "vesselName": "KMTC DUBAI",
+      "voyageNo": "2410E",
+      "departure": "2026-11-21",
+      "arrival": "2026-12-05",
+      "transitTime": "14 days",
+      "transitHours": 336,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Mundra (MDCC)",
+      "originLocode": "INMUN",
+      "destinationName": "Busan",
+      "destinationLocode": "KRPUS",
+      "cutOffs": {
+        "containerYard": "2026-11-19 12:00",
+        "shippingInstructions": "2026-11-19 12:00",
+        "vgm": "2026-11-19 12:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Mundra (MDCC)",
+          "fromLocode": "INMUN",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-21",
+          "toName": "Busan",
+          "toLocode": "KRPUS",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-05",
+          "vesselName": "KMTC DUBAI",
+          "voyageNo": "2410E",
+          "serviceName": "Korea Express"
+        }
+      ]
+    },
+    {
+      "carrier": "ARKAS LINE",
+      "carrierCode": "ARKAS",
+      "service": "Levant Express",
+      "vesselName": "WANDA A",
+      "voyageNo": "2440W",
+      "departure": "2026-11-22",
+      "arrival": "2026-12-10",
+      "transitTime": "18 days",
+      "transitHours": 432,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (NSICT)",
+      "originLocode": "INNSA",
+      "destinationName": "Poti (Georgia)",
+      "destinationLocode": "GEPTI",
+      "cutOffs": {
+        "containerYard": "2026-11-20 18:00",
+        "shippingInstructions": "2026-11-20 18:00",
+        "vgm": "2026-11-20 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (NSICT)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-22",
+          "toName": "Poti (Georgia)",
+          "toLocode": "GEPTI",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-10",
+          "vesselName": "WANDA A",
+          "voyageNo": "2440W",
+          "serviceName": "Levant Express"
+        }
+      ]
+    },
+    {
+      "carrier": "MAERSK LINE",
+      "carrierCode": "MAEU",
+      "service": "MECL2 - Gulf Direct",
+      "vesselName": "MAERSK DENVER",
+      "voyageNo": "2446W",
+      "departure": "2026-11-25",
+      "arrival": "2026-11-29",
+      "transitTime": "4 days",
+      "transitHours": 96,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Mundra (MDPT)",
+      "originLocode": "INMUN",
+      "destinationName": "Jebel Ali",
+      "destinationLocode": "AEJEA",
+      "cutOffs": {
+        "containerYard": "2026-11-23 16:00",
+        "shippingInstructions": "2026-11-23 16:00",
+        "vgm": "2026-11-23 16:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Mundra (MDPT)",
+          "fromLocode": "INMUN",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-25",
+          "toName": "Jebel Ali",
+          "toLocode": "AEJEA",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-11-29",
+          "vesselName": "MAERSK DENVER",
+          "voyageNo": "2446W",
+          "serviceName": "MECL2 - Gulf Direct"
+        }
+      ]
+    },
+    {
+      "carrier": "EVERGREEN LINE",
+      "carrierCode": "EGLV",
+      "service": "BEX - Black Sea Express",
+      "vesselName": "EVER GIVEN",
+      "voyageNo": "068W",
+      "departure": "2026-11-26",
+      "arrival": "2026-12-18",
+      "transitTime": "22 days",
+      "transitHours": 528,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (BMCT)",
+      "originLocode": "INNSA",
+      "destinationName": "Constanta (Romania)",
+      "destinationLocode": "ROCND",
+      "cutOffs": {
+        "containerYard": "2026-11-24 14:00",
+        "shippingInstructions": "2026-11-24 14:00",
+        "vgm": "2026-11-24 14:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (BMCT)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-26",
+          "toName": "Constanta (Romania)",
+          "toLocode": "ROCND",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-18",
+          "vesselName": "EVER GIVEN",
+          "voyageNo": "068W",
+          "serviceName": "BEX - Black Sea Express"
+        }
+      ]
+    },
+    {
+      "carrier": "MSC",
+      "carrierCode": "MSCU",
+      "service": "INDUS EXPRESS",
+      "vesselName": "MSC TIA",
+      "voyageNo": "IP2648A",
+      "departure": "2026-11-27",
+      "arrival": "2026-12-17",
+      "transitTime": "20 days",
+      "transitHours": 480,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (JNPT)",
+      "originLocode": "INNSA",
+      "destinationName": "New York (USNYC)",
+      "destinationLocode": "USNYC",
+      "cutOffs": {
+        "containerYard": "2026-11-25 18:00",
+        "shippingInstructions": "2026-11-25 18:00",
+        "vgm": "2026-11-25 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (JNPT)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-27",
+          "toName": "New York (USNYC)",
+          "toLocode": "USNYC",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-17",
+          "vesselName": "MSC TIA",
+          "voyageNo": "IP2648A",
+          "serviceName": "INDUS EXPRESS"
+        }
+      ]
+    },
+    {
+      "carrier": "HAPAG-LLOYD",
+      "carrierCode": "HLCU",
+      "service": "IMX Express",
+      "vesselName": "BARZAN",
+      "voyageNo": "025W",
+      "departure": "2026-11-28",
+      "arrival": "2026-12-20",
+      "transitTime": "22 days",
+      "transitHours": 528,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (GTI)",
+      "originLocode": "INNSA",
+      "destinationName": "Felixstowe",
+      "destinationLocode": "GBFXT",
+      "cutOffs": {
+        "containerYard": "2026-11-26 18:00",
+        "shippingInstructions": "2026-11-26 18:00",
+        "vgm": "2026-11-26 18:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (GTI)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-28",
+          "toName": "Felixstowe",
+          "toLocode": "GBFXT",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-20",
+          "vesselName": "BARZAN",
+          "voyageNo": "025W",
+          "serviceName": "IMX Express"
+        }
+      ]
+    },
+    {
+      "carrier": "COSCO SHIPPING",
+      "carrierCode": "COSU",
+      "service": "CEN - Central Europe",
+      "vesselName": "COSCO EXCELLENCE",
+      "voyageNo": "031E",
+      "departure": "2026-11-28",
+      "arrival": "2026-12-24",
+      "transitTime": "26 days",
+      "transitHours": 624,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Nhava Sheva (NSICT)",
+      "originLocode": "INNSA",
+      "destinationName": "Gdansk (Poland)",
+      "destinationLocode": "PLGDY",
+      "cutOffs": {
+        "containerYard": "2026-11-26 12:00",
+        "shippingInstructions": "2026-11-26 12:00",
+        "vgm": "2026-11-26 12:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Nhava Sheva (NSICT)",
+          "fromLocode": "INNSA",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-28",
+          "toName": "Gdansk (Poland)",
+          "toLocode": "PLGDY",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-24",
+          "vesselName": "COSCO EXCELLENCE",
+          "voyageNo": "031E",
+          "serviceName": "CEN - Central Europe"
+        }
+      ]
+    },
+    {
+      "carrier": "WAN HAI LINES",
+      "carrierCode": "WHL",
+      "service": "CI3 Asia Feeder",
+      "vesselName": "WAN HAI 316",
+      "voyageNo": "E045",
+      "departure": "2026-11-29",
+      "arrival": "2026-12-10",
+      "transitTime": "11 days",
+      "transitHours": 264,
+      "direct": true,
+      "routingType": "Direct",
+      "originName": "Mundra (MDCC)",
+      "originLocode": "INMUN",
+      "destinationName": "Jakarta (Tanjung Priok)",
+      "destinationLocode": "IDJKT",
+      "cutOffs": {
+        "containerYard": "2026-11-27 12:00",
+        "shippingInstructions": "2026-11-27 12:00",
+        "vgm": "2026-11-27 12:00"
+      },
+      "legs": [
+        {
+          "sequence": 1,
+          "mode": "VESSEL",
+          "fromName": "Mundra (MDCC)",
+          "fromLocode": "INMUN",
+          "fromTerminal": "Gateway Terminal",
+          "departure": "2026-11-29",
+          "toName": "Jakarta (Tanjung Priok)",
+          "toLocode": "IDJKT",
+          "toTerminal": "Main Container Terminal",
+          "arrival": "2026-12-10",
+          "vesselName": "WAN HAI 316",
+          "voyageNo": "E045",
+          "serviceName": "CI3 Asia Feeder"
+        }
+      ]
+    }
+  ]
+}
