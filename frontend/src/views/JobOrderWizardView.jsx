@@ -1,0 +1,1222 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Building2,
+  MapPin,
+  Ship,
+  PlusCircle,
+  Search,
+  History,
+  Copy,
+  ChevronRight,
+  AlertCircle,
+  Save,
+  CheckCircle2,
+  Trash2,
+  ArrowRight,
+  Zap,
+  Clipboard,
+  UploadCloud,
+  RotateCcw,
+  Sparkles,
+  Check
+} from 'lucide-react';
+
+export default function JobOrderWizardView({
+  parties,
+  jobs = [],
+  onOpenQuickAddShipper,
+  onCreateJob,
+  onSelectJob,
+  onOpenShipmentStatus,
+  openRecentDirectly = false,
+  onResetRecentDirectly,
+  copilotFillData = null,
+  onResetCopilotFill,
+  copilotClearTrigger = 0
+}) {
+  const todayStr = new Date().toLocaleDateString('en-GB');
+
+  // Real Shippers & Lines from SPJLIVE
+  const shippersList = [
+    'Fair Exports (India) Pvt Ltd',
+    'Marhaba Frozen Foods',
+    'Allanasons Private Limited',
+    'Al Sameer Exports Pvt Ltd',
+    'Deepmala Foods',
+    'Deccan Edibles Pvt Ltd',
+    'Sri Sri Exim Agro India',
+    'White Globe',
+    'Sumal India',
+    'Ever Fruit Exports Pvt Ltd'
+  ];
+
+  const linesList = [
+    'Maersk Line India Pvt Ltd',
+    'Mediterranean Shipping Co (MSC)',
+    'CMA CGM Agencies India',
+    'Cosco Shipping Lines',
+    'Interasia Shipping Lines',
+    'Goodrich Maritime Pvt Ltd',
+    'Navio Shipping Private Limited'
+  ];
+
+  const consigneesList = [
+    'Al Maya Trading LLC (Dubai, UAE)',
+    'EuroMeat B.V. (Rotterdam, Netherlands)',
+    'Al-Shaikh Trading Co. (Jeddah, KSA)',
+    'Gulf Import Corp (Dammam, KSA)',
+    'Trans-World Logistics (New York, USA)'
+  ];
+
+  const podList = [
+    { code: 'AEJEA', name: 'JEBEL ALI (AEJEA)' },
+    { code: 'SADMM', name: 'DAMMAM (SADMM)' },
+    { code: 'NLRTM', name: 'ROTTERDAM (NLRTM)' },
+    { code: 'SAJED', name: 'JEDDAH (SAJED)' },
+    { code: 'LTKLJ', name: 'KLAIPEDA (LTKLJ)' },
+    { code: 'USNYC', name: 'NEW YORK / NJ (USNYC)' },
+    { code: 'DJIBOUTI', name: 'DJIBOUTI (DJIBOUTI)' }
+  ];
+
+
+
+  // Fresh Blank Form State
+  const [form, setForm] = useState({
+    joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
+    joDate: todayStr,
+    joType: 'Export FCL',
+    modeOfShipment: 'By Rail',
+    consignor: '',
+    consignee: '',
+    shippingLine: '',
+    lineBookingNo: '',
+    fromLocation: 'Dadri ICD (INICD6)',
+    toLocation: 'Nhava Sheva-NSFT (INNSA1)',
+    pol: 'INNSA1',
+    pod: '',
+    vesselName: '',
+    voyage: '',
+    etdDate: '',
+    siCutDate: '',
+    portCutDate: '',
+    bookingValidity: '',
+    temperature: '',
+    transporter: 'SPJ Fleet Logistics',
+    handoverLocation: 'Dadri ICD CFS Complex',
+    noOfCont: 1,
+    size: '40',
+    type: 'HC',
+    remarks: '',
+    sellRate: '',
+    buyRate: ''
+  });
+
+  // Blank Container Unit
+  const [containers, setContainers] = useState([
+    {
+      sr: 1,
+      contNo: '',
+      size: '40',
+      type: 'HC',
+      tareWeight: 3820,
+      cargoWeight: '',
+      grossWeight: '',
+      sealNo: '',
+      vehicleNo: '',
+      grNo: '',
+      grDate: todayStr,
+      remarks: ''
+    }
+  ]);
+
+  const [formError, setFormError] = useState('');
+  const [recentSearch, setRecentSearch] = useState('');
+  const [showRecentModal, setShowRecentModal] = useState(openRecentDirectly);
+  const [showPasteModal, setShowPasteModal] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+  const [quickFillNotice, setQuickFillNotice] = useState('');
+
+  // Multiple Equipment & Commercial Rates Lines ("+ button rakho taki multiple add krsake")
+  const [equipmentLines, setEquipmentLines] = useState([
+    { id: 1, noOfCont: 1, size: "40" }
+  ]);
+
+  const syncContainersFromEquipment = (lines) => {
+    const newContainers = [];
+    let sr = 1;
+    lines.forEach((l) => {
+      const count = parseInt(l.noOfCont, 10) || 1;
+      for (let i = 0; i < count; i++) {
+        newContainers.push({
+          sr: sr++,
+          contNo: "",
+          size: l.size || "40",
+          type: l.size === "20" ? "GP" : "HC",
+          tareWeight: l.size === "20" ? 2280 : 3820,
+          cargoWeight: "",
+          grossWeight: "",
+          sealNo: "",
+          vehicleNo: "",
+          grNo: "",
+          grDate: todayStr,
+          remarks: ""
+        });
+      }
+    });
+    setContainers(newContainers);
+    setForm(prev => ({
+      ...prev,
+      noOfCont: newContainers.length
+    }));
+  };
+
+  const handleAddEquipmentLine = () => {
+    const newLine = {
+      id: Date.now(),
+      noOfCont: 1,
+      size: "20"
+    };
+    const updated = [...equipmentLines, newLine];
+    setEquipmentLines(updated);
+    syncContainersFromEquipment(updated);
+  };
+
+  const handleRemoveEquipmentLine = (id) => {
+    if (equipmentLines.length <= 1) return;
+    const updated = equipmentLines.filter(l => l.id !== id);
+    setEquipmentLines(updated);
+    syncContainersFromEquipment(updated);
+  };
+
+  const handleEquipmentLineChange = (idx, field, value) => {
+    const updated = [...equipmentLines];
+    updated[idx][field] = value;
+    setEquipmentLines(updated);
+    if (field === "noOfCont" || field === "size" || field === "type") {
+      syncContainersFromEquipment(updated);
+    }
+  };
+
+  useEffect(() => {
+    if (openRecentDirectly) {
+      setShowRecentModal(true);
+      if (onResetRecentDirectly) onResetRecentDirectly();
+    }
+  }, [openRecentDirectly]);
+
+  // AI Copilot Live Form Fill Listener
+  useEffect(() => {
+    if (copilotFillData && copilotFillData.form) {
+      setForm(prev => ({
+        ...prev,
+        ...copilotFillData.form
+      }));
+      if (copilotFillData.equipmentLines && copilotFillData.equipmentLines.length > 0) {
+        setEquipmentLines(copilotFillData.equipmentLines);
+        syncContainersFromEquipment(copilotFillData.equipmentLines);
+      }
+      setQuickFillNotice("✨ AI Copilot ne form live fill kar diya!");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (onResetCopilotFill) onResetCopilotFill();
+    }
+  }, [copilotFillData]);
+
+  useEffect(() => {
+    if (copilotClearTrigger > 0) {
+      handleClearForm();
+    }
+  }, [copilotClearTrigger]);
+
+  // Handle Consignor change
+  const handleConsignorChange = (shipperName) => {
+    setFormError("");
+    setForm(prev => ({ ...prev, consignor: shipperName }));
+  };
+
+  // Clear Form for fresh blank entry
+  const handleClearForm = () => {
+    setForm({
+      joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
+      joDate: todayStr,
+      joType: 'Export FCL',
+      modeOfShipment: 'By Rail',
+      consignor: '',
+      consignee: '',
+      shippingLine: '',
+      lineBookingNo: '',
+      fromLocation: 'Dadri ICD (INICD6)',
+      toLocation: 'Nhava Sheva-NSFT (INNSA1)',
+      pol: 'INNSA1',
+      pod: '',
+      vesselName: '',
+      voyage: '',
+      etdDate: '',
+      siCutDate: '',
+      portCutDate: '',
+      noOfCont: 1,
+      size: '40',
+      type: 'HC',
+      remarks: '',
+      sellRate: '',
+      buyRate: ''
+    });
+    setContainers([
+      {
+        sr: 1,
+        contNo: '',
+        size: '40',
+        type: 'HC',
+        tareWeight: 3820,
+        cargoWeight: '',
+        grossWeight: '',
+        sealNo: '',
+        vehicleNo: '',
+        grNo: '',
+        grDate: todayStr,
+        remarks: ''
+      }
+    ]);
+    setQuickFillNotice('Form cleared for blank entry.');
+    setTimeout(() => setQuickFillNotice(''), 2500);
+  };
+
+  // Load Previous Booking for Edit
+  const handleLoadForEdit = (prevJob) => {
+    setForm({
+      ...form,
+      joNo: prevJob.joNo || prevJob.id || form.joNo,
+      consignor: prevJob.customer || prevJob.consignor || '',
+      consignee: prevJob.consignee || consigneesList[0],
+      shippingLine: prevJob.shippingLine || prevJob.line || linesList[0],
+      lineBookingNo: prevJob.bookingNo || '',
+      fromLocation: prevJob.fromLocation || prevJob.origin || 'Dadri ICD (INICD6)',
+      toLocation: prevJob.toLocation || 'Nhava Sheva-NSFT (INNSA1)',
+      pol: prevJob.pol || 'INNSA1',
+      pod: prevJob.podCode || prevJob.pod || 'AEJEA',
+      vesselName: prevJob.vessel || 'MAERSK COLOMBO',
+      voyage: prevJob.voyage || '2604W',
+      noOfCont: prevJob.containersCount || (prevJob.containers ? prevJob.containers.length : 1),
+      sellRate: String(prevJob.sellFreight || '145000'),
+      buyRate: String(prevJob.buyFreight || '118000')
+    });
+
+    if (prevJob.containers && prevJob.containers.length > 0) {
+      setContainers(
+        prevJob.containers.map((c, idx) => ({
+          sr: idx + 1,
+          contNo: c.containerNo || c.contNo || '',
+          size: c.sizeType?.includes('20') ? '20' : '40',
+          type: c.sizeType?.includes('GP') ? 'GP' : 'HC',
+          tareWeight: c.tareWeight || 3820,
+          cargoWeight: c.cargoWeight || '24500',
+          grossWeight: c.grossWeight || '28320',
+          sealNo: c.sealNo || '',
+          vehicleNo: c.truckNo || '',
+          grNo: c.grNo || '',
+          grDate: todayStr,
+          remarks: ''
+        }))
+      );
+    }
+
+    setShowRecentModal(false);
+    setQuickFillNotice(`Loaded ${prevJob.id || prevJob.joNo} into form for editing.`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Container Count Change
+  const handleContCountChange = (val) => {
+    const count = parseInt(val, 10) || 1;
+    setForm({ ...form, noOfCont: count });
+    const currentLen = containers.length;
+    if (count > currentLen) {
+      const added = [];
+      for (let i = currentLen; i < count; i++) {
+        added.push({
+          sr: i + 1,
+          contNo: `MSKU${Math.floor(1000000 + Math.random() * 9000000)}`,
+          size: form.size,
+          type: form.type,
+          tareWeight: 3820,
+          cargoWeight: '24500',
+          grossWeight: '28320',
+          sealNo: `ML-IN-${Math.floor(100000 + Math.random() * 900000)}`,
+          vehicleNo: `HR55AN${Math.floor(1000 + Math.random() * 9000)}`,
+          grNo: `GR-2026-0${Math.floor(10 + Math.random() * 90)}`,
+          grDate: todayStr,
+          remarks: ''
+        });
+      }
+      setContainers([...containers, ...added]);
+    } else if (count < currentLen) {
+      setContainers(containers.slice(0, count));
+    }
+  };
+
+  const handleContainerRowChange = (idx, field, value) => {
+    const updated = [...containers];
+    updated[idx][field] = value;
+    if (field === 'cargoWeight') {
+      const cargo = parseFloat(value) || 0;
+      const tare = parseFloat(updated[idx].tareWeight) || 0;
+      updated[idx].grossWeight = (cargo + tare).toString();
+    }
+    setContainers(updated);
+  };
+
+  const handleApplyPastedContainers = () => {
+    const rawTokens = pasteText
+      .split(/[\n,\s\t]+/)
+      .map(t => t.trim().toUpperCase())
+      .filter(t => t.length >= 4);
+
+    if (rawTokens.length === 0) return;
+
+    const parsedRows = rawTokens.map((num, i) => ({
+      sr: i + 1,
+      contNo: num,
+      size: form.size || '40',
+      type: form.type || 'HC',
+      tareWeight: 3820,
+      cargoWeight: '24500',
+      grossWeight: '28320',
+      sealNo: `ML-IN-${Math.floor(100000 + Math.random() * 900000)}`,
+      vehicleNo: `HR55AN${Math.floor(1000 + Math.random() * 9000)}`,
+      grNo: '',
+      grDate: todayStr,
+      remarks: 'Bulk Pasted Unit'
+    }));
+
+    setContainers(parsedRows);
+    setForm(prev => ({ ...prev, noOfCont: parsedRows.length }));
+    setShowPasteModal(false);
+    setPasteText('');
+    setQuickFillNotice(`✓ Parsed & Generated ${parsedRows.length} Container Units!`);
+    setTimeout(() => setQuickFillNotice(''), 3000);
+  };
+
+  const handleCsvUpload = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target.result;
+      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+      const rows = [];
+      lines.forEach((line) => {
+        const parts = line.split(',');
+        const cont = (parts[0] || '').trim().toUpperCase();
+        if (cont && !cont.includes('CONTAINER')) {
+          rows.push({
+            sr: rows.length + 1,
+            contNo: cont,
+            size: (parts[1] || form.size || '40').trim(),
+            type: (parts[2] || form.type || 'HC').trim(),
+            tareWeight: 3820,
+            cargoWeight: (parts[3] || '24500').trim(),
+            grossWeight: (parts[4] || '28320').trim(),
+            sealNo: (parts[5] || `ML-IN-${Math.floor(100000 + Math.random() * 900000)}`).trim(),
+            vehicleNo: (parts[6] || `HR55AN${Math.floor(1000 + Math.random() * 9000)}`).trim(),
+            grNo: '',
+            grDate: todayStr,
+            remarks: 'Imported from CSV'
+          });
+        }
+      });
+      if (rows.length > 0) {
+        setContainers(rows);
+        setForm(prev => ({ ...prev, noOfCont: rows.length }));
+        setQuickFillNotice(`✓ Imported ${rows.length} containers from CSV!`);
+        setTimeout(() => setQuickFillNotice(''), 3000);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.consignor) {
+      setFormError('Please select Consignor (Shipper)');
+      return;
+    }
+    if (!form.shippingLine) {
+      setFormError('Please select Shipping Line');
+      return;
+    }
+    if (!form.pod) {
+      setFormError('Please select POD (Port of Discharge)');
+      return;
+    }
+
+    setFormError('');
+    const newJobPayload = {
+      id: form.joNo,
+      customer: form.consignor,
+      consignee: form.consignee || 'Al Maya Trading LLC',
+      line: form.shippingLine,
+      bookingNo: form.lineBookingNo,
+      origin: form.fromLocation,
+      pod: form.pod,
+      podCode: form.pod,
+      vessel: form.vesselName || 'MAERSK COLOMBO',
+      voyage: form.voyage || '2604W',
+      containersCount: totalContainersCount,
+      equipmentBreakdown: equipmentLines,
+      status: "STUFFED",
+      sellFreight: totalSellVal,
+      buyFreight: totalBuyVal,
+      margin: totalMarginVal,
+      containers: containers.map(c => ({
+        containerNo: c.contNo || `MSKU${Math.floor(1000000 + Math.random() * 9000000)}`,
+        sizeType: `${c.size}${c.type}`,
+        tareWeight: c.tareWeight,
+        cargoWeight: c.cargoWeight,
+        grossWeight: c.grossWeight,
+        sealNo: c.sealNo,
+        truckNo: c.vehicleNo,
+        grNo: c.grNo
+      }))
+    };
+
+    if (onCreateJob) {
+      onCreateJob(newJobPayload);
+    }
+  };
+
+  const filteredPrevious = jobs.filter((j) => {
+    if (!recentSearch.trim()) return true;
+    const q = (recentSearch || '').toLowerCase();
+    const jid = String(j.id || j.joNo || '').toLowerCase();
+    const cst = String(j.customer || j.consignor || '').toLowerCase();
+    const vsl = String(j.vessel || '').toLowerCase();
+    return jid.includes(q) || cst.includes(q) || vsl.includes(q);
+  });
+
+  const totalContainersCount = equipmentLines.reduce((acc, l) => acc + (parseInt(l.noOfCont, 10) || 1), 0);
+  const totalSellVal = equipmentLines.reduce((acc, l) => acc + ((Number(l.sellRate) || 0) * (parseInt(l.noOfCont, 10) || 1)), 0);
+  const totalBuyVal = equipmentLines.reduce((acc, l) => acc + ((Number(l.buyRate) || 0) * (parseInt(l.noOfCont, 10) || 1)), 0);
+  const totalMarginVal = totalSellVal - totalBuyVal;
+
+  return (
+    <div className="space-y-3.5 max-w-6xl mx-auto font-sans pb-10">
+      {/* 1. Header with Compact Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
+        <div>
+          <h1 className="text-lg font-bold font-heading text-[rgb(25,40,57)] flex items-center gap-2">
+            <span>Job Order / Container Booking</span>
+            <span className="font-mono text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+              {form.joNo}
+            </span>
+          </h1>
+          <p className="text-[11px] text-slate-500 font-sans">
+            Fast single-screen container booking entry &bull; Auto-calculates gross weight &amp; net margin
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 text-xs">
+          {quickFillNotice && (
+            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3 shrink-0" />
+              <span className="truncate max-w-[240px]">{quickFillNotice}</span>
+            </span>
+          )}
+
+          <button
+            type="button"
+            onClick={handleClearForm}
+            className="px-2 py-1 rounded-md bg-white hover:bg-slate-50 text-slate-600 font-medium text-[11px] border border-slate-200 flex items-center gap-1 transition cursor-pointer"
+            title="Clear form fields"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>Clear</span>
+          </button>
+
+          {/* Compact Recent Bookings Button - at the very last (far right) */}
+          <button
+            type="button"
+            onClick={() => setShowRecentModal(true)}
+            className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-semibold text-[11px] flex items-center gap-1 border border-slate-300 shadow-2xs transition cursor-pointer select-none"
+            title="View Recent Bookings & Load for Edit"
+          >
+            <History className="w-3 h-3 text-blue-600" />
+            <span>Recent Bookings</span>
+            <span className="px-1 py-0.2 rounded-full bg-blue-600 text-white text-[9px] font-mono font-bold">
+              {jobs.length}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {formError && (
+        <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span className="font-semibold">{formError}</span>
+        </div>
+      )}
+
+      {/* 3. Compact High-Density Form */}
+      <form onSubmit={handleSubmit} className="space-y-3">
+        {/* CARD 1: Routing & Shipment Type (6-Col High Density Grid) */}
+        <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+            <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider font-mono">
+              1. Routing &amp; Shipment Specification
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono">Export Haulage Railhead</span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Jo Type *</label>
+              <select
+                value={form.joType}
+                onChange={(e) => setForm({ ...form, joType: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+              >
+                <option value="Export FCL">Export FCL</option>
+                <option value="Import FCL">Import FCL</option>
+                <option value="Re Export">Re Export</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Mode *</label>
+              <select
+                value={form.modeOfShipment}
+                onChange={(e) => setForm({ ...form, modeOfShipment: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+              >
+                <option value="By Rail">By Rail (CONCOR)</option>
+                <option value="By Road">By Road (Trailer)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Origin (ICD) *</label>
+              <select
+                value={form.fromLocation}
+                onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+              >
+                <option value="Dadri ICD (INICD6)">Dadri ICD (INICD6)</option>
+                <option value="Moradabad ICD (INMBD6)">Moradabad ICD (INMBD6)</option>
+                <option value="Piyala ICD (INPYA6)">Piyala ICD (INPYA6)</option>
+                <option value="Ludhiana ICD (INLDH6)">Ludhiana ICD (INLDH6)</option>
+                <option value="Kanpur ICD (INKNU6)">Kanpur ICD (INKNU6)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Gateway Port *</label>
+              <select
+                value={form.toLocation}
+                onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+              >
+                <option value="Nhava Sheva-NSFT (INNSA1)">Nhava Sheva-NSFT</option>
+                <option value="Nhava Sheva-BMCT (INNSA1)">Nhava Sheva-BMCT</option>
+                <option value="Nhava Sheva-GTI (INNSA1)">Nhava Sheva-GTI</option>
+                <option value="Mundra Port (INMUN1)">Mundra Port (INMUN1)</option>
+                <option value="Pipavav Port (INPAV1)">Pipavav Port (INPAV1)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">POL *</label>
+              <select
+                value={form.pol}
+                onChange={(e) => setForm({ ...form, pol: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-mono focus:bg-white focus:border-blue-500 outline-none"
+              >
+                <option value="INNSA1">Nhava Sheva (INNSA1)</option>
+                <option value="INMUN1">Mundra Port (INMUN1)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">POD (Discharge) *</label>
+              <select
+                value={form.pod}
+                onChange={(e) => {
+                  setForm({ ...form, pod: e.target.value });
+                  setFormError('');
+                }}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+              >
+                <option value="">-- Select POD --</option>
+                {podList.map((p) => (
+                  <option key={p.code} value={p.code}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* CARD 2: Stakeholders, Vessel & Dates (Combined 4-Col Grid) */}
+        <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+            <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider font-mono">
+              2. Stakeholders, Ocean Liner &amp; Vessel Cut-offs
+            </span>
+            <button
+              type="button"
+              onClick={onOpenQuickAddShipper}
+              className="text-[11px] text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 cursor-pointer"
+            >
+              <PlusCircle className="w-3 h-3" />
+              <span>+ Add Shipper</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+            {/* Row 1 */}
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Consignor (Shipper) *</label>
+              <select
+                value={form.consignor}
+                onChange={(e) => handleConsignorChange(e.target.value)}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-bold focus:bg-white focus:border-blue-500 outline-none truncate"
+              >
+                <option value="">-- Select Consignor --</option>
+                {shippersList.map((name, i) => (
+                  <option key={i} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Consignee</label>
+              <select
+                value={form.consignee}
+                onChange={(e) => setForm({ ...form, consignee: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none truncate"
+              >
+                <option value="">-- Select Consignee --</option>
+                {consigneesList.map((name, i) => (
+                  <option key={i} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Shipping Line *</label>
+              <select
+                value={form.shippingLine}
+                onChange={(e) => {
+                  setForm({ ...form, shippingLine: e.target.value });
+                  setFormError('');
+                }}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-bold focus:bg-white focus:border-blue-500 outline-none truncate"
+              >
+                <option value="">-- Select Line --</option>
+                {linesList.map((name, i) => (
+                  <option key={i} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Line Booking No</label>
+              <input
+                type="text"
+                placeholder="BK-982104"
+                value={form.lineBookingNo}
+                onChange={(e) => setForm({ ...form, lineBookingNo: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+              />
+            </div>
+
+            {/* Row 2: Vessel & Dates */}
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Vessel Name</label>
+              <input
+                type="text"
+                placeholder="MAERSK COLOMBO"
+                value={form.vesselName}
+                onChange={(e) => setForm({ ...form, vesselName: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Voyage</label>
+              <input
+                type="text"
+                placeholder="2604W"
+                value={form.voyage}
+                onChange={(e) => setForm({ ...form, voyage: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">SI Cut-off Date</label>
+              <input
+                type="date"
+                value={form.siCutDate}
+                onChange={(e) => setForm({ ...form, siCutDate: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Port Cut-off Date</label>
+              <input
+                type="date"
+                value={form.portCutDate}
+                onChange={(e) => setForm({ ...form, portCutDate: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+              />
+            </div>
+
+            {/* Row 3 (SPJ-2 Operations: Validity, Reefer Temp, Transporter, Handover) */}
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Booking Re-Validity</label>
+              <input
+                type="date"
+                value={form.bookingValidity || ''}
+                onChange={(e) => setForm({ ...form, bookingValidity: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Set Temp (°C / Reefer)</label>
+              <input
+                type="text"
+                placeholder="-18°C (Frozen) / Ambient"
+                value={form.temperature || ''}
+                onChange={(e) => setForm({ ...form, temperature: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Transporter</label>
+              <input
+                type="text"
+                placeholder="SPJ Fleet Logistics / CONCOR"
+                value={form.transporter || ''}
+                onChange={(e) => setForm({ ...form, transporter: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Handover Location (CFS)</label>
+              <input
+                type="text"
+                placeholder="Dadri ICD CFS Complex"
+                value={form.handoverLocation || ''}
+                onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* CARD 3: Equipment Count & Size Allotment (Type & Rates removed) */}
+        <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider font-mono">
+                3. Equipment Count &amp; Container Sizes
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200">
+                {totalContainersCount} Units Total
+              </span>
+            </div>
+
+            {/* + ADD EQUIPMENT LINE BUTTON */}
+            <button
+              type="button"
+              onClick={handleAddEquipmentLine}
+              className="px-2.5 py-1 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-[11px] shadow-2xs flex items-center gap-1 transition cursor-pointer select-none"
+              title="Add another container size line"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>+ Add Line</span>
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {equipmentLines.map((line, idx) => (
+              <div key={line.id} className="flex items-center gap-3 bg-slate-50/70 p-2 rounded-lg border border-slate-200/80">
+                <div className="w-36">
+                  <label className="text-[9px] font-bold text-slate-500 uppercase block mb-0.5">No Of Cont *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={line.noOfCont}
+                    onChange={(e) => handleEquipmentLineChange(idx, "noOfCont", e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-md bg-white border border-slate-200 text-xs font-mono font-bold text-slate-900 focus:border-blue-500 outline-none"
+                  />
+                </div>
+
+                <div className="w-48">
+                  <label className="text-[9px] font-bold text-slate-500 uppercase block mb-0.5">Size</label>
+                  <select
+                    value={line.size}
+                    onChange={(e) => handleEquipmentLineChange(idx, "size", e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-md bg-white border border-slate-200 text-xs font-mono font-semibold focus:border-blue-500 outline-none"
+                  >
+                    <option value="40">40' (High Cube / Standard)</option>
+                    <option value="20">20' (Standard Box)</option>
+                    <option value="45">45' (High Cube)</option>
+                  </select>
+                </div>
+
+                {equipmentLines.length > 1 && (
+                  <div className="pt-3">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveEquipmentLine(line.id)}
+                      className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                      title="Delete this equipment line"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CARD 4: Container Details Table (Compact Repeater) */}
+        <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-1.5 gap-2">
+            <div className="flex items-center gap-2">
+              <Ship className="w-3.5 h-3.5 text-blue-600" />
+              <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider font-mono">
+                4. Container Allotment ({containers.length} Units)
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setShowPasteModal(true)}
+                className="px-2 py-1 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] border border-blue-200 flex items-center gap-1 cursor-pointer transition"
+              >
+                <Clipboard className="w-3 h-3" />
+                <span>Quick Paste</span>
+              </button>
+
+              <label className="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] border border-slate-200 flex items-center gap-1 cursor-pointer transition">
+                <UploadCloud className="w-3 h-3" />
+                <span>Import CSV</span>
+                <input
+                  type="file"
+                  accept=".csv,.txt"
+                  onChange={handleCsvUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
+                <tr>
+                  <th className="py-1.5 px-2.5">#</th>
+                  <th className="py-1.5 px-2.5">Container No *</th>
+                  <th className="py-1.5 px-2.5">Size/Type</th>
+                  <th className="py-1.5 px-2.5">Tare (kg)</th>
+                  <th className="py-1.5 px-2.5">Cargo (kg)</th>
+                  <th className="py-1.5 px-2.5">Gross (kg)</th>
+                  <th className="py-1.5 px-2.5">Seal No</th>
+                  <th className="py-1.5 px-2.5">Vehicle No</th>
+                  <th className="py-1.5 px-2.5">GR No</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white font-mono text-xs">
+                {containers.map((c, idx) => (
+                  <tr key={idx} className="hover:bg-slate-50">
+                    <td className="py-1.5 px-2.5 text-slate-400 font-bold">{c.sr}</td>
+
+                    <td className="py-1.5 px-2.5">
+                      <input
+                        type="text"
+                        placeholder="MSKU1234567"
+                        value={c.contNo}
+                        onChange={(e) => handleContainerRowChange(idx, 'contNo', e.target.value.toUpperCase())}
+                        className="px-2 py-1 rounded border border-slate-200 font-bold text-blue-700 w-28 text-xs focus:outline-none focus:border-blue-500"
+                      />
+                    </td>
+
+                    <td className="py-1.5 px-2.5 text-slate-600 font-medium">
+                      {c.size}'{c.type}
+                    </td>
+
+                    <td className="py-1.5 px-2.5">
+                      <input
+                        type="number"
+                        value={c.tareWeight}
+                        onChange={(e) => handleContainerRowChange(idx, 'tareWeight', e.target.value)}
+                        className="px-2 py-1 rounded border border-slate-200 text-slate-500 w-20 text-xs focus:outline-none focus:border-blue-500"
+                      />
+                    </td>
+
+                    <td className="py-1.5 px-2.5">
+                      <input
+                        type="number"
+                        placeholder="24500"
+                        value={c.cargoWeight}
+                        onChange={(e) => handleContainerRowChange(idx, 'cargoWeight', e.target.value)}
+                        className="px-2 py-1 rounded border border-slate-200 text-slate-700 w-20 text-xs focus:outline-none focus:border-blue-500"
+                      />
+                    </td>
+
+                    <td className="py-1.5 px-2.5">
+                      <input
+                        type="number"
+                        placeholder="28320"
+                        value={c.grossWeight}
+                        onChange={(e) => handleContainerRowChange(idx, 'grossWeight', e.target.value)}
+                        className="px-2 py-1 rounded border border-slate-200 font-bold text-slate-900 w-24 text-xs focus:outline-none focus:border-blue-500"
+                      />
+                    </td>
+
+                    <td className="py-1.5 px-2.5">
+                      <input
+                        type="text"
+                        placeholder="ML-IN-938210"
+                        value={c.sealNo}
+                        onChange={(e) => handleContainerRowChange(idx, 'sealNo', e.target.value.toUpperCase())}
+                        className="px-2 py-1 rounded border border-slate-200 text-slate-700 w-24 text-xs focus:outline-none focus:border-blue-500"
+                      />
+                    </td>
+
+                    <td className="py-1.5 px-2.5">
+                      <input
+                        type="text"
+                        placeholder="HR55AN2094"
+                        value={c.vehicleNo}
+                        onChange={(e) => handleContainerRowChange(idx, 'vehicleNo', e.target.value.toUpperCase())}
+                        className="px-2 py-1 rounded border border-slate-200 text-slate-700 w-24 text-xs focus:outline-none focus:border-blue-500"
+                      />
+                    </td>
+
+                    <td className="py-1.5 px-2.5">
+                      <input
+                        type="text"
+                        placeholder="GR-2026-084"
+                        value={c.grNo}
+                        onChange={(e) => handleContainerRowChange(idx, 'grNo', e.target.value.toUpperCase())}
+                        className="px-2 py-1 rounded border border-slate-200 text-emerald-700 font-semibold w-24 text-xs focus:outline-none focus:border-emerald-500"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* 4. Action Save Button Bar */}
+        <div className="flex items-center justify-between pt-2">
+          <div className="text-[11px] text-slate-400 font-mono">
+            * Mandatory fields pre-filled for rapid job processing
+          </div>
+
+          <button
+            type="submit"
+            className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs shadow-md flex items-center gap-2 transition cursor-pointer"
+          >
+            <Save className="w-4 h-4" />
+            <span>Save Container Booking</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </form>
+
+      {/* ================= RECENT BOOKINGS MODAL (FULL LIST & EDIT) ================= */}
+      {showRecentModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in font-sans">
+          <div className="w-full max-w-4xl max-h-[85vh] rounded-2xl bg-white border border-slate-200 shadow-2xl flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 bg-[#232f3e] text-white flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-amber-400">
+                  <History className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white leading-tight">
+                    Recent Container Bookings ({jobs.length})
+                  </h2>
+                  <p className="text-[11px] text-slate-300">
+                    Click "✏️ Edit in Form" to load booking back into form for editing
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowRecentModal(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Filter Search */}
+            <div className="p-3 bg-slate-50 border-b border-slate-200/80 flex items-center justify-between gap-3 shrink-0">
+              <div className="relative flex-1 max-w-md">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  placeholder="Search by Job No, Shipper, Vessel, POD..."
+                  value={recentSearch}
+                  onChange={(e) => setRecentSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-800 outline-none focus:border-blue-500"
+                />
+              </div>
+              <span className="text-[11px] font-mono text-slate-400 hidden sm:inline">
+                Showing {filteredPrevious.length} of {jobs.length} Bookings
+              </span>
+            </div>
+
+            {/* Bookings List / Table */}
+            <div className="flex-1 overflow-y-auto p-4 divide-y divide-slate-100">
+              {filteredPrevious.length === 0 ? (
+                <div className="p-12 text-center text-slate-400 text-xs">
+                  No bookings found matching your search.
+                </div>
+              ) : (
+                filteredPrevious.map((job) => (
+                  <div
+                    key={job.id}
+                    className="py-3 px-3 hover:bg-slate-50 rounded-xl transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
+                  >
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-blue-600 text-xs">
+                          {job.id || job.joNo}
+                        </span>
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                          {job.status || "BOOKED"}
+                        </span>
+                        <span className="text-[11px] font-bold text-slate-800 truncate">
+                          {job.customer || job.consignor}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-xs text-slate-500 font-mono">
+                        <span>{job.origin || job.fromLocation || "Dadri ICD"} ➔ <strong className="text-slate-700">{job.pod || job.toLocation || "Jebel Ali"}</strong></span>
+                        <span>•</span>
+                        <span>{job.vessel || "Vessel TBA"} ({job.voyage || "2604W"})</span>
+                        <span>•</span>
+                        <span>{job.containersCount || 1}x 40HC</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="text-right mr-2 hidden sm:block">
+                        <div className="font-mono font-bold text-emerald-600 text-xs">
+                          ₹ {Number(job.margin !== undefined ? job.margin : ((job.sellFreight || 145000) - (job.buyFreight || 118000))).toLocaleString("en-IN")}
+                        </div>
+                        <span className="text-[9px] text-slate-400 font-mono">Net Margin</span>
+                      </div>
+
+                      {/* Primary Action: Load back into form for Edit! */}
+                      <button
+                        type="button"
+                        onClick={() => handleLoadForEdit(job)}
+                        className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer select-none"
+                        title="Load this booking into form to edit"
+                      >
+                        <span>✏️ Edit in Form</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowRecentModal(false);
+                          if (onSelectJob) onSelectJob(job.id);
+                          if (onOpenShipmentStatus) onOpenShipmentStatus();
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition cursor-pointer select-none"
+                        title="Open Status Cockpit"
+                      >
+                        <span>Cockpit</span>
+                        <ChevronRight className="w-3.5 h-3.5 inline" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 bg-slate-50 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500 px-5 shrink-0">
+              <span>Tip: Click <strong>"✏️ Edit in Form"</strong> to populate all fields and update.</span>
+              <button
+                type="button"
+                onClick={() => setShowRecentModal(false)}
+                className="px-3 py-1 rounded-md bg-white border border-slate-200 text-slate-700 font-semibold cursor-pointer hover:bg-slate-100"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= QUICK PASTE CONTAINERS MODAL ================= */}
+      {showPasteModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-lg p-5 rounded-2xl bg-white border border-slate-200 shadow-2xl space-y-3 font-sans">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <h2 className="text-sm font-bold font-heading text-[rgb(25,40,57)] flex items-center gap-2">
+                <Clipboard className="w-4 h-4 text-blue-600" />
+                <span>Quick Paste Container Numbers</span>
+              </h2>
+              <button onClick={() => setShowPasteModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <p className="text-slate-500 font-sans">
+                WhatsApp, Email ya Excel se container numbers copy karein aur yahan paste karein:
+              </p>
+              <textarea
+                rows={5}
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                placeholder="MSKU7829102\nMSKU8910293\nMEDU8819201"
+                className="w-full p-2.5 rounded-lg border border-slate-200 font-mono text-xs focus:outline-none focus:border-blue-500 uppercase"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowPasteModal(false)}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleApplyPastedContainers}
+                className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer"
+              >
+                Generate Container Rows &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
