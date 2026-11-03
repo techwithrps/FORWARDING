@@ -444,11 +444,11 @@ export function AppleWelcomeModal({ isOpen, onClose }) {
         </button>
 
         {/* Official SPJ Group of Companies Logo (Transparent & Prominent) */}
-        <div className="flex justify-center items-center pt-3 pb-1 relative z-10">
+        <div className="flex justify-center items-center pt-2 pb-1 relative z-10">
           <img
             src="/spj-logo.png"
             alt="SPJ Group of Companies"
-            className="h-14 sm:h-16 md:h-18 w-auto max-w-[280px] sm:max-w-[330px] object-contain select-none"
+            className="h-16 sm:h-20 md:h-24 w-auto max-w-[360px] sm:max-w-[420px] object-contain select-none"
             style={{ mixBlendMode: 'multiply' }}
           />
         </div>
