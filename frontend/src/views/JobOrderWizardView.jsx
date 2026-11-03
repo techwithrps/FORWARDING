@@ -748,7 +748,7 @@ export default function JobOrderWizardView({
 
       {/* 3. Compact High-Density Form */}
       <form onSubmit={handleSubmit} className="space-y-2.5">
-        {/* CARD 1: Routing & Shipment Type (SPJ-2 Full Logistics Route Chain) */}
+        {/* CARD 1: Routing & Shipment Type */}
         <div className="p-3 sm:px-3.5 sm:py-2.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
           <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
             <div className="flex items-center gap-2">
@@ -759,9 +759,6 @@ export default function JobOrderWizardView({
                 Routing &amp; Shipment Specification
               </h2>
             </div>
-            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded border border-slate-200/80">
-              SPJ-2 Full Logistics Route Chain
-            </span>
           </div>
 
           {/* Row 1: Shipment Specs & Initial Movement (Job Type -> Mode of Transportation -> Empty Pickup -> Stuffing) */}
