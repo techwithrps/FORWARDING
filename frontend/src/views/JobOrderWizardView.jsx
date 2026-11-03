@@ -191,6 +191,7 @@ export default function JobOrderWizardView({
 
   const autoFillTargetKeys = new Set([
     'shippingLine',
+    'lineBookingNo',
     'vesselName',
     'voyage',
     'etdDate',
@@ -788,11 +789,11 @@ export default function JobOrderWizardView({
             </span>
           </div>
 
-          {/* Row 1: Shipment Specs & Initial Movement (JO Type -> Mode -> Empty Pickup -> Stuffing) */}
+          {/* Row 1: Shipment Specs & Initial Movement (Job Type -> Mode of Transportation -> Empty Pickup -> Stuffing) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
             <div>
               <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
-                Jo Type <span className="text-rose-500 font-bold">*</span>
+                Job Type <span className="text-rose-500 font-bold">*</span>
               </label>
               <select
                 value={form.joType}
@@ -811,7 +812,7 @@ export default function JobOrderWizardView({
 
             <div>
               <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
-                Mode <span className="text-rose-500 font-bold">*</span>
+                Mode of Transportation <span className="text-rose-500 font-bold">*</span>
               </label>
               <select
                 value={form.modeOfShipment}
@@ -898,7 +899,7 @@ export default function JobOrderWizardView({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-[10px] font-bold text-slate-600 uppercase">
-                  POL (Loading Port) <span className="text-rose-500 font-bold">*</span>
+                  POL (Port of Loading) <span className="text-rose-500 font-bold">*</span>
                 </label>
                 {autoFilledFields.pol && form.pol && (
                   <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
@@ -928,7 +929,7 @@ export default function JobOrderWizardView({
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1.5">
                   <label className="text-[10px] font-bold text-slate-600 uppercase">
-                    POD (Discharge) <span className="text-rose-500 font-bold">*</span>
+                    POD (Port of Discharge) <span className="text-rose-500 font-bold">*</span>
                   </label>
                   {autoFilledFields.pod && form.pod && (
                     <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
@@ -1008,7 +1009,7 @@ export default function JobOrderWizardView({
           </div>
 
           <div className="space-y-2.5">
-            {/* Row 1: Stakeholders & Line (4 Cols) */}
+            {/* Row 1: Consignor -> Consignee -> Transporter -> Set Temp (4 Cols) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
               <div>
                 <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
@@ -1045,6 +1046,31 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Transporter</label>
+                <input
+                  type="text"
+                  placeholder="SPJ Fleet Logistics / CONCOR"
+                  value={form.transporter || ''}
+                  onChange={(e) => setForm({ ...form, transporter: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Set Temp (°C / Reefer)</label>
+                <input
+                  type="text"
+                  placeholder="-18°C (Frozen) / Ambient"
+                  value={form.temperature || ''}
+                  onChange={(e) => setForm({ ...form, temperature: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Row 2: Shipping Line -> Line Booking No -> Booking Validity -> Vessel Name (4 Cols) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1 border-t border-slate-100">
+              <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-[10px] font-bold text-slate-600 uppercase">
                     Shipping Line <span className="text-rose-500 font-bold">*</span>
@@ -1076,19 +1102,40 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Line Booking No</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[10px] font-bold text-slate-600 uppercase">Line Booking No</label>
+                  {autoFilledFields.lineBookingNo && form.lineBookingNo && (
+                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
+                      ✓ Set
+                    </span>
+                  )}
+                </div>
                 <input
                   type="text"
                   placeholder="e.g. BK-982104"
                   value={form.lineBookingNo}
                   onChange={(e) => setForm({ ...form, lineBookingNo: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('lineBookingNo', false, form.lineBookingNo)}`}
                 />
               </div>
-            </div>
 
-            {/* Row 2: Vessel & Operational Context (4 Cols) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1 border-t border-slate-100">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[10px] font-bold text-slate-600 uppercase">Booking Validity</label>
+                  {autoFilledFields.bookingValidity && form.bookingValidity && (
+                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
+                      ✓ Set
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="date"
+                  value={form.bookingValidity || ''}
+                  onChange={(e) => setForm({ ...form, bookingValidity: e.target.value })}
+                  className={`w-full px-2 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('bookingValidity', false, form.bookingValidity)}`}
+                />
+              </div>
+
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-[10px] font-bold text-slate-600 uppercase">Vessel Name</label>
@@ -1106,7 +1153,10 @@ export default function JobOrderWizardView({
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass('vesselName', false, form.vesselName)}`}
                 />
               </div>
+            </div>
 
+            {/* Row 3: Voyage -> ETD -> ETA -> Port Cut-off -> SI Cut-off (5 Cols Compact Line) */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1.5 border-t border-slate-100 bg-slate-50/60 p-2.5 rounded-lg border border-slate-200/60">
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-[10px] font-bold text-slate-600 uppercase">Voyage</label>
@@ -1121,35 +1171,10 @@ export default function JobOrderWizardView({
                   placeholder="e.g. 0UW4JW1MA"
                   value={form.voyage}
                   onChange={(e) => setForm({ ...form, voyage: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('voyage', false, form.voyage)}`}
+                  className={`w-full px-2 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('voyage', false, form.voyage)}`}
                 />
               </div>
 
-              <div>
-                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Transporter</label>
-                <input
-                  type="text"
-                  placeholder="SPJ Fleet Logistics / CONCOR"
-                  value={form.transporter || ''}
-                  onChange={(e) => setForm({ ...form, transporter: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Set Temp (°C / Reefer)</label>
-                <input
-                  type="text"
-                  placeholder="-18°C (Frozen) / Ambient"
-                  value={form.temperature || ''}
-                  onChange={(e) => setForm({ ...form, temperature: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Row 3: ALL DATES IN ONE LINE (5 Cols Compact Schedule Strip) */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1.5 border-t border-slate-100 bg-slate-50/60 p-2.5 rounded-lg border border-slate-200/60">
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-[10px] font-bold text-slate-600 uppercase">ETD (Departure)</label>
@@ -1215,16 +1240,6 @@ export default function JobOrderWizardView({
                   value={form.siCutDate}
                   onChange={(e) => setForm({ ...form, siCutDate: e.target.value })}
                   className={`w-full px-2 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('siCutDate', false, form.siCutDate)}`}
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Booking Validity</label>
-                <input
-                  type="date"
-                  value={form.bookingValidity || ''}
-                  onChange={(e) => setForm({ ...form, bookingValidity: e.target.value })}
-                  className={`w-full px-2 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('bookingValidity', false, form.bookingValidity)}`}
                 />
               </div>
             </div>
