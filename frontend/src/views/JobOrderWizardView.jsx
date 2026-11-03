@@ -60,7 +60,15 @@ export default function JobOrderWizardView({
     'Mediterranean Shipping Co (MSC)',
     'CMA CGM Agencies India',
     'Cosco Shipping Lines',
+    'Ocean Network Express (ONE)',
+    'Evergreen Shipping Agency',
+    'Hapag-Lloyd India',
+    'Wan Hai Lines',
+    'KMTC Line',
     'Interasia Shipping Lines',
+    'Arkas Container Transport',
+    'Yang Ming Line',
+    'ZIM Integrated Shipping',
     'Goodrich Maritime Pvt Ltd',
     'Navio Shipping Private Limited'
   ];
@@ -74,13 +82,28 @@ export default function JobOrderWizardView({
   ];
 
   const podList = [
-    { code: 'AEJEA', name: 'JEBEL ALI (AEJEA)' },
-    { code: 'SADMM', name: 'DAMMAM (SADMM)' },
-    { code: 'NLRTM', name: 'ROTTERDAM (NLRTM)' },
-    { code: 'SAJED', name: 'JEDDAH (SAJED)' },
-    { code: 'LTKLJ', name: 'KLAIPEDA (LTKLJ)' },
-    { code: 'USNYC', name: 'NEW YORK / NJ (USNYC)' },
-    { code: 'DJIBOUTI', name: 'DJIBOUTI (DJIBOUTI)' }
+    { code: 'AEJEA', name: 'JEBEL ALI, UAE (AEJEA)', flag: '🇦🇪' },
+    { code: 'USNYC', name: 'NEW YORK / NJ, USA (USNYC)', flag: '🇺🇸' },
+    { code: 'NLRTM', name: 'ROTTERDAM, NETHERLANDS (NLRTM)', flag: '🇳🇱' },
+    { code: 'SAJED', name: 'JEDDAH, SAUDI ARABIA (SAJED)', flag: '🇸🇦' },
+    { code: 'SADMM', name: 'DAMMAM, SAUDI ARABIA (SADMM)', flag: '🇸🇦' },
+    { code: 'SGSIN', name: 'SINGAPORE (SGSIN)', flag: '🇸🇬' },
+    { code: 'DEHAM', name: 'HAMBURG, GERMANY (DEHAM)', flag: '🇩🇪' },
+    { code: 'BEANR', name: 'ANTWERP, BELGIUM (BEANR)', flag: '🇧🇪' },
+    { code: 'ITGOA', name: 'GENOA, ITALY (ITGOA)', flag: '🇮🇹' },
+    { code: 'MYPKG', name: 'PORT KLANG, MALAYSIA (MYPKG)', flag: '🇲🇾' },
+    { code: 'KRPUS', name: 'BUSAN, SOUTH KOREA (KRPUS)', flag: '🇰🇷' },
+    { code: 'VNHPH', name: 'HAIPHONG, VIETNAM (VNHPH)', flag: '🇻🇳' },
+    { code: 'EGALY', name: 'ALEXANDRIA, EGYPT (EGALY)', flag: '🇪🇬' },
+    { code: 'TRMER', name: 'MERSIN, TURKEY (TRMER)', flag: '🇹🇷' },
+    { code: 'GEPTI', name: 'POTI, GEORGIA (GEPTI)', flag: '🇬🇪' },
+    { code: 'ROCND', name: 'CONSTANTA, ROMANIA (ROCND)', flag: '🇷🇴' },
+    { code: 'GBFXT', name: 'FELIXSTOWE, UK (GBFXT)', flag: '🇬🇧' },
+    { code: 'PLGDY', name: 'GDANSK, POLAND (PLGDY)', flag: '🇵🇱' },
+    { code: 'IDJKT', name: 'JAKARTA, INDONESIA (IDJKT)', flag: '🇮🇩' },
+    { code: 'GHNTM', name: 'TEMA, GHANA (GHNTM)', flag: '🇬🇭' },
+    { code: 'LTKLJ', name: 'KLAIPEDA, LITHUANIA (LTKLJ)', flag: '🇱🇹' },
+    { code: 'DJIBOUTI', name: 'DJIBOUTI (DJIBOUTI)', flag: '🇩🇯' }
   ];
 
 
@@ -145,10 +168,39 @@ export default function JobOrderWizardView({
   const [showSailingPicker, setShowSailingPicker] = useState(false);
   const [sailingSearch, setSailingSearch] = useState('');
   const [selectedCarrierFilter, setSelectedCarrierFilter] = useState('ALL');
+  const [routeFilterOnly, setRouteFilterOnly] = useState(true);
   const [autoFilledToast, setAutoFilledToast] = useState(null);
 
   const allSailings = defaultSchedulesData?.sailings || [];
-  const uniqueCarriers = ['ALL', ...Array.from(new Set(allSailings.map(s => s.carrier).filter(Boolean)))];
+
+  // Match POL & POD helpers
+  const cleanPolCode = (form.pol || 'INNSA1').slice(0, 5).toUpperCase();
+  const cleanPodCode = (form.pod || '').trim().toUpperCase();
+
+  const isPolMatch = (s) => {
+    if (!form.pol) return true;
+    const sPol = (s.originLocode || s.origin || '').toUpperCase();
+    return sPol.startsWith(cleanPolCode);
+  };
+
+  const isPodMatch = (s) => {
+    if (!cleanPodCode) return true;
+    const sPod = (s.destinationLocode || s.destination || '').toUpperCase();
+    return sPod.startsWith(cleanPodCode) || cleanPodCode.startsWith(sPod);
+  };
+
+  // Sailings strictly matching selected POL & POD
+  const routeMatchingSailings = allSailings.filter(s => isPolMatch(s) && isPodMatch(s));
+
+  // Determine active dataset: if routeFilterOnly is true and POD is selected, show route sailings;
+  // if 0 route sailings found, user can toggle or it falls back cleanly
+  const basePool = (routeFilterOnly && cleanPodCode && routeMatchingSailings.length > 0)
+    ? routeMatchingSailings
+    : (routeFilterOnly && cleanPodCode && routeMatchingSailings.length === 0)
+      ? []
+      : allSailings;
+
+  const uniqueCarriers = ['ALL', ...Array.from(new Set(basePool.map(s => s.carrier).filter(Boolean)))];
 
   const mapCarrierToShippingLine = (carrier) => {
     if (!carrier) return '';
@@ -163,17 +215,20 @@ export default function JobOrderWizardView({
     if (c.includes('WAN HAI')) return 'Wan Hai Lines';
     if (c.includes('KMTC')) return 'KMTC Line';
     if (c.includes('ARKAS')) return 'Arkas Container Transport';
+    if (c.includes('YANG MING')) return 'Yang Ming Line';
+    if (c.includes('ZIM')) return 'ZIM Integrated Shipping';
     return carrier;
   };
 
-  const filteredSailings = allSailings.filter(s => {
+  const filteredSailings = basePool.filter(s => {
     const matchesCarrier = selectedCarrierFilter === 'ALL' || s.carrier === selectedCarrierFilter;
     const q = sailingSearch.trim().toLowerCase();
     const matchesSearch = !q ||
       (s.vesselName && s.vesselName.toLowerCase().includes(q)) ||
       (s.voyageNo && s.voyageNo.toLowerCase().includes(q)) ||
       (s.carrier && s.carrier.toLowerCase().includes(q)) ||
-      (s.service && s.service.toLowerCase().includes(q));
+      (s.service && s.service.toLowerCase().includes(q)) ||
+      (s.destinationName && s.destinationName.toLowerCase().includes(q));
     return matchesCarrier && matchesSearch;
   });
 
@@ -183,6 +238,9 @@ export default function JobOrderWizardView({
     const siCut = sailing.cutOffs?.shippingInstructions ? sailing.cutOffs.shippingInstructions.split(' ')[0] : portCut;
     const etd = sailing.departure || '';
 
+    const sPol = sailing.originLocode || sailing.origin || '';
+    const sPod = sailing.destinationLocode || sailing.destination || '';
+
     setForm(prev => ({
       ...prev,
       shippingLine: mappedLine || prev.shippingLine,
@@ -191,12 +249,14 @@ export default function JobOrderWizardView({
       portCutDate: portCut,
       siCutDate: siCut,
       bookingValidity: etd,
-      pod: prev.pod || 'AEJEA'
+      etdDate: etd,
+      pol: sPol === 'INMUN' ? 'INMUN1' : (sPol === 'INNSA' ? 'INNSA1' : prev.pol),
+      pod: sPod || prev.pod
     }));
 
     setFormError('');
     setShowSailingPicker(false);
-    setAutoFilledToast(`⚡ Auto-filled: ${sailing.vesselName} (${sailing.voyageNo}) · ${sailing.carrier}`);
+    setAutoFilledToast(`⚡ Auto-filled: ${sailing.vesselName} (${sailing.voyageNo}) · ${mappedLine || sailing.carrier} · Cut-offs & Dates set!`);
     setTimeout(() => setAutoFilledToast(null), 4500);
   };
 
@@ -698,7 +758,12 @@ export default function JobOrderWizardView({
               <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">POL *</label>
               <select
                 value={form.pol}
-                onChange={(e) => setForm({ ...form, pol: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setForm({ ...form, pol: val });
+                  setRouteFilterOnly(true);
+                  setSelectedCarrierFilter('ALL');
+                }}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-mono focus:bg-white focus:border-blue-500 outline-none"
               >
                 <option value="INNSA1">Nhava Sheva (INNSA1)</option>
@@ -711,12 +776,20 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-bold text-slate-600 uppercase">POD (Discharge) *</label>
                 <button
                   type="button"
-                  onClick={() => setShowSailingPicker(true)}
+                  onClick={() => {
+                    setRouteFilterOnly(true);
+                    setSelectedCarrierFilter('ALL');
+                    setShowSailingPicker(true);
+                  }}
                   className="text-[10px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-0.5 cursor-pointer"
-                  title="Browse 31 Active Ocean Sailings for this Route"
+                  title="Browse matching sailings for this Route"
                 >
                   <Ship className="w-2.5 h-2.5 text-blue-600" />
-                  <span>31 Sailings</span>
+                  <span>
+                    {form.pod && routeMatchingSailings.length > 0
+                      ? `${routeMatchingSailings.length} Sailings (${form.pod})`
+                      : `${allSailings.length} Sailings`}
+                  </span>
                 </button>
               </div>
               <select
@@ -726,6 +799,9 @@ export default function JobOrderWizardView({
                   setForm({ ...form, pod: val });
                   setFormError('');
                   if (val) {
+                    setRouteFilterOnly(true);
+                    setSelectedCarrierFilter('ALL');
+                    setSailingSearch('');
                     setShowSailingPicker(true);
                   }
                 }}
@@ -750,19 +826,25 @@ export default function JobOrderWizardView({
                 2. Stakeholders, Ocean Liner &amp; Vessel Cut-offs
               </span>
               <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                Route: Nhava Sheva (INNSA) ➔ {form.pod ? (podList.find(p => p.code === form.pod)?.name || form.pod) : 'Jebel Ali (AEJEA)'}
+                Route: {form.pol === 'INMUN1' ? 'Mundra (INMUN)' : 'Nhava Sheva (INNSA)'} ➔ {form.pod ? (podList.find(p => p.code === form.pod)?.name || form.pod) : 'Select POD'}
               </span>
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setShowSailingPicker(true)}
+                onClick={() => {
+                  setRouteFilterOnly(true);
+                  setSelectedCarrierFilter('ALL');
+                  setShowSailingPicker(true);
+                }}
                 className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 active:scale-95 text-white font-bold text-[11px] flex items-center gap-1.5 shadow-xs transition cursor-pointer"
-                title="Select from 31 Active Ocean Sailings to auto-fill Line, Vessel, Voyage & Cut-offs"
+                title="Select from Active Ocean Sailings to auto-fill Line, Vessel, Voyage & Cut-offs"
               >
                 <Ship className="w-3.5 h-3.5 text-cyan-200" />
-                <span>Auto-Fill from Sailings ({allSailings.length})</span>
+                <span>
+                  Auto-Fill from Sailings ({form.pod && routeMatchingSailings.length > 0 ? routeMatchingSailings.length : allSailings.length})
+                </span>
                 <span className="px-1 py-0.2 rounded bg-white/20 text-[9px] font-mono">⚡ 1-Click</span>
               </button>
 
@@ -827,6 +909,9 @@ export default function JobOrderWizardView({
                     {name}
                   </option>
                 ))}
+                {form.shippingLine && !linesList.includes(form.shippingLine) && (
+                  <option value={form.shippingLine}>{form.shippingLine}</option>
+                )}
               </select>
             </div>
 
@@ -1175,11 +1260,16 @@ export default function JobOrderWizardView({
                       Active Ocean Sailings &amp; Schedules
                     </h2>
                     <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-mono font-semibold border border-blue-500/30">
-                      {allSailings.length} Sailings
+                      {filteredSailings.length} {routeFilterOnly && cleanPodCode ? 'Route Sailings' : 'Total Sailings'}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-300">
-                    Route: <span className="text-amber-300 font-semibold">Nhava Sheva (INNSA)</span> ➔ <span className="text-emerald-300 font-semibold">{form.pod ? (podList.find(p => p.code === form.pod)?.name || form.pod) : 'Jebel Ali (AEJEA)'}</span> &bull; Click any sailing to 1-click auto-fill
+                  <p className="text-[11px] text-slate-300 flex items-center gap-1.5 flex-wrap">
+                    <span>Route:</span>
+                    <span className="text-amber-300 font-bold">{form.pol === 'INMUN1' ? 'Mundra (INMUN)' : 'Nhava Sheva (INNSA)'}</span>
+                    <span>➔</span>
+                    <span className="text-emerald-300 font-bold">{form.pod ? (podList.find(p => p.code === form.pod)?.name || form.pod) : 'All Global Destinations'}</span>
+                    <span>&bull;</span>
+                    <span className="text-slate-400">Click any sailing to 1-click auto-fill Line, Vessel &amp; Cut-offs</span>
                   </p>
                 </div>
               </div>
@@ -1195,16 +1285,73 @@ export default function JobOrderWizardView({
 
             {/* Filter Bar */}
             <div className="p-3 bg-slate-50 border-b border-slate-200 shrink-0 space-y-2.5">
+              {/* Route Matching Filter Toggle & Quick Port Selector */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/70 pb-2">
+                <div className="flex items-center gap-1.5 bg-slate-200/80 p-0.5 rounded-lg text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRouteFilterOnly(true);
+                      setSelectedCarrierFilter('ALL');
+                    }}
+                    className={`px-2.5 py-1 rounded-md font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
+                      routeFilterOnly && cleanPodCode
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>🎯 Selected Route ({routeMatchingSailings.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRouteFilterOnly(false);
+                      setSelectedCarrierFilter('ALL');
+                    }}
+                    className={`px-2.5 py-1 rounded-md font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
+                      !routeFilterOnly || !cleanPodCode
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>🌐 All Global Sailings ({allSailings.length})</span>
+                  </button>
+                </div>
+
+                {/* Instant POD dropdown selector inside modal */}
+                <div className="flex items-center gap-1.5 text-xs">
+                  <span className="text-[11px] font-bold text-slate-600">POD (Discharge):</span>
+                  <select
+                    value={form.pod}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setForm({ ...form, pod: val });
+                      setRouteFilterOnly(true);
+                      setSelectedCarrierFilter('ALL');
+                    }}
+                    className="px-2 py-1 rounded-lg bg-white border border-slate-300 text-xs font-bold text-slate-800 outline-none focus:border-blue-500 max-w-[200px] truncate"
+                  >
+                    <option value="">-- All Ports --</option>
+                    {podList.map((p) => (
+                      <option key={p.code} value={p.code}>
+                        {p.flag} {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Search & Carrier Filters */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="relative flex-1">
                   <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
                   <input
                     type="text"
-                    placeholder="Search by Vessel Name (e.g. CNC TIGER, MSC ALESSIA), Voyage, Carrier..."
+                    placeholder="Search by Vessel Name, Voyage, Carrier (e.g. CNC TIGER, MAERSK, 0UW4JW1MA)..."
                     value={sailingSearch}
                     onChange={(e) => setSailingSearch(e.target.value)}
                     className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-500"
-                    autoFocus
                   />
                   {sailingSearch && (
                     <button
@@ -1217,43 +1364,58 @@ export default function JobOrderWizardView({
                 </div>
 
                 <div className="text-[11px] font-medium text-slate-500 shrink-0">
-                  Showing <strong className="text-slate-800">{filteredSailings.length}</strong> of {allSailings.length} sailings
+                  Showing <strong className="text-slate-800">{filteredSailings.length}</strong> of {basePool.length} sailings
                 </div>
               </div>
 
               {/* Carrier Filter Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[11px]">
-                <span className="text-[10px] font-bold text-slate-400 uppercase shrink-0">Filter:</span>
-                {uniqueCarriers.map((carrier) => (
-                  <button
-                    key={carrier}
-                    type="button"
-                    onClick={() => setSelectedCarrierFilter(carrier)}
-                    className={`px-2 py-0.5 rounded-md font-semibold whitespace-nowrap transition cursor-pointer text-[10px] ${
-                      selectedCarrierFilter === carrier
-                        ? 'bg-blue-600 text-white shadow-2xs'
-                        : 'bg-white hover:bg-slate-200/80 text-slate-600 border border-slate-200'
-                    }`}
-                  >
-                    {carrier} {carrier !== 'ALL' && `(${allSailings.filter(s => s.carrier === carrier).length})`}
-                  </button>
-                ))}
-              </div>
+              {uniqueCarriers.length > 1 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[11px]">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase shrink-0">Carrier:</span>
+                  {uniqueCarriers.map((carrier) => (
+                    <button
+                      key={carrier}
+                      type="button"
+                      onClick={() => setSelectedCarrierFilter(carrier)}
+                      className={`px-2 py-0.5 rounded-md font-semibold whitespace-nowrap transition cursor-pointer text-[10px] ${
+                        selectedCarrierFilter === carrier
+                          ? 'bg-blue-600 text-white shadow-2xs'
+                          : 'bg-white hover:bg-slate-200/80 text-slate-600 border border-slate-200'
+                      }`}
+                    >
+                      {carrier} {carrier !== 'ALL' && `(${basePool.filter(s => s.carrier === carrier).length})`}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Sailings List */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2 max-h-[60vh] bg-slate-100/50">
               {filteredSailings.length === 0 ? (
-                <div className="py-12 text-center text-slate-400 space-y-2">
+                <div className="py-12 text-center text-slate-500 space-y-3">
                   <Ship className="w-10 h-10 mx-auto text-slate-300 stroke-[1.5]" />
-                  <p className="text-xs font-semibold text-slate-600">No sailings found matching your search</p>
-                  <button
-                    type="button"
-                    onClick={() => { setSailingSearch(''); setSelectedCarrierFilter('ALL'); }}
-                    className="text-xs text-blue-600 font-bold hover:underline"
-                  >
-                    Clear Filters
-                  </button>
+                  <div>
+                    <p className="text-sm font-bold text-slate-700">
+                      No pre-cached sailings found for {form.pol === 'INMUN1' ? 'Mundra (INMUN)' : 'Nhava Sheva (INNSA)'} ➔ {form.pod ? (podList.find(p => p.code === form.pod)?.name || form.pod) : 'selected port'}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Try selecting another POD or view all 31 pre-cached sailings across global routes.
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRouteFilterOnly(false);
+                        setSelectedCarrierFilter('ALL');
+                        setSailingSearch('');
+                      }}
+                      className="px-3.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition cursor-pointer shadow-xs"
+                    >
+                      Show All 31 Global Sailings
+                    </button>
+                  </div>
                 </div>
               ) : (
                 filteredSailings.map((sailing, idx) => {
@@ -1298,6 +1460,9 @@ export default function JobOrderWizardView({
                           </span>
                           <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                             Voy: {sailing.voyageNo}
+                          </span>
+                          <span className="text-[10px] font-bold font-mono bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">
+                            {sailing.originLocode || 'INNSA'} ➔ {sailing.destinationLocode || 'AEJEA'}
                           </span>
                           <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
                             {sailing.routingType || (sailing.direct ? 'Direct' : 'Transshipment')} &bull; {sailing.transitTime || '4-5 Days'}
