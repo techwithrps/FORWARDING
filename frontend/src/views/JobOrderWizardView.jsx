@@ -690,14 +690,14 @@ export default function JobOrderWizardView({
   const totalMarginVal = totalSellVal - totalBuyVal;
 
   return (
-    <div className="space-y-3 w-full font-sans pb-4">
+    <div className="space-y-2 w-full font-sans pb-1">
       {/* 1. Header with Compact Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/90 pb-2.5 mb-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-b border-slate-200/90 pb-1.5 mb-0.5">
         <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 flex items-center gap-2">
             <span>Job Order / Container Booking</span>
           </h1>
-          <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 font-extrabold border border-blue-200 shadow-2xs">
+          <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-extrabold border border-blue-200 shadow-2xs">
             {form.joNo}
           </span>
           <span className="hidden lg:inline-block text-[11px] font-medium text-slate-500 border-l border-slate-200 pl-2">
@@ -705,7 +705,7 @@ export default function JobOrderWizardView({
           </span>
         </div>
 
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-1.5 text-xs">
           {quickFillNotice && (
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3 shrink-0" />
@@ -716,7 +716,7 @@ export default function JobOrderWizardView({
           <button
             type="button"
             onClick={handleClearForm}
-            className="px-2.5 py-1 rounded-md bg-white hover:bg-slate-50 text-slate-600 font-bold text-[11px] border border-slate-200 flex items-center gap-1 transition cursor-pointer"
+            className="px-2 py-0.5 rounded-md bg-white hover:bg-slate-50 text-slate-600 font-bold text-[11px] border border-slate-200 flex items-center gap-1 transition cursor-pointer"
             title="Clear form fields"
           >
             <RotateCcw className="w-3 h-3" />
@@ -727,7 +727,7 @@ export default function JobOrderWizardView({
           <button
             type="button"
             onClick={() => setShowRecentModal(true)}
-            className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-extrabold text-[11px] flex items-center gap-1 border border-slate-300 shadow-2xs transition cursor-pointer select-none"
+            className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-extrabold text-[11px] flex items-center gap-1 border border-slate-300 shadow-2xs transition cursor-pointer select-none"
             title="View Recent Bookings & Load for Edit"
           >
             <History className="w-3 h-3 text-blue-600" />
@@ -740,17 +740,17 @@ export default function JobOrderWizardView({
       </div>
 
       {formError && (
-        <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+        <div className="p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
           <AlertCircle className="w-3.5 h-3.5 shrink-0" />
           <span className="font-bold">{formError}</span>
         </div>
       )}
 
       {/* 3. Compact High-Density Form */}
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form onSubmit={handleSubmit} className="space-y-2">
         {/* CARD 1: Routing & Shipment Type (SPJ-2 Full Logistics Route Chain) */}
-        <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div className="px-3 py-2 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1.5">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-1">
             <div className="flex items-center gap-2">
               <span className="w-5 h-5 rounded-md bg-blue-600/10 text-blue-600 flex items-center justify-center border border-blue-500/20">
                 <Route className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -759,21 +759,21 @@ export default function JobOrderWizardView({
                 Routing &amp; Shipment Specification
               </h2>
             </div>
-            <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded border border-slate-200/80">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded border border-slate-200/80">
               SPJ-2 Full Logistics Route Chain
             </span>
           </div>
 
           {/* Row 1: Shipment Specs & Initial Movement (Job Type -> Mode of Transportation -> Empty Pickup -> Stuffing) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
             <div>
-              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">
                 Job Type <span className="text-rose-500 font-bold">*</span>
               </label>
               <select
                 value={form.joType}
                 onChange={(e) => setForm({ ...form, joType: e.target.value })}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('joType', true, form.joType)}`}
+                className={`w-full px-2.5 py-1 rounded-md text-xs font-semibold outline-none ${getFieldClass('joType', true, form.joType)}`}
               >
                 <option value="Export FCL">Export FCL (Laden)</option>
                 <option value="Import FCL">Import FCL (Delivery)</option>
@@ -786,13 +786,13 @@ export default function JobOrderWizardView({
             </div>
 
             <div>
-              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">
                 Mode of Transportation <span className="text-rose-500 font-bold">*</span>
               </label>
               <select
                 value={form.modeOfShipment}
                 onChange={(e) => setForm({ ...form, modeOfShipment: e.target.value })}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('modeOfShipment', true, form.modeOfShipment)}`}
+                className={`w-full px-2.5 py-1 rounded-md text-xs font-semibold outline-none ${getFieldClass('modeOfShipment', true, form.modeOfShipment)}`}
               >
                 <option value="Multimodal (Rail + Road)">Multimodal (Rail + Road / Both)</option>
                 <option value="By Rail">By Rail (CONCOR Rake)</option>
@@ -801,13 +801,13 @@ export default function JobOrderWizardView({
             </div>
 
             <div>
-              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">
                 Empty Pickup Location
               </label>
               <select
                 value={form.emptyPickupLocation || 'Dadri ICD Depot (CONCOR)'}
                 onChange={(e) => setForm({ ...form, emptyPickupLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-semibold focus:bg-white focus:border-blue-500 outline-none"
+                className="w-full px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-xs text-slate-800 font-semibold focus:bg-white focus:border-blue-500 outline-none"
               >
                 <option value="Dadri ICD Depot (CONCOR)">Dadri ICD Depot (CONCOR)</option>
                 <option value="Piyala ICD Depot">Piyala ICD Depot</option>
@@ -820,7 +820,7 @@ export default function JobOrderWizardView({
             </div>
 
             <div>
-              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">
                 To Pickup / Stuffing Location
               </label>
               <input
@@ -828,21 +828,21 @@ export default function JobOrderWizardView({
                 placeholder="e.g. Shipper Factory / Aligarh Plant"
                 value={form.fromLocation}
                 onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-semibold focus:bg-white focus:border-blue-500 outline-none"
+                className="w-full px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-xs text-slate-800 font-semibold focus:bg-white focus:border-blue-500 outline-none"
               />
             </div>
           </div>
 
           {/* Row 2: Handover -> Gateway Terminal -> POL -> POD */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1.5 border-t border-slate-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-1 border-t border-slate-100">
             <div>
-              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">
                 Handover Location
               </label>
               <select
                 value={form.handoverLocation || 'Dadri ICD CFS Complex'}
                 onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-semibold focus:bg-white focus:border-blue-500 outline-none"
+                className="w-full px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-xs text-slate-800 font-semibold focus:bg-white focus:border-blue-500 outline-none"
               >
                 <option value="Dadri ICD CFS Complex">Dadri ICD CFS Complex</option>
                 <option value="Piyala ICD CFS Complex">Piyala ICD CFS Complex</option>
@@ -853,13 +853,13 @@ export default function JobOrderWizardView({
             </div>
 
             <div>
-              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">
                 Gateway Port Terminal
               </label>
               <select
                 value={form.toLocation}
                 onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-semibold focus:bg-white focus:border-blue-500 outline-none"
+                className="w-full px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-xs text-slate-800 font-semibold focus:bg-white focus:border-blue-500 outline-none"
               >
                 <option value="Nhava Sheva-NSFT (INNSA1)">Nhava Sheva-NSFT (INNSA1)</option>
                 <option value="Nhava Sheva-BMCT (INNSA1)">Nhava Sheva-BMCT (INNSA1)</option>
@@ -872,7 +872,7 @@ export default function JobOrderWizardView({
             </div>
 
             <div>
-              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+              <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">
                 POL (Port of Loading) <span className="text-rose-500 font-bold">*</span>
               </label>
               <select
@@ -883,7 +883,7 @@ export default function JobOrderWizardView({
                   setRouteFilterOnly(true);
                   setSelectedCarrierFilter('ALL');
                 }}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass('pol', true, form.pol)}`}
+                className={`w-full px-2.5 py-1 rounded-md text-xs font-bold outline-none ${getFieldClass('pol', true, form.pol)}`}
               >
                 {polList.map((p) => (
                   <option key={p.code} value={p.code}>
@@ -894,8 +894,8 @@ export default function JobOrderWizardView({
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider">
+              <div className="flex items-center justify-between mb-0.5">
+                <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider">
                   POD (Port of Discharge) <span className="text-rose-500 font-bold">*</span>
                 </label>
                 <button
@@ -929,7 +929,7 @@ export default function JobOrderWizardView({
                     setShowSailingPicker(true);
                   }
                 }}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('pod', true, form.pod)}`}
+                className={`w-full px-2.5 py-1 rounded-md text-xs font-semibold outline-none ${getFieldClass('pod', true, form.pod)}`}
               >
                 <option value="">-- Select POD --</option>
                 {podList.map((p) => (
@@ -943,8 +943,8 @@ export default function JobOrderWizardView({
         </div>
 
         {/* CARD 2: Stakeholders, Liner & Vessel Schedule */}
-        <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2 flex-wrap gap-1.5">
+        <div className="px-3 py-2 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1.5">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-1 flex-wrap gap-1.5">
             <div className="flex items-center gap-2">
               <span className="w-5 h-5 rounded-md bg-blue-600/10 text-blue-600 flex items-center justify-center border border-blue-500/20">
                 <Ship className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -952,7 +952,7 @@ export default function JobOrderWizardView({
               <h2 className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-900">
                 Stakeholders, Liner &amp; Vessel Schedule
               </h2>
-              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[9.5px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
+              <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
                 Route: {polList.find(p => p.code === form.pol)?.name || form.pol} ➔ {form.pod ? (podList.find(p => p.code === form.pod)?.name || form.pod) : 'Select POD'}
               </span>
             </div>
@@ -961,7 +961,7 @@ export default function JobOrderWizardView({
               <button
                 type="button"
                 onClick={onOpenQuickAddShipper}
-                className="text-[11px] text-blue-600 hover:text-blue-800 font-extrabold flex items-center gap-1 cursor-pointer"
+                className="text-[10px] text-blue-600 hover:text-blue-800 font-extrabold flex items-center gap-1 cursor-pointer"
               >
                 <PlusCircle className="w-3.5 h-3.5" />
                 <span>+ Add Shipper</span>
@@ -969,17 +969,17 @@ export default function JobOrderWizardView({
             </div>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-1.5">
             {/* Row 1: Consignor -> Consignee -> Transporter -> Set Temp (4 Cols) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">
                   Consignor (Shipper) <span className="text-rose-500 font-bold">*</span>
                 </label>
                 <select
                   value={form.consignor}
                   onChange={(e) => handleConsignorChange(e.target.value)}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate ${getFieldClass('consignor', true, form.consignor)}`}
+                  className={`w-full px-2.5 py-1 rounded-md text-xs font-bold outline-none truncate ${getFieldClass('consignor', true, form.consignor)}`}
                 >
                   <option value="">-- Select Consignor --</option>
                   {shippersList.map((name, i) => (
@@ -991,11 +991,11 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Consignee</label>
+                <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">Consignee</label>
                 <select
                   value={form.consignee}
                   onChange={(e) => setForm({ ...form, consignee: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none truncate"
+                  className="w-full px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none truncate"
                 >
                   <option value="">-- Select Consignee --</option>
                   {consigneesList.map((name, i) => (
@@ -1007,32 +1007,32 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Transporter</label>
+                <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">Transporter</label>
                 <input
                   type="text"
                   placeholder="SPJ Fleet Logistics / CONCOR"
                   value={form.transporter || ''}
                   onChange={(e) => setForm({ ...form, transporter: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                  className="w-full px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Set Temp (°C / Reefer)</label>
+                <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">Set Temp (°C / Reefer)</label>
                 <input
                   type="text"
                   placeholder="-18°C (Frozen) / Ambient"
                   value={form.temperature || ''}
                   onChange={(e) => setForm({ ...form, temperature: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                  className="w-full px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
                 />
               </div>
             </div>
 
             {/* Row 2: Shipping Line -> Line Booking No -> Booking Validity -> Vessel Name (4 Cols) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1.5 border-t border-slate-100">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-1 border-t border-slate-100">
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">
                   Shipping Line <span className="text-rose-500 font-bold">*</span>
                 </label>
                 <select
@@ -1041,7 +1041,7 @@ export default function JobOrderWizardView({
                     setForm({ ...form, shippingLine: e.target.value });
                     setFormError('');
                   }}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate ${getFieldClass('shippingLine', true, form.shippingLine)}`}
+                  className={`w-full px-2.5 py-1 rounded-md text-xs font-bold outline-none truncate ${getFieldClass('shippingLine', true, form.shippingLine)}`}
                 >
                   <option value="">-- Select Line --</option>
                   {linesList.map((name, i) => (
@@ -1056,88 +1056,88 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Line Booking No</label>
+                <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">Line Booking No</label>
                 <input
                   type="text"
                   placeholder="e.g. BK-982104"
                   value={form.lineBookingNo}
                   onChange={(e) => setForm({ ...form, lineBookingNo: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('lineBookingNo', false, form.lineBookingNo)}`}
+                  className={`w-full px-2.5 py-1 rounded-md text-xs font-mono outline-none ${getFieldClass('lineBookingNo', false, form.lineBookingNo)}`}
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Booking Validity</label>
+                <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">Booking Validity</label>
                 <input
                   type="date"
                   value={form.bookingValidity || ''}
                   onChange={(e) => setForm({ ...form, bookingValidity: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('bookingValidity', false, form.bookingValidity)}`}
+                  className={`w-full px-2 py-1 rounded-md text-xs font-mono outline-none ${getFieldClass('bookingValidity', false, form.bookingValidity)}`}
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Vessel Name</label>
+                <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">Vessel Name</label>
                 <input
                   type="text"
                   placeholder="e.g. CNC TIGER"
                   value={form.vesselName}
                   onChange={(e) => setForm({ ...form, vesselName: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass('vesselName', false, form.vesselName)}`}
+                  className={`w-full px-2.5 py-1 rounded-md text-xs font-bold outline-none ${getFieldClass('vesselName', false, form.vesselName)}`}
                 />
               </div>
             </div>
 
             {/* Row 3: Voyage -> ETD -> ETA -> Port Cut-off -> SI Cut-off (5 Cols Compact Line) */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1.5 border-t border-slate-100 bg-slate-50/70 p-2 rounded-lg border border-slate-200/60">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-1 border-t border-slate-100 bg-slate-50/70 p-1 rounded-lg border border-slate-200/60">
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Voyage</label>
+                <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">Voyage</label>
                 <input
                   type="text"
                   placeholder="e.g. 0UW4JW1MA"
                   value={form.voyage}
                   onChange={(e) => setForm({ ...form, voyage: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('voyage', false, form.voyage)}`}
+                  className={`w-full px-2 py-1 rounded-md text-xs font-mono outline-none ${getFieldClass('voyage', false, form.voyage)}`}
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">ETD (Departure)</label>
+                <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">ETD (Departure)</label>
                 <input
                   type="date"
                   value={form.etdDate}
                   onChange={(e) => setForm({ ...form, etdDate: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('etdDate', false, form.etdDate)}`}
+                  className={`w-full px-2 py-1 rounded-md text-xs font-mono outline-none ${getFieldClass('etdDate', false, form.etdDate)}`}
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">ETA (Arrival)</label>
+                <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">ETA (Arrival)</label>
                 <input
                   type="date"
                   value={form.etaDate || ''}
                   onChange={(e) => setForm({ ...form, etaDate: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('etaDate', false, form.etaDate)}`}
+                  className={`w-full px-2 py-1 rounded-md text-xs font-mono outline-none ${getFieldClass('etaDate', false, form.etaDate)}`}
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Port Cut-off</label>
+                <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">Port Cut-off</label>
                 <input
                   type="date"
                   value={form.portCutDate}
                   onChange={(e) => setForm({ ...form, portCutDate: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('portCutDate', false, form.portCutDate)}`}
+                  className={`w-full px-2 py-1 rounded-md text-xs font-mono outline-none ${getFieldClass('portCutDate', false, form.portCutDate)}`}
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">SI Cut-off</label>
+                <label className="text-[9.5px] font-extrabold text-slate-700 uppercase tracking-wider block mb-0.5">SI Cut-off</label>
                 <input
                   type="date"
                   value={form.siCutDate}
                   onChange={(e) => setForm({ ...form, siCutDate: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('siCutDate', false, form.siCutDate)}`}
+                  className={`w-full px-2 py-1 rounded-md text-xs font-mono outline-none ${getFieldClass('siCutDate', false, form.siCutDate)}`}
                 />
               </div>
             </div>
@@ -1145,8 +1145,8 @@ export default function JobOrderWizardView({
         </div>
 
         {/* CARD 3: Equipment Count & Size Allotment (Type & Rates removed) */}
-        <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div className="px-3 py-2 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1.5">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-1">
             <div className="flex items-center gap-2">
               <span className="w-5 h-5 rounded-md bg-blue-600/10 text-blue-600 flex items-center justify-center border border-blue-500/20">
                 <Box className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -1154,7 +1154,7 @@ export default function JobOrderWizardView({
               <h2 className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-900">
                 Equipment Count &amp; Container Sizes
               </h2>
-              <span className="text-[9.5px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-extrabold border border-blue-200">
+              <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-extrabold border border-blue-200">
                 {totalContainersCount} Units Total
               </span>
             </div>
@@ -1163,19 +1163,19 @@ export default function JobOrderWizardView({
             <button
               type="button"
               onClick={handleAddEquipmentLine}
-              className="px-2.5 py-1 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold text-[11px] shadow-2xs flex items-center gap-1 transition cursor-pointer select-none"
+              className="px-2 py-0.5 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold text-[10px] shadow-2xs flex items-center gap-1 transition cursor-pointer select-none"
               title="Add another container size line"
             >
-              <PlusCircle className="w-3.5 h-3.5" />
+              <PlusCircle className="w-3 h-3" />
               <span>+ Add Line</span>
             </button>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {equipmentLines.map((line, idx) => (
-              <div key={line.id} className="flex items-center gap-3 bg-slate-50/70 p-2 rounded-lg border border-slate-200/80">
-                <div className="w-36">
-                  <label className="text-[9.5px] font-extrabold text-slate-600 uppercase block mb-1">
+              <div key={line.id} className="flex items-center gap-2.5 bg-slate-50/70 p-1 rounded-lg border border-slate-200/80">
+                <div className="w-32">
+                  <label className="text-[9px] font-extrabold text-slate-600 uppercase block mb-0.5">
                     No Of Cont <span className="text-rose-500 font-bold">*</span>
                   </label>
                   <input
@@ -1184,16 +1184,16 @@ export default function JobOrderWizardView({
                     max="50"
                     value={line.noOfCont}
                     onChange={(e) => handleEquipmentLineChange(idx, "noOfCont", e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-white border border-slate-200 text-slate-800 focus:border-blue-500 outline-none transition"
+                    className="w-full px-2 py-1 rounded-md text-xs font-mono font-bold bg-white border border-slate-200 text-slate-800 focus:border-blue-500 outline-none transition"
                   />
                 </div>
 
-                <div className="w-48">
-                  <label className="text-[9.5px] font-extrabold text-slate-600 uppercase block mb-1">Size</label>
+                <div className="w-44">
+                  <label className="text-[9px] font-extrabold text-slate-600 uppercase block mb-0.5">Size</label>
                   <select
                     value={line.size}
                     onChange={(e) => handleEquipmentLineChange(idx, "size", e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold focus:border-blue-500 outline-none"
+                    className="w-full px-2 py-1 rounded-md bg-white border border-slate-200 text-xs font-mono font-bold focus:border-blue-500 outline-none"
                   >
                     <option value="40">40' (High Cube / Standard)</option>
                     <option value="20">20' (Standard Box)</option>
@@ -1206,10 +1206,10 @@ export default function JobOrderWizardView({
                     <button
                       type="button"
                       onClick={() => handleRemoveEquipmentLine(line.id)}
-                      className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                      className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                       title="Delete this equipment line"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
                 )}
@@ -1219,8 +1219,8 @@ export default function JobOrderWizardView({
         </div>
 
         {/* CARD 4: Container Details Table (Compact Repeater) */}
-        <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-2 gap-2">
+        <div className="px-3 py-2 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-1.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-1 gap-1.5">
             <div className="flex items-center gap-2">
               <span className="w-5 h-5 rounded-md bg-blue-600/10 text-blue-600 flex items-center justify-center border border-blue-500/20">
                 <Layers className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -1230,18 +1230,18 @@ export default function JobOrderWizardView({
               </h2>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setShowPasteModal(true)}
-                className="px-2.5 py-1 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-[11px] border border-blue-200 flex items-center gap-1 cursor-pointer transition"
+                className="px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-[10px] border border-blue-200 flex items-center gap-1 cursor-pointer transition"
               >
-                <Clipboard className="w-3.5 h-3.5" />
+                <Clipboard className="w-3 h-3" />
                 <span>Quick Paste</span>
               </button>
 
-              <label className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] border border-slate-200 flex items-center gap-1 cursor-pointer transition">
-                <UploadCloud className="w-3.5 h-3.5" />
+              <label className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] border border-slate-200 flex items-center gap-1 cursor-pointer transition">
+                <UploadCloud className="w-3 h-3" />
                 <span>Import CSV</span>
                 <input
                   type="file"
@@ -1253,98 +1253,98 @@ export default function JobOrderWizardView({
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
             <table className="w-full text-left text-xs table-auto">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-mono text-[9.5px] uppercase font-extrabold">
                 <tr>
-                  <th className="py-2 px-2.5 w-8 text-center">#</th>
-                  <th className="py-2 px-2.5 min-w-[130px]">
+                  <th className="py-1 px-2 w-8 text-center">#</th>
+                  <th className="py-1 px-2 min-w-[130px]">
                     Container No <span className="text-rose-500 font-bold">*</span>
                   </th>
-                  <th className="py-2 px-2.5 min-w-[70px] whitespace-nowrap">Size/Type</th>
-                  <th className="py-2 px-2.5 min-w-[85px]">Tare (kg)</th>
-                  <th className="py-2 px-2.5 min-w-[95px]">Cargo (kg)</th>
-                  <th className="py-2 px-2.5 min-w-[95px]">Gross (kg)</th>
-                  <th className="py-2 px-2.5 min-w-[140px]">Seal No</th>
-                  <th className="py-2 px-2.5 min-w-[130px]">Vehicle No</th>
-                  <th className="py-2 px-2.5 min-w-[140px]">GR No</th>
+                  <th className="py-1 px-2 min-w-[70px] whitespace-nowrap">Size/Type</th>
+                  <th className="py-1 px-2 min-w-[85px]">Tare (kg)</th>
+                  <th className="py-1 px-2 min-w-[95px]">Cargo (kg)</th>
+                  <th className="py-1 px-2 min-w-[95px]">Gross (kg)</th>
+                  <th className="py-1 px-2 min-w-[140px]">Seal No</th>
+                  <th className="py-1 px-2 min-w-[130px]">Vehicle No</th>
+                  <th className="py-1 px-2 min-w-[140px]">GR No</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white font-mono text-xs">
                 {containers.map((c, idx) => (
                   <tr key={idx} className="hover:bg-slate-50">
-                    <td className="py-2 px-2.5 text-slate-400 font-bold text-center">{c.sr}</td>
+                    <td className="py-1 px-2 text-slate-400 font-bold text-center">{c.sr}</td>
 
-                    <td className="py-2 px-2.5">
+                    <td className="py-1 px-2">
                       <input
                         type="text"
                         placeholder="MSKU1234567"
                         value={c.contNo}
                         onChange={(e) => handleContainerRowChange(idx, 'contNo', e.target.value.toUpperCase())}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 font-bold text-xs text-slate-800 bg-white focus:outline-none focus:border-blue-500 transition"
+                        className="w-full px-2 py-0.5 rounded border border-slate-200 font-bold text-xs text-slate-800 bg-white focus:outline-none focus:border-blue-500 transition"
                       />
                     </td>
 
-                    <td className="py-2 px-2.5 text-slate-700 font-bold whitespace-nowrap">
+                    <td className="py-1 px-2 text-slate-700 font-bold whitespace-nowrap">
                       {c.size}'{c.type}
                     </td>
 
-                    <td className="py-2 px-2.5">
+                    <td className="py-1 px-2">
                       <input
                         type="number"
                         value={c.tareWeight}
                         onChange={(e) => handleContainerRowChange(idx, 'tareWeight', e.target.value)}
-                        className="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-slate-500 text-xs focus:outline-none focus:border-blue-500"
+                        className="w-full px-2 py-0.5 rounded border border-slate-200 text-slate-500 text-xs focus:outline-none focus:border-blue-500"
                       />
                     </td>
 
-                    <td className="py-2 px-2.5">
+                    <td className="py-1 px-2">
                       <input
                         type="number"
                         placeholder="24500"
                         value={c.cargoWeight}
                         onChange={(e) => handleContainerRowChange(idx, 'cargoWeight', e.target.value)}
-                        className="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-blue-500"
+                        className="w-full px-2 py-0.5 rounded border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-blue-500"
                       />
                     </td>
 
-                    <td className="py-2 px-2.5">
+                    <td className="py-1 px-2">
                       <input
                         type="number"
                         placeholder="28320"
                         value={c.grossWeight}
                         onChange={(e) => handleContainerRowChange(idx, 'grossWeight', e.target.value)}
-                        className="w-full px-2 py-1.5 rounded-lg border border-slate-200 font-bold text-slate-900 text-xs focus:outline-none focus:border-blue-500"
+                        className="w-full px-2 py-0.5 rounded border border-slate-200 font-bold text-slate-900 text-xs focus:outline-none focus:border-blue-500"
                       />
                     </td>
 
-                    <td className="py-2 px-2.5">
+                    <td className="py-1 px-2">
                       <input
                         type="text"
                         placeholder="ML-IN-938210"
                         value={c.sealNo}
                         onChange={(e) => handleContainerRowChange(idx, 'sealNo', e.target.value.toUpperCase())}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-blue-500"
+                        className="w-full px-2 py-0.5 rounded border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-blue-500"
                       />
                     </td>
 
-                    <td className="py-2 px-2.5">
+                    <td className="py-1 px-2">
                       <input
                         type="text"
                         placeholder="HR55AN2094"
                         value={c.vehicleNo}
                         onChange={(e) => handleContainerRowChange(idx, 'vehicleNo', e.target.value.toUpperCase())}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-blue-500"
+                        className="w-full px-2 py-0.5 rounded border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-blue-500"
                       />
                     </td>
 
-                    <td className="py-2 px-2.5">
+                    <td className="py-1 px-2">
                       <input
                         type="text"
                         placeholder="GR-2026-084"
                         value={c.grNo}
                         onChange={(e) => handleContainerRowChange(idx, 'grNo', e.target.value.toUpperCase())}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-semibold text-xs focus:outline-none focus:border-blue-500"
+                        className="w-full px-2 py-0.5 rounded border border-slate-200 text-slate-700 font-semibold text-xs focus:outline-none focus:border-blue-500"
                       />
                     </td>
                   </tr>
@@ -1355,18 +1355,18 @@ export default function JobOrderWizardView({
         </div>
 
         {/* 4. Action Save Button Bar */}
-        <div className="flex items-center justify-between pt-2.5">
-          <div className="text-[11px] text-slate-400 font-mono">
+        <div className="flex items-center justify-between pt-1 pb-0.5">
+          <div className="text-[10px] text-slate-400 font-mono">
             * Mandatory fields pre-filled for rapid job processing
           </div>
 
           <button
             type="submit"
-            className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold text-xs shadow-md flex items-center gap-2 transition cursor-pointer"
+            className="px-5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-xs shadow-sm flex items-center gap-1.5 transition cursor-pointer"
           >
-            <Save className="w-4 h-4" />
+            <Save className="w-3.5 h-3.5" />
             <span>Save Container Booking</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </form>
