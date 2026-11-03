@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import defaultSchedulesData from '../data/panvayaDefaultSchedules.json';
 import {
   Building2,
   MapPin,
@@ -18,7 +19,11 @@ import {
   UploadCloud,
   RotateCcw,
   Sparkles,
-  Check
+  Check,
+  X,
+  Calendar,
+  Anchor,
+  Clock
 } from 'lucide-react';
 
 export default function JobOrderWizardView({
@@ -135,6 +140,65 @@ export default function JobOrderWizardView({
   const [showPasteModal, setShowPasteModal] = useState(false);
   const [pasteText, setPasteText] = useState('');
   const [quickFillNotice, setQuickFillNotice] = useState('');
+
+  // Active Sailing Schedules & Smart Auto-Fill Picker State
+  const [showSailingPicker, setShowSailingPicker] = useState(false);
+  const [sailingSearch, setSailingSearch] = useState('');
+  const [selectedCarrierFilter, setSelectedCarrierFilter] = useState('ALL');
+  const [autoFilledToast, setAutoFilledToast] = useState(null);
+
+  const allSailings = defaultSchedulesData?.sailings || [];
+  const uniqueCarriers = ['ALL', ...Array.from(new Set(allSailings.map(s => s.carrier).filter(Boolean)))];
+
+  const mapCarrierToShippingLine = (carrier) => {
+    if (!carrier) return '';
+    const c = carrier.toUpperCase();
+    if (c.includes('MAERSK')) return 'Maersk Line India Pvt Ltd';
+    if (c.includes('MSC') || c.includes('MEDITERRANEAN')) return 'Mediterranean Shipping Co (MSC)';
+    if (c.includes('CMA')) return 'CMA CGM Agencies India';
+    if (c.includes('COSCO')) return 'Cosco Shipping Lines';
+    if (c.includes('ONE') || c.includes('OCEAN NETWORK')) return 'Ocean Network Express (ONE)';
+    if (c.includes('EVERGREEN')) return 'Evergreen Shipping Agency';
+    if (c.includes('HAPAG')) return 'Hapag-Lloyd India';
+    if (c.includes('WAN HAI')) return 'Wan Hai Lines';
+    if (c.includes('KMTC')) return 'KMTC Line';
+    if (c.includes('ARKAS')) return 'Arkas Container Transport';
+    return carrier;
+  };
+
+  const filteredSailings = allSailings.filter(s => {
+    const matchesCarrier = selectedCarrierFilter === 'ALL' || s.carrier === selectedCarrierFilter;
+    const q = sailingSearch.trim().toLowerCase();
+    const matchesSearch = !q ||
+      (s.vesselName && s.vesselName.toLowerCase().includes(q)) ||
+      (s.voyageNo && s.voyageNo.toLowerCase().includes(q)) ||
+      (s.carrier && s.carrier.toLowerCase().includes(q)) ||
+      (s.service && s.service.toLowerCase().includes(q));
+    return matchesCarrier && matchesSearch;
+  });
+
+  const handleSelectSailing = (sailing) => {
+    const mappedLine = mapCarrierToShippingLine(sailing.carrier);
+    const portCut = sailing.cutOffs?.containerYard ? sailing.cutOffs.containerYard.split(' ')[0] : (sailing.departure || '');
+    const siCut = sailing.cutOffs?.shippingInstructions ? sailing.cutOffs.shippingInstructions.split(' ')[0] : portCut;
+    const etd = sailing.departure || '';
+
+    setForm(prev => ({
+      ...prev,
+      shippingLine: mappedLine || prev.shippingLine,
+      vesselName: sailing.vesselName || prev.vesselName,
+      voyage: sailing.voyageNo || prev.voyage,
+      portCutDate: portCut,
+      siCutDate: siCut,
+      bookingValidity: etd,
+      pod: prev.pod || 'AEJEA'
+    }));
+
+    setFormError('');
+    setShowSailingPicker(false);
+    setAutoFilledToast(`⚡ Auto-filled: ${sailing.vesselName} (${sailing.voyageNo}) · ${sailing.carrier}`);
+    setTimeout(() => setAutoFilledToast(null), 4500);
+  };
 
   // Multiple Equipment & Commercial Rates Lines ("+ button rakho taki multiple add krsake")
   const [equipmentLines, setEquipmentLines] = useState([
@@ -634,12 +698,27 @@ export default function JobOrderWizardView({
             </div>
 
             <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">POD (Discharge) *</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[10px] font-bold text-slate-600 uppercase">POD (Discharge) *</label>
+                <button
+                  type="button"
+                  onClick={() => setShowSailingPicker(true)}
+                  className="text-[10px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-0.5 cursor-pointer"
+                  title="Browse 31 Active Ocean Sailings for this Route"
+                >
+                  <Ship className="w-2.5 h-2.5 text-blue-600" />
+                  <span>31 Sailings</span>
+                </button>
+              </div>
               <select
                 value={form.pod}
                 onChange={(e) => {
-                  setForm({ ...form, pod: e.target.value });
+                  const val = e.target.value;
+                  setForm({ ...form, pod: val });
                   setFormError('');
+                  if (val) {
+                    setShowSailingPicker(true);
+                  }
                 }}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
               >
@@ -656,18 +735,37 @@ export default function JobOrderWizardView({
 
         {/* CARD 2: Stakeholders, Vessel & Dates (Combined 4-Col Grid) */}
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-            <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider font-mono">
-              2. Stakeholders, Ocean Liner &amp; Vessel Cut-offs
-            </span>
-            <button
-              type="button"
-              onClick={onOpenQuickAddShipper}
-              className="text-[11px] text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 cursor-pointer"
-            >
-              <PlusCircle className="w-3 h-3" />
-              <span>+ Add Shipper</span>
-            </button>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider font-mono">
+                2. Stakeholders, Ocean Liner &amp; Vessel Cut-offs
+              </span>
+              <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                Route: Nhava Sheva (INNSA) ➔ {form.pod ? (podList.find(p => p.code === form.pod)?.name || form.pod) : 'Jebel Ali (AEJEA)'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSailingPicker(true)}
+                className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 active:scale-95 text-white font-bold text-[11px] flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                title="Select from 31 Active Ocean Sailings to auto-fill Line, Vessel, Voyage & Cut-offs"
+              >
+                <Ship className="w-3.5 h-3.5 text-cyan-200" />
+                <span>Auto-Fill from Sailings ({allSailings.length})</span>
+                <span className="px-1 py-0.2 rounded bg-white/20 text-[9px] font-mono">⚡ 1-Click</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onOpenQuickAddShipper}
+                className="text-[11px] text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <PlusCircle className="w-3 h-3" />
+                <span>+ Add Shipper</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
@@ -736,7 +834,18 @@ export default function JobOrderWizardView({
 
             {/* Row 2: Vessel & Dates */}
             <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Vessel Name</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[10px] font-bold text-slate-600 uppercase">Vessel Name</label>
+                <button
+                  type="button"
+                  onClick={() => setShowSailingPicker(true)}
+                  className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-0.5 cursor-pointer"
+                  title="Pick from 31 Active Sailings"
+                >
+                  <Zap className="w-2.5 h-2.5 text-amber-500" />
+                  <span>Pick Sailing</span>
+                </button>
+              </div>
               <input
                 type="text"
                 placeholder="MAERSK COLOMBO"
@@ -1040,6 +1149,214 @@ export default function JobOrderWizardView({
           </button>
         </div>
       </form>
+
+      {/* ================= ACTIVE OCEAN SAILINGS PICKER MODAL ================= */}
+      {showSailingPicker && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fade-in font-sans">
+          <div className="w-full max-w-4xl max-h-[88vh] rounded-2xl bg-white border border-slate-200 shadow-2xl flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-4 bg-gradient-to-r from-[#111827] via-[#1f2937] to-[#111827] text-white flex items-center justify-between shrink-0 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md">
+                  <Ship className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm sm:text-base font-bold text-white">
+                      Active Ocean Sailings &amp; Schedules
+                    </h2>
+                    <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-mono font-semibold border border-blue-500/30">
+                      {allSailings.length} Sailings
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-300">
+                    Route: <span className="text-amber-300 font-semibold">Nhava Sheva (INNSA)</span> ➔ <span className="text-emerald-300 font-semibold">{form.pod ? (podList.find(p => p.code === form.pod)?.name || form.pod) : 'Jebel Ali (AEJEA)'}</span> &bull; Click any sailing to 1-click auto-fill
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowSailingPicker(false)}
+                className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="p-3 bg-slate-50 border-b border-slate-200 shrink-0 space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="relative flex-1">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    placeholder="Search by Vessel Name (e.g. CNC TIGER, MSC ALESSIA), Voyage, Carrier..."
+                    value={sailingSearch}
+                    onChange={(e) => setSailingSearch(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-blue-500"
+                    autoFocus
+                  />
+                  {sailingSearch && (
+                    <button
+                      onClick={() => setSailingSearch('')}
+                      className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+
+                <div className="text-[11px] font-medium text-slate-500 shrink-0">
+                  Showing <strong className="text-slate-800">{filteredSailings.length}</strong> of {allSailings.length} sailings
+                </div>
+              </div>
+
+              {/* Carrier Filter Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[11px]">
+                <span className="text-[10px] font-bold text-slate-400 uppercase shrink-0">Filter:</span>
+                {uniqueCarriers.map((carrier) => (
+                  <button
+                    key={carrier}
+                    type="button"
+                    onClick={() => setSelectedCarrierFilter(carrier)}
+                    className={`px-2 py-0.5 rounded-md font-semibold whitespace-nowrap transition cursor-pointer text-[10px] ${
+                      selectedCarrierFilter === carrier
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'bg-white hover:bg-slate-200/80 text-slate-600 border border-slate-200'
+                    }`}
+                  >
+                    {carrier} {carrier !== 'ALL' && `(${allSailings.filter(s => s.carrier === carrier).length})`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sailings List */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 max-h-[60vh] bg-slate-100/50">
+              {filteredSailings.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 space-y-2">
+                  <Ship className="w-10 h-10 mx-auto text-slate-300 stroke-[1.5]" />
+                  <p className="text-xs font-semibold text-slate-600">No sailings found matching your search</p>
+                  <button
+                    type="button"
+                    onClick={() => { setSailingSearch(''); setSelectedCarrierFilter('ALL'); }}
+                    className="text-xs text-blue-600 font-bold hover:underline"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              ) : (
+                filteredSailings.map((sailing, idx) => {
+                  const portCut = sailing.cutOffs?.containerYard ? sailing.cutOffs.containerYard.split(' ')[0] : sailing.departure;
+                  const siCut = sailing.cutOffs?.shippingInstructions ? sailing.cutOffs.shippingInstructions.split(' ')[0] : portCut;
+
+                  const isMaersk = sailing.carrier?.includes('MAERSK');
+                  const isMSC = sailing.carrier?.includes('MSC');
+                  const isCMA = sailing.carrier?.includes('CMA');
+                  const isEvergreen = sailing.carrier?.includes('EVERGREEN');
+                  const isONE = sailing.carrier?.includes('ONE');
+                  const isHapag = sailing.carrier?.includes('HAPAG');
+
+                  const carrierBadgeClass = isMaersk
+                    ? 'bg-sky-100 text-sky-800 border-sky-300'
+                    : isMSC
+                    ? 'bg-amber-100 text-amber-900 border-amber-300'
+                    : isCMA
+                    ? 'bg-blue-100 text-blue-800 border-blue-300'
+                    : isEvergreen
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                    : isONE
+                    ? 'bg-pink-100 text-pink-800 border-pink-300'
+                    : isHapag
+                    ? 'bg-orange-100 text-orange-900 border-orange-300'
+                    : 'bg-slate-100 text-slate-800 border-slate-300';
+
+                  return (
+                    <div
+                      key={idx}
+                      className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-blue-400 transition flex flex-col md:flex-row md:items-center justify-between gap-3 group"
+                    >
+                      {/* Vessel & Carrier Info */}
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border ${carrierBadgeClass}`}>
+                            {sailing.carrier}
+                          </span>
+                          <span className="text-xs font-bold font-mono text-slate-900 flex items-center gap-1.5">
+                            <Ship className="w-3.5 h-3.5 text-blue-600" />
+                            <span>{sailing.vesselName}</span>
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                            Voy: {sailing.voyageNo}
+                          </span>
+                          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                            {sailing.routingType || (sailing.direct ? 'Direct' : 'Transshipment')} &bull; {sailing.transitTime || '4-5 Days'}
+                          </span>
+                        </div>
+
+                        <div className="text-[11px] text-slate-600 flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-slate-500">Service: {sailing.service || 'Ocean Express'}</span>
+                          <span>&bull;</span>
+                          <span>Port Cut-Off: <strong className="text-slate-800 font-mono">{portCut}</strong></span>
+                          <span>&bull;</span>
+                          <span>SI Cut-Off: <strong className="text-slate-800 font-mono">{siCut}</strong></span>
+                        </div>
+                      </div>
+
+                      {/* Dates & Quick Select Button */}
+                      <div className="flex items-center justify-between md:justify-end gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+                        <div className="text-right text-[11px] space-y-0.5">
+                          <div className="text-slate-500 text-[10px] font-bold uppercase">ETD Departure</div>
+                          <div className="text-xs font-bold font-mono text-blue-700">{sailing.departure}</div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSelectSailing(sailing)}
+                          className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition cursor-pointer group-hover:bg-blue-700"
+                        >
+                          <Zap className="w-3.5 h-3.5 text-amber-300" />
+                          <span>Select &amp; Auto-Fill</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 bg-slate-50 border-t border-slate-200/90 flex items-center justify-between text-xs text-slate-600 shrink-0">
+              <div className="flex items-center gap-1.5 text-[11px]">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Pre-cached schedule pool active (0 API credits consumed)</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSailingPicker(false)}
+                className="px-3 py-1 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-xs font-semibold text-slate-700 transition cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Auto-Filled Success Toast */}
+      {autoFilledToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-3 animate-fade-in backdrop-blur-xs">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold shrink-0">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-white">Sailing &amp; Dates Auto-Filled!</div>
+            <div className="text-[11px] text-slate-300 font-mono">{autoFilledToast}</div>
+          </div>
+        </div>
+      )}
+
 
       {/* ================= RECENT BOOKINGS MODAL (FULL LIST & EDIT) ================= */}
       {showRecentModal && (
