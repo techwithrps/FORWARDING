@@ -192,36 +192,9 @@ export default function JobOrderWizardView({
   const [autoFilledToast, setAutoFilledToast] = useState(null);
   const [autoFilledFields, setAutoFilledFields] = useState({});
 
-  // Dynamic Validation Rims (Standard Professional Executive Style)
-  // - When colorModeActive is false: Clean neutral standard appearance
-  // - When colorModeActive is true (Auto-Fill / Validate clicked):
-  //     - Filled: Elegant Emerald Green rim with soft ambient tint
-  //     - Unfilled: Refined Rose Red rim with soft subtle tint
-  const [colorModeActive, setColorModeActive] = useState(false);
-
-  const isValueFilled = (val) => {
-    if (val === undefined || val === null) return false;
-    const str = String(val).trim();
-    if (!str) return false;
-    if (str.startsWith('--') || str.startsWith('Select')) return false;
-    return true;
-  };
-
-  const getFieldClass = (valOrName, isRequired, explicitVal) => {
-    if (!colorModeActive) {
-      return 'bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 outline-none transition-all duration-150';
-    }
-
-    let val = explicitVal !== undefined ? explicitVal : valOrName;
-    if (typeof val === 'string' && form && Object.prototype.hasOwnProperty.call(form, val) && explicitVal === undefined && isRequired !== undefined) {
-      val = form[val];
-    }
-    const filled = isValueFilled(val);
-
-    if (filled) {
-      return 'border border-emerald-500 bg-emerald-50/[0.14] text-slate-900 font-semibold focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-200 outline-none transition-all duration-150';
-    }
-    return 'border border-rose-400 bg-rose-50/[0.14] text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-200 outline-none transition-all duration-150';
+  // Clean, high-end enterprise input styling (No colored boxes / clean uniform border)
+  const getFieldClass = () => {
+    return 'bg-white border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 outline-none transition-all duration-150';
   };
 
   const allSailings = defaultSchedulesData?.sailings || [];
@@ -286,7 +259,6 @@ export default function JobOrderWizardView({
   });
 
   const handleSelectSailing = (sailing) => {
-    setColorModeActive(true);
     const mappedLine = mapCarrierToShippingLine(sailing.carrier);
     const portCut = sailing.cutOffs?.containerYard ? sailing.cutOffs.containerYard.split(' ')[0] : (sailing.departure || '');
     const siCut = sailing.cutOffs?.shippingInstructions ? sailing.cutOffs.shippingInstructions.split(' ')[0] : portCut;
@@ -399,7 +371,6 @@ export default function JobOrderWizardView({
   // AI Copilot Live Form Fill Listener
   useEffect(() => {
     if (copilotFillData && copilotFillData.form) {
-      setColorModeActive(true);
       setForm(prev => ({
         ...prev,
         ...copilotFillData.form
@@ -426,11 +397,12 @@ export default function JobOrderWizardView({
     setForm(prev => ({ ...prev, consignor: shipperName }));
   };
 
-  // ⚡ 1-Click Complete Auto-Fill with Dynamic Validation Rims
+  // ⚡ 1-Click Complete Auto-Fill
   const handleAutoFillSample = () => {
-    setColorModeActive(true);
     setForm(prev => ({
       ...prev,
+      joType: 'Export FCL',
+      modeOfShipment: 'Multimodal (Rail + Road)',
       consignor: shippersList[0] || 'Fair Exports (India) Pvt Ltd',
       consignee: consigneesList[0] || 'Al Maya Trading LLC (Dubai, UAE)',
       shippingLine: 'Maersk Line',
@@ -454,6 +426,7 @@ export default function JobOrderWizardView({
       size: '40',
       type: 'HC'
     }));
+    setEquipmentLines([{ id: 1, noOfCont: 1, size: '40' }]);
     setContainers([
       {
         sr: 1,
@@ -471,13 +444,12 @@ export default function JobOrderWizardView({
       }
     ]);
     setFormError('');
-    setQuickFillNotice('⚡ Form Auto-Filled! Green = Completed, Red = Empty.');
+    setQuickFillNotice('⚡ Form Auto-Filled with complete booking details!');
     setTimeout(() => setQuickFillNotice(''), 3500);
   };
 
   // Clear Form for fresh blank entry
   const handleClearForm = () => {
-    setColorModeActive(false);
     setForm({
       joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
       joDate: todayStr,
@@ -692,7 +664,6 @@ export default function JobOrderWizardView({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setColorModeActive(true);
     if (!form.consignor) {
       setFormError('Please select Consignor (Shipper)');
       return;
@@ -1465,23 +1436,9 @@ export default function JobOrderWizardView({
 
         {/* 4. Action Save Button Bar */}
         <div className="flex items-center justify-between pt-1.5 pb-1">
-          {colorModeActive ? (
-            <div className="text-[10px] text-slate-600 font-medium flex items-center gap-2 animate-fade-in">
-              <span className="inline-flex items-center gap-1 font-semibold text-rose-700">
-                <span className="w-2 h-2 rounded-full bg-rose-500 inline-block shadow-xs"></span>
-                Unfilled / Required (Red Rim)
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block shadow-xs"></span>
-                Auto-Filled / Valid (Green Rim)
-              </span>
-            </div>
-          ) : (
-            <div className="text-[10px] text-slate-400 font-mono">
-              Click ⚡ Auto-Fill or Auto-Fill Sailings to populate &amp; reveal validation colors
-            </div>
-          )}
+          <div className="text-[10px] text-slate-400 font-medium">
+            * Mandatory fields marked with red asterisk are required for booking
+          </div>
 
           <button
             type="submit"
