@@ -199,6 +199,8 @@ export default function App() {
       const lineObj = parties.find((p) => p.id === formData.shippingLineId);
       const payload = {
         joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
+        joType: formData.joType || 'Export FCL',
+        modeOfShipment: formData.modeOfShipment || 'Multimodal (Rail + Road)',
         consignor: customerObj ? customerObj.name : 'Fair Exports (India) Pvt Ltd',
         customerName: customerObj ? customerObj.name : 'Fair Exports (India) Pvt Ltd',
         shippingLine: lineObj ? lineObj.name : 'Maersk Line India Pvt Ltd',

@@ -90,7 +90,7 @@ export default function JobOrderWizardView({
     joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
     joDate: todayStr,
     joType: 'Export FCL',
-    modeOfShipment: 'By Rail',
+    modeOfShipment: 'Multimodal (Rail + Road)',
     consignor: '',
     consignee: '',
     shippingLine: '',
@@ -303,7 +303,7 @@ export default function JobOrderWizardView({
       joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
       joDate: todayStr,
       joType: 'Export FCL',
-      modeOfShipment: 'By Rail',
+      modeOfShipment: 'Multimodal (Rail + Road)',
       consignor: '',
       consignee: '',
       shippingLine: '',
@@ -349,6 +349,8 @@ export default function JobOrderWizardView({
     setForm({
       ...form,
       joNo: prevJob.joNo || prevJob.id || form.joNo,
+      joType: prevJob.joType || 'Export FCL',
+      modeOfShipment: prevJob.modeOfShipment || 'Multimodal (Rail + Road)',
       consignor: prevJob.customer || prevJob.consignor || '',
       consignee: prevJob.consignee || consigneesList[0],
       shippingLine: prevJob.shippingLine || prevJob.line || linesList[0],
@@ -515,6 +517,8 @@ export default function JobOrderWizardView({
     setFormError('');
     const newJobPayload = {
       id: form.joNo,
+      joType: form.joType,
+      modeOfShipment: form.modeOfShipment,
       customer: form.consignor,
       consignee: form.consignee || 'Al Maya Trading LLC',
       line: form.shippingLine,
@@ -637,8 +641,12 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, joType: e.target.value })}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
               >
-                <option value="Export FCL">Export FCL</option>
-                <option value="Import FCL">Import FCL</option>
+                <option value="Export FCL">Export FCL (Laden)</option>
+                <option value="Import FCL">Import FCL (Delivery)</option>
+                <option value="Domestic Movement">Domestic Movement</option>
+                <option value="Custom Clearance">Custom Clearance (CHA)</option>
+                <option value="Empty Return">Empty Return / Depot</option>
+                <option value="Back To Town">Back To Town (BTT)</option>
                 <option value="Re Export">Re Export</option>
               </select>
             </div>
@@ -650,8 +658,9 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, modeOfShipment: e.target.value })}
                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
               >
-                <option value="By Rail">By Rail (CONCOR)</option>
-                <option value="By Road">By Road (Trailer)</option>
+                <option value="Multimodal (Rail + Road)">Multimodal (Rail + Road / Both)</option>
+                <option value="By Rail">By Rail (CONCOR Rake)</option>
+                <option value="By Road">By Road (Trailer / Direct)</option>
               </select>
             </div>
 
@@ -1423,6 +1432,12 @@ export default function JobOrderWizardView({
                         </span>
                         <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                           {job.status || "BOOKED"}
+                        </span>
+                        <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                          {job.joType || "Export FCL"}
+                        </span>
+                        <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          {(job.modeOfShipment || "Multimodal (Rail + Road)").includes("Multimodal") ? "🚂 🚛 Multimodal" : (job.modeOfShipment || "").includes("Road") ? "🚛 Road" : "🚂 Rail"}
                         </span>
                         <span className="text-[11px] font-bold text-slate-800 truncate">
                           {job.customer || job.consignor}
