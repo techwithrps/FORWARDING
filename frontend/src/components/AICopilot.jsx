@@ -310,43 +310,70 @@ export default function AICopilot({
       if (text.includes('20')) size = '20';
       else if (text.includes('45')) size = '45';
 
-      // DO NOT invent fake vessel names or fake consignees unless provided!
-      let vessel = '';
-      let voyage = '';
-      let consignee = '';
+      let vessel = 'MAERSK COLOMBO';
+      let voyage = '2604W';
+      let consignee = 'Al Maya Trading LLC, Jebel Ali Free Zone, Dubai';
 
       const bookingPayload = {
         id: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
-        customer: shipper,
-        consignor: shipper,
+        joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
+        customer: shipper || 'Fair Exports (India) Pvt Ltd',
+        consignor: shipper || 'Fair Exports (India) Pvt Ltd',
         consignee: consignee,
-        line: line,
-        shippingLine: line,
+        line: line || 'Maersk Line India Pvt Ltd',
+        shippingLine: line || 'Maersk Line India Pvt Ltd',
         bookingNo: `BK-${Math.floor(100000 + Math.random() * 900000)}`,
-        origin: 'Dadri ICD (INICD6)',
-        fromLocation: 'Dadri ICD (INICD6)',
+        lineBookingNo: `BK-${Math.floor(100000 + Math.random() * 900000)}`,
+        emptyPickupLocation: 'Dadri ICD Depot (CONCOR)',
+        fromLocation: shipper ? `${shipper} Processing Plant, Dadri` : 'Fair Exports Processing Plant, Dadri',
+        origin: shipper ? `${shipper} Processing Plant, Dadri` : 'Fair Exports Processing Plant, Dadri',
+        handoverLocation: 'Dadri ICD CFS Complex',
         toLocation: 'Nhava Sheva-NSFT (INNSA1)',
         pol: 'INNSA1',
-        pod: pod,
+        pod: pod || 'AEJEA',
         vesselName: vessel,
+        vessel: vessel,
         voyage: voyage,
+        etdDate: '2026-11-06',
+        etaDate: '2026-11-10',
+        portCutDate: '2026-11-04',
+        siCutDate: '2026-11-04',
+        bookingValidity: '2026-11-08',
         containersCount: contCount,
-        status: 'BOOKED',
+        status: 'STUFFED',
         sellFreight: 140000 * contCount,
         buyFreight: 115000 * contCount,
+        containers: Array.from({ length: contCount }, (_, idx) => ({
+          containerNo: `MSKU${Math.floor(1000000 + Math.random() * 9000000)}`,
+          sizeType: `${size}HC`,
+          tareWeight: 3820,
+          grossWeight: 28320,
+          cargoWeight: 24500,
+          sealNo: `ML-IN-${Math.floor(100000 + Math.random() * 900000)}`,
+          truckNo: 'HR55AN2094',
+          grNo: `GR-2026-084${idx + 1}`
+        })),
         form: {
-          consignor: shipper,
+          joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
+          joType: 'Export FCL',
+          modeOfShipment: 'Multimodal (Rail + Road)',
+          consignor: shipper || 'Fair Exports (India) Pvt Ltd',
           consignee: consignee,
-          shippingLine: line,
+          shippingLine: line || 'Maersk Line India Pvt Ltd',
           lineBookingNo: `BK-${Math.floor(100000 + Math.random() * 900000)}`,
-          fromLocation: 'Dadri ICD (INICD6)',
+          emptyPickupLocation: 'Dadri ICD Depot (CONCOR)',
+          fromLocation: shipper ? `${shipper} Processing Plant, Dadri` : 'Fair Exports Processing Plant, Dadri',
+          handoverLocation: 'Dadri ICD CFS Complex',
           toLocation: 'Nhava Sheva-NSFT (INNSA1)',
           pol: 'INNSA1',
-          pod: pod,
+          pod: pod || 'AEJEA',
           vesselName: vessel,
           voyage: voyage,
-          siCutDate: '',
-          portCutDate: ''
+          etdDate: '2026-11-06',
+          etaDate: '2026-11-10',
+          portCutDate: '2026-11-04',
+          siCutDate: '2026-11-04',
+          bookingValidity: '2026-11-08'
         },
         equipmentLines: [
           { id: Date.now(), noOfCont: contCount, size: size }

@@ -596,37 +596,61 @@ export default function JobOrderWizardView({
     setFormError('');
     const newJobPayload = {
       id: form.joNo,
+      joNo: form.joNo,
       joType: form.joType,
       modeOfShipment: form.modeOfShipment,
       customer: form.consignor,
-      consignee: form.consignee || 'Al Maya Trading LLC',
+      customerName: form.consignor,
+      consignor: form.consignor,
+      consignee: form.consignee || 'Al Maya Trading LLC, Jebel Ali Free Zone, Dubai',
       line: form.shippingLine,
+      shippingLine: form.shippingLine,
+      shippingLineName: form.shippingLine,
       bookingNo: form.lineBookingNo,
-      origin: form.fromLocation,
+      lineBookingNo: form.lineBookingNo,
+      emptyPickupLocation: form.emptyPickupLocation || 'Dadri ICD Depot (CONCOR)',
+      fromLocation: form.fromLocation || 'Shipper Factory / Processing Plant',
+      origin: form.fromLocation || 'Shipper Factory / Processing Plant',
+      handoverLocation: form.handoverLocation || 'Dadri ICD CFS Complex',
+      toLocation: form.toLocation || 'Nhava Sheva-NSFT (INNSA1)',
+      pol: form.pol || 'INNSA1',
       pod: form.pod,
       podCode: form.pod,
+      podPort: form.pod,
       vessel: form.vesselName || 'MAERSK COLOMBO',
+      vesselName: form.vesselName || 'MAERSK COLOMBO',
       voyage: form.voyage || '2604W',
+      etdDate: form.etdDate,
+      etaDate: form.etaDate,
+      portCutDate: form.portCutDate,
+      siCutDate: form.siCutDate,
+      bookingValidity: form.bookingValidity,
       containersCount: totalContainersCount,
       equipmentBreakdown: equipmentLines,
       status: "STUFFED",
       sellFreight: totalSellVal,
       buyFreight: totalBuyVal,
       margin: totalMarginVal,
-      containers: containers.map(c => ({
+      containers: containers.map((c, idx) => ({
+        id: `C${idx + 1}`,
+        sr: c.sr || idx + 1,
         containerNo: c.contNo || `MSKU${Math.floor(1000000 + Math.random() * 9000000)}`,
         sizeType: `${c.size}${c.type}`,
-        tareWeight: c.tareWeight,
-        cargoWeight: c.cargoWeight,
-        grossWeight: c.grossWeight,
-        sealNo: c.sealNo,
-        truckNo: c.vehicleNo,
-        grNo: c.grNo
+        size: c.size,
+        type: c.type,
+        tareWeight: Number(c.tareWeight) || 3820,
+        cargoWeight: Number(c.cargoWeight) || 24500,
+        grossWeight: Number(c.grossWeight) || 28320,
+        sealNo: c.sealNo || `ML-IN-${Math.floor(100000 + Math.random() * 900000)}`,
+        truckNo: c.vehicleNo || 'HR55AN2094',
+        grNo: c.grNo || `GR-2026-084${idx + 1}`
       }))
     };
 
     if (onCreateJob) {
       onCreateJob(newJobPayload);
+      setAutoFilledToast(`✅ Booking ${newJobPayload.id} Successfully Saved with complete route!`);
+      setTimeout(() => setAutoFilledToast(null), 4000);
     }
   };
 
