@@ -189,14 +189,35 @@ export default function JobOrderWizardView({
   const [autoFilledToast, setAutoFilledToast] = useState(null);
   const [autoFilledFields, setAutoFilledFields] = useState({});
 
-  // Dynamic input styling: green if auto-filled from schedule; very soft light-red if mandatory & empty; else neutral
+  const autoFillTargetKeys = new Set([
+    'shippingLine',
+    'vesselName',
+    'voyage',
+    'etdDate',
+    'etaDate',
+    'portCutDate',
+    'siCutDate',
+    'pod',
+    'bookingValidity'
+  ]);
+
+  // Dynamic input styling:
+  // - Unfilled auto-fill targets & mandatory fields are framed in soft red ("red se frame krdo")
+  // - As soon as they are filled / auto-fetched, they turn crisp emerald green ("fill hote he green krdo")
   const getFieldClass = (fieldName, isMandatory, value) => {
-    if (autoFilledFields[fieldName] && value) {
-      return 'border border-emerald-400 bg-emerald-50/30 text-emerald-950 font-bold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 transition';
+    const isAutoFillTarget = autoFillTargetKeys.has(fieldName);
+
+    // 1. If filled (via autofill from sailings/copilot or user input) -> GREEN
+    if ((autoFilledFields[fieldName] || isAutoFillTarget || isMandatory) && Boolean(value)) {
+      return 'border border-emerald-400 bg-emerald-50/25 text-emerald-950 font-bold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 transition';
     }
-    if (isMandatory && !value) {
+
+    // 2. If it is an autofill target or mandatory field and is currently EMPTY -> RED frame
+    if ((isAutoFillTarget || isMandatory) && !value) {
       return 'border border-rose-200/90 bg-rose-50/10 text-slate-700 focus:border-rose-300 focus:ring-1 focus:ring-rose-100 transition';
     }
+
+    // 3. Regular optional input
     return 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500 transition';
   };
 
@@ -1203,7 +1224,7 @@ export default function JobOrderWizardView({
                   type="date"
                   value={form.bookingValidity || ''}
                   onChange={(e) => setForm({ ...form, bookingValidity: e.target.value })}
-                  className="w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono text-slate-800 focus:border-blue-500 outline-none"
+                  className={`w-full px-2 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('bookingValidity', false, form.bookingValidity)}`}
                 />
               </div>
             </div>
@@ -1253,7 +1274,7 @@ export default function JobOrderWizardView({
                     className={`w-full px-2.5 py-1.5 rounded-md text-xs font-mono font-bold outline-none transition ${
                       !line.noOfCont || Number(line.noOfCont) <= 0
                         ? 'border border-rose-200/90 bg-rose-50/10 text-slate-700 focus:border-rose-300 focus:ring-1 focus:ring-rose-100'
-                        : 'bg-white border border-slate-200 text-slate-900 focus:border-blue-500'
+                        : 'border border-emerald-400 bg-emerald-50/25 text-emerald-950 font-bold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200'
                     }`}
                   />
                 </div>
@@ -1354,7 +1375,7 @@ export default function JobOrderWizardView({
                         className={`px-2 py-1 rounded font-bold w-28 text-xs focus:outline-none transition ${
                           !c.contNo
                             ? 'border border-rose-200/90 bg-rose-50/10 text-slate-700 focus:border-rose-300 focus:ring-1 focus:ring-rose-100'
-                            : 'border border-slate-200 font-bold text-blue-700 bg-white focus:border-blue-500'
+                            : 'border border-emerald-400 bg-emerald-50/25 text-emerald-950 font-bold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200'
                         }`}
                       />
                     </td>
