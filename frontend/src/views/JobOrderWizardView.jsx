@@ -136,10 +136,10 @@ export default function JobOrderWizardView({
     consignee: '',
     shippingLine: '',
     lineBookingNo: '',
-    emptyPickupLocation: 'Dadri ICD Depot (CONCOR)',
-    fromLocation: 'Dadri ICD (INICD6)',
-    toLocation: 'Nhava Sheva-NSFT (INNSA1)',
-    pol: 'INNSA1',
+    emptyPickupLocation: '',
+    fromLocation: '',
+    toLocation: '',
+    pol: '',
     pod: '',
     vesselName: '',
     voyage: '',
@@ -149,8 +149,8 @@ export default function JobOrderWizardView({
     portCutDate: '',
     bookingValidity: '',
     temperature: '',
-    transporter: 'SPJ Fleet Logistics',
-    handoverLocation: 'Dadri ICD CFS Complex',
+    transporter: '',
+    handoverLocation: '',
     noOfCont: 1,
     size: '40',
     type: 'HC',
@@ -166,7 +166,7 @@ export default function JobOrderWizardView({
       contNo: '',
       size: '40',
       type: 'HC',
-      tareWeight: 3820,
+      tareWeight: '',
       cargoWeight: '',
       grossWeight: '',
       sealNo: '',
@@ -192,9 +192,28 @@ export default function JobOrderWizardView({
   const [autoFilledToast, setAutoFilledToast] = useState(null);
   const [autoFilledFields, setAutoFilledFields] = useState({});
 
-  // Clean standard input styling
-  const getFieldClass = () => {
-    return 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500 outline-none transition';
+  // Dynamic Validation Rims (Standard Professional Executive Style)
+  // - Filled: Elegant Emerald Green rim with soft ambient tint
+  // - Unfilled: Refined Rose Red rim with soft subtle tint
+  const isValueFilled = (val) => {
+    if (val === undefined || val === null) return false;
+    const str = String(val).trim();
+    if (!str) return false;
+    if (str.startsWith('--') || str.startsWith('Select')) return false;
+    return true;
+  };
+
+  const getFieldClass = (valOrName, isRequired, explicitVal) => {
+    let val = explicitVal !== undefined ? explicitVal : valOrName;
+    if (typeof val === 'string' && form && Object.prototype.hasOwnProperty.call(form, val) && explicitVal === undefined && isRequired !== undefined) {
+      val = form[val];
+    }
+    const filled = isValueFilled(val);
+
+    if (filled) {
+      return 'border border-emerald-500 bg-emerald-50/[0.14] text-slate-900 font-semibold focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-200 outline-none transition-all duration-150';
+    }
+    return 'border border-rose-300 hover:border-rose-400 bg-rose-50/[0.14] text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-200 outline-none transition-all duration-150';
   };
 
   const allSailings = defaultSchedulesData?.sailings || [];
@@ -408,15 +427,21 @@ export default function JobOrderWizardView({
       consignee: '',
       shippingLine: '',
       lineBookingNo: '',
-      fromLocation: 'Dadri ICD (INICD6)',
-      toLocation: 'Nhava Sheva-NSFT (INNSA1)',
-      pol: 'INNSA1',
+      emptyPickupLocation: '',
+      fromLocation: '',
+      toLocation: '',
+      pol: '',
       pod: '',
       vesselName: '',
       voyage: '',
       etdDate: '',
+      etaDate: '',
       siCutDate: '',
       portCutDate: '',
+      bookingValidity: '',
+      temperature: '',
+      transporter: '',
+      handoverLocation: '',
       noOfCont: 1,
       size: '40',
       type: 'HC',
@@ -430,7 +455,7 @@ export default function JobOrderWizardView({
         contNo: '',
         size: '40',
         type: 'HC',
-        tareWeight: 3820,
+        tareWeight: '',
         cargoWeight: '',
         grossWeight: '',
         sealNo: '',
@@ -440,6 +465,8 @@ export default function JobOrderWizardView({
         remarks: ''
       }
     ]);
+    setEquipmentLines([{ id: 1, noOfCont: 1, size: '40' }]);
+    setFormError('');
     setQuickFillNotice('Form cleared for blank entry.');
     setTimeout(() => setQuickFillNotice(''), 2500);
   };
@@ -522,10 +549,14 @@ export default function JobOrderWizardView({
   const handleContainerRowChange = (idx, field, value) => {
     const updated = [...containers];
     updated[idx][field] = value;
-    if (field === 'cargoWeight') {
-      const cargo = parseFloat(value) || 0;
+    if (field === 'cargoWeight' || field === 'tareWeight') {
+      const cargo = parseFloat(updated[idx].cargoWeight) || 0;
       const tare = parseFloat(updated[idx].tareWeight) || 0;
-      updated[idx].grossWeight = (cargo + tare).toString();
+      if (cargo > 0 || tare > 0) {
+        updated[idx].grossWeight = (cargo + tare).toString();
+      } else {
+        updated[idx].grossWeight = '';
+      }
     }
     setContainers(updated);
   };
@@ -802,10 +833,11 @@ export default function JobOrderWizardView({
                 Empty Pickup Location
               </label>
               <select
-                value={form.emptyPickupLocation || 'Dadri ICD Depot (CONCOR)'}
+                value={form.emptyPickupLocation}
                 onChange={(e) => setForm({ ...form, emptyPickupLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-semibold focus:bg-white focus:border-blue-500 outline-none"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.emptyPickupLocation)}`}
               >
+                <option value="">-- Select Empty Pickup Location --</option>
                 <option value="Dadri ICD Depot (CONCOR)">Dadri ICD Depot (CONCOR)</option>
                 <option value="Piyala ICD Depot">Piyala ICD Depot</option>
                 <option value="ACTL Faridabad Yard">ACTL Faridabad Yard</option>
@@ -825,7 +857,7 @@ export default function JobOrderWizardView({
                 placeholder="e.g. Shipper Factory / Aligarh Plant"
                 value={form.fromLocation}
                 onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-semibold focus:bg-white focus:border-blue-500 outline-none"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.fromLocation)}`}
               />
             </div>
           </div>
@@ -837,10 +869,11 @@ export default function JobOrderWizardView({
                 Handover Location
               </label>
               <select
-                value={form.handoverLocation || 'Dadri ICD CFS Complex'}
+                value={form.handoverLocation}
                 onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-semibold focus:bg-white focus:border-blue-500 outline-none"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.handoverLocation)}`}
               >
+                <option value="">-- Select Handover Location --</option>
                 <option value="Dadri ICD CFS Complex">Dadri ICD CFS Complex</option>
                 <option value="Piyala ICD CFS Complex">Piyala ICD CFS Complex</option>
                 <option value="Nhava Sheva Buffer Yard">Nhava Sheva Buffer Yard</option>
@@ -856,8 +889,9 @@ export default function JobOrderWizardView({
               <select
                 value={form.toLocation}
                 onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-semibold focus:bg-white focus:border-blue-500 outline-none"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.toLocation)}`}
               >
+                <option value="">-- Select Gateway Terminal --</option>
                 <option value="Nhava Sheva-NSFT (INNSA1)">Nhava Sheva-NSFT (INNSA1)</option>
                 <option value="Nhava Sheva-BMCT (INNSA1)">Nhava Sheva-BMCT (INNSA1)</option>
                 <option value="Nhava Sheva-GTI (INNSA1)">Nhava Sheva-GTI (INNSA1)</option>
@@ -880,8 +914,9 @@ export default function JobOrderWizardView({
                   setRouteFilterOnly(true);
                   setSelectedCarrierFilter('ALL');
                 }}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass('pol', true, form.pol)}`}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass(form.pol)}`}
               >
+                <option value="">-- Select POL --</option>
                 {polList.map((p) => (
                   <option key={p.code} value={p.code}>
                     {p.flag} {p.name}
@@ -992,7 +1027,7 @@ export default function JobOrderWizardView({
                 <select
                   value={form.consignee}
                   onChange={(e) => setForm({ ...form, consignee: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none truncate font-semibold"
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none truncate font-semibold ${getFieldClass(form.consignee)}`}
                 >
                   <option value="">-- Select Consignee --</option>
                   {consigneesList.map((name, i) => (
@@ -1007,10 +1042,10 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Transporter</label>
                 <input
                   type="text"
-                  placeholder="SPJ Fleet Logistics / CONCOR"
+                  placeholder="e.g. SPJ Fleet Logistics / CONCOR"
                   value={form.transporter || ''}
                   onChange={(e) => setForm({ ...form, transporter: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-semibold focus:bg-white focus:border-blue-500 outline-none"
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.transporter)}`}
                 />
               </div>
 
@@ -1018,10 +1053,10 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Set Temp (°C / Reefer)</label>
                 <input
                   type="text"
-                  placeholder="-18°C (Frozen) / Ambient"
+                  placeholder="e.g. -18°C (Frozen) / Ambient"
                   value={form.temperature || ''}
                   onChange={(e) => setForm({ ...form, temperature: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass(form.temperature)}`}
                 />
               </div>
             </div>
@@ -1181,7 +1216,7 @@ export default function JobOrderWizardView({
                     max="50"
                     value={line.noOfCont}
                     onChange={(e) => handleEquipmentLineChange(idx, "noOfCont", e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-white border border-slate-200 text-slate-800 focus:border-blue-500 outline-none transition"
+                    className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold outline-none ${getFieldClass(line.noOfCont)}`}
                   />
                 </div>
 
@@ -1190,7 +1225,7 @@ export default function JobOrderWizardView({
                   <select
                     value={line.size}
                     onChange={(e) => handleEquipmentLineChange(idx, "size", e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono font-bold text-slate-800 focus:border-blue-500 outline-none"
+                    className={`w-full px-3 py-1.5 rounded-lg text-xs font-mono font-bold outline-none ${getFieldClass(line.size)}`}
                   >
                     <option value="40">40' (High Cube / Standard)</option>
                     <option value="20">20' (Standard Box)</option>
@@ -1275,10 +1310,10 @@ export default function JobOrderWizardView({
                     <td className="py-1.5 px-2.5">
                       <input
                         type="text"
-                        placeholder="MSKU1234567"
+                        placeholder="e.g. MSKU1234567"
                         value={c.contNo}
                         onChange={(e) => handleContainerRowChange(idx, 'contNo', e.target.value.toUpperCase())}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 font-bold text-xs text-slate-800 bg-white focus:outline-none focus:border-blue-500 transition"
+                        className={`w-full px-2.5 py-1.5 rounded-lg font-bold text-xs uppercase outline-none ${getFieldClass(c.contNo)}`}
                       />
                     </td>
 
@@ -1289,59 +1324,60 @@ export default function JobOrderWizardView({
                     <td className="py-1.5 px-2.5">
                       <input
                         type="number"
+                        placeholder="e.g. 3820"
                         value={c.tareWeight}
                         onChange={(e) => handleContainerRowChange(idx, 'tareWeight', e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 text-xs focus:outline-none focus:border-blue-500"
+                        className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.tareWeight)}`}
                       />
                     </td>
 
                     <td className="py-1.5 px-2.5">
                       <input
                         type="number"
-                        placeholder="24500"
+                        placeholder="e.g. 24500"
                         value={c.cargoWeight}
                         onChange={(e) => handleContainerRowChange(idx, 'cargoWeight', e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-blue-500"
+                        className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.cargoWeight)}`}
                       />
                     </td>
 
                     <td className="py-1.5 px-2.5">
                       <input
                         type="number"
-                        placeholder="28320"
+                        placeholder="Auto Gross"
                         value={c.grossWeight}
                         onChange={(e) => handleContainerRowChange(idx, 'grossWeight', e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 font-bold text-slate-900 text-xs focus:outline-none focus:border-blue-500"
+                        className={`w-full px-2.5 py-1.5 rounded-lg font-bold text-xs outline-none ${getFieldClass(c.grossWeight)}`}
                       />
                     </td>
 
                     <td className="py-1.5 px-2.5">
                       <input
                         type="text"
-                        placeholder="ML-IN-938210"
+                        placeholder="e.g. ML-IN-938210"
                         value={c.sealNo}
                         onChange={(e) => handleContainerRowChange(idx, 'sealNo', e.target.value.toUpperCase())}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-blue-500"
+                        className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.sealNo)}`}
                       />
                     </td>
 
                     <td className="py-1.5 px-2.5">
                       <input
                         type="text"
-                        placeholder="HR55AN2094"
+                        placeholder="e.g. HR55AN2094"
                         value={c.vehicleNo}
                         onChange={(e) => handleContainerRowChange(idx, 'vehicleNo', e.target.value.toUpperCase())}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-blue-500"
+                        className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.vehicleNo)}`}
                       />
                     </td>
 
                     <td className="py-1.5 px-2.5">
                       <input
                         type="text"
-                        placeholder="GR-2026-084"
+                        placeholder="e.g. GR-2026-084"
                         value={c.grNo}
                         onChange={(e) => handleContainerRowChange(idx, 'grNo', e.target.value.toUpperCase())}
-                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-semibold text-xs focus:outline-none focus:border-blue-500"
+                        className={`w-full px-2.5 py-1.5 rounded-lg font-semibold text-xs outline-none ${getFieldClass(c.grNo)}`}
                       />
                     </td>
                   </tr>
@@ -1353,8 +1389,16 @@ export default function JobOrderWizardView({
 
         {/* 4. Action Save Button Bar */}
         <div className="flex items-center justify-between pt-1.5 pb-1">
-          <div className="text-[10px] text-slate-400 font-mono">
-            * Mandatory fields pre-filled for rapid job processing
+          <div className="text-[10px] text-slate-500 font-medium flex items-center gap-2">
+            <span className="inline-flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-rose-400 inline-block"></span>
+              Unfilled / Blank (Red Rim)
+            </span>
+            <span className="text-slate-300">•</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+              Filled / Valid (Green Rim)
+            </span>
           </div>
 
           <button
