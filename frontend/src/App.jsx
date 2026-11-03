@@ -543,7 +543,7 @@ export default function App() {
         />
 
         {/* Central Dynamic View Container */}
-        <main className="flex-1 p-6 pb-20 md:pb-8">
+        <main className={`flex-1 ${activeView === 'ContainerBooking' ? 'p-3 sm:p-4 pb-4' : 'p-6 pb-20 md:pb-8'}`}>
           <ViewErrorBoundary key={activeView}>
           {/* 1. Login Page */}
           {activeView === 'Login' && (
