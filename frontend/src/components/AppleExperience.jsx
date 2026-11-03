@@ -396,9 +396,13 @@ export function AppleHelloPageTransition({ activeView }) {
         {/* Subtle iridescent glow orb */}
         <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-48 h-48 bg-gradient-to-tr from-blue-500/20 via-indigo-500/20 to-violet-500/20 rounded-full blur-2xl pointer-events-none" />
 
-        {/* Squircle App Icon */}
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-white/90 border border-white/80 text-blue-600 shadow-sm shadow-blue-500/20 relative z-10">
-          <Icon className="w-6 h-6 stroke-[2.2]" />
+        {/* SPJ Group of Companies Official Logo */}
+        <div className="flex justify-center items-center relative z-10">
+          <img
+            src="/spj-logo.png"
+            alt="SPJ Group of Companies"
+            className="h-8 sm:h-9 w-auto object-contain drop-shadow-xs"
+          />
         </div>
 
         {/* The Iconic Apple "hello" Style Cursive Script */}
@@ -448,44 +452,27 @@ export function AppleWelcomeModal({ isOpen, onClose }) {
           <X className="w-4 h-4" />
         </button>
 
-        {/* Apple-style Logo & Sparkle Header */}
-        <div className="space-y-2.5 relative z-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 ring-4 ring-white/80">
-            <Sparkles className="w-7 h-7 animate-pulse" />
-          </div>
-
-          <div className="space-y-1">
-            {/* The iconic Apple cursive "hello" text */}
-            <div className="font-apple-script text-5xl sm:text-6xl font-bold apple-shimmer-text tracking-wide lowercase">
-              hello
-            </div>
-
-            <div className="text-[11px] font-black tracking-widest uppercase text-blue-600 font-mono">
-              SPJ GROUP OF COMPANIES
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
-              Welcome to Version 2.O
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto font-medium">
-              Next-generation freight forwarding, single-screen container booking, and real-time ocean intelligence.
-            </p>
-          </div>
+        {/* Official SPJ Group of Companies Logo */}
+        <div className="flex justify-center items-center pt-2 relative z-10">
+          <img
+            src="/spj-logo.png"
+            alt="SPJ Group of Companies"
+            className="h-11 sm:h-13 w-auto object-contain drop-shadow-xs"
+          />
         </div>
 
-        {/* Feature Highlights Pills */}
-        <div className="grid grid-cols-3 gap-2 relative z-10 pt-1">
-          <div className="p-2.5 rounded-2xl bg-white/70 border border-white/80 shadow-2xs space-y-0.5">
-            <div className="text-[11px] font-black text-slate-900">⚡ Single-Screen</div>
-            <div className="text-[9.5px] text-slate-500">Fast Container JO</div>
+        <div className="space-y-1.5 relative z-10">
+          {/* The iconic Apple cursive "hello" text */}
+          <div className="font-apple-script text-5xl sm:text-6xl font-bold apple-shimmer-text tracking-wide lowercase">
+            hello
           </div>
-          <div className="p-2.5 rounded-2xl bg-white/70 border border-white/80 shadow-2xs space-y-0.5">
-            <div className="text-[11px] font-black text-slate-900">🚢 Live Sailings</div>
-            <div className="text-[9.5px] text-slate-500">Auto Schedule Sync</div>
-          </div>
-          <div className="p-2.5 rounded-2xl bg-white/70 border border-white/80 shadow-2xs space-y-0.5">
-            <div className="text-[11px] font-black text-slate-900">⚖️ Auto Gross</div>
-            <div className="text-[9.5px] text-slate-500">Tare + Cargo = Gross</div>
-          </div>
+
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+            Welcome to Version 2.O
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto font-medium">
+            Next-generation freight forwarding, single-screen container booking, and real-time ocean intelligence.
+          </p>
         </div>
 
         {/* Action Button */}
