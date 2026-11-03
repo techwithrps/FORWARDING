@@ -1254,97 +1254,97 @@ export default function JobOrderWizardView({
           </div>
 
           <div className="overflow-x-auto rounded-lg border border-slate-200">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs table-auto">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-mono text-[9.5px] uppercase font-extrabold">
                 <tr>
-                  <th className="py-1 px-2.5">#</th>
-                  <th className="py-1 px-2.5">
+                  <th className="py-1.5 px-2 w-8 text-center">#</th>
+                  <th className="py-1.5 px-2 min-w-[130px]">
                     Container No <span className="text-rose-500 font-bold">*</span>
                   </th>
-                  <th className="py-1 px-2.5">Size/Type</th>
-                  <th className="py-1 px-2.5">Tare (kg)</th>
-                  <th className="py-1 px-2.5">Cargo (kg)</th>
-                  <th className="py-1 px-2.5">Gross (kg)</th>
-                  <th className="py-1 px-2.5">Seal No</th>
-                  <th className="py-1 px-2.5">Vehicle No</th>
-                  <th className="py-1 px-2.5">GR No</th>
+                  <th className="py-1.5 px-2 min-w-[70px] whitespace-nowrap">Size/Type</th>
+                  <th className="py-1.5 px-2 min-w-[85px]">Tare (kg)</th>
+                  <th className="py-1.5 px-2 min-w-[95px]">Cargo (kg)</th>
+                  <th className="py-1.5 px-2 min-w-[95px]">Gross (kg)</th>
+                  <th className="py-1.5 px-2 min-w-[140px]">Seal No</th>
+                  <th className="py-1.5 px-2 min-w-[130px]">Vehicle No</th>
+                  <th className="py-1.5 px-2 min-w-[140px]">GR No</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white font-mono text-xs">
                 {containers.map((c, idx) => (
                   <tr key={idx} className="hover:bg-slate-50">
-                    <td className="py-1 px-2.5 text-slate-400 font-bold">{c.sr}</td>
+                    <td className="py-1.5 px-2 text-slate-400 font-bold text-center">{c.sr}</td>
 
-                    <td className="py-1 px-2.5">
+                    <td className="py-1.5 px-2">
                       <input
                         type="text"
                         placeholder="MSKU1234567"
                         value={c.contNo}
                         onChange={(e) => handleContainerRowChange(idx, 'contNo', e.target.value.toUpperCase())}
-                        className="px-2 py-0.5 rounded border border-slate-200 font-bold w-28 text-xs text-slate-800 bg-white focus:outline-none focus:border-blue-500 transition"
+                        className="w-full px-2.5 py-1 rounded border border-slate-200 font-bold text-xs text-slate-800 bg-white focus:outline-none focus:border-blue-500 transition"
                       />
                     </td>
 
-                    <td className="py-1 px-2.5 text-slate-700 font-bold">
+                    <td className="py-1.5 px-2 text-slate-700 font-bold whitespace-nowrap">
                       {c.size}'{c.type}
                     </td>
 
-                    <td className="py-1 px-2.5">
+                    <td className="py-1.5 px-2">
                       <input
                         type="number"
                         value={c.tareWeight}
                         onChange={(e) => handleContainerRowChange(idx, 'tareWeight', e.target.value)}
-                        className="px-2 py-0.5 rounded border border-slate-200 text-slate-500 w-20 text-xs focus:outline-none focus:border-blue-500"
+                        className="w-full px-2 py-1 rounded border border-slate-200 text-slate-500 text-xs focus:outline-none focus:border-blue-500"
                       />
                     </td>
 
-                    <td className="py-1 px-2.5">
+                    <td className="py-1.5 px-2">
                       <input
                         type="number"
                         placeholder="24500"
                         value={c.cargoWeight}
                         onChange={(e) => handleContainerRowChange(idx, 'cargoWeight', e.target.value)}
-                        className="px-2 py-0.5 rounded border border-slate-200 text-slate-700 w-20 text-xs focus:outline-none focus:border-blue-500"
+                        className="w-full px-2 py-1 rounded border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-blue-500"
                       />
                     </td>
 
-                    <td className="py-1 px-2.5">
+                    <td className="py-1.5 px-2">
                       <input
                         type="number"
                         placeholder="28320"
                         value={c.grossWeight}
                         onChange={(e) => handleContainerRowChange(idx, 'grossWeight', e.target.value)}
-                        className="px-2 py-0.5 rounded border border-slate-200 font-bold text-slate-900 w-24 text-xs focus:outline-none focus:border-blue-500"
+                        className="w-full px-2 py-1 rounded border border-slate-200 font-bold text-slate-900 text-xs focus:outline-none focus:border-blue-500"
                       />
                     </td>
 
-                    <td className="py-1 px-2.5">
+                    <td className="py-1.5 px-2">
                       <input
                         type="text"
                         placeholder="ML-IN-938210"
                         value={c.sealNo}
                         onChange={(e) => handleContainerRowChange(idx, 'sealNo', e.target.value.toUpperCase())}
-                        className="px-2 py-0.5 rounded border border-slate-200 text-slate-700 w-24 text-xs focus:outline-none focus:border-blue-500"
+                        className="w-full px-2.5 py-1 rounded border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-blue-500"
                       />
                     </td>
 
-                    <td className="py-1 px-2.5">
+                    <td className="py-1.5 px-2">
                       <input
                         type="text"
                         placeholder="HR55AN2094"
                         value={c.vehicleNo}
                         onChange={(e) => handleContainerRowChange(idx, 'vehicleNo', e.target.value.toUpperCase())}
-                        className="px-2 py-0.5 rounded border border-slate-200 text-slate-700 w-24 text-xs focus:outline-none focus:border-blue-500"
+                        className="w-full px-2.5 py-1 rounded border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-blue-500"
                       />
                     </td>
 
-                    <td className="py-1 px-2.5">
+                    <td className="py-1.5 px-2">
                       <input
                         type="text"
                         placeholder="GR-2026-084"
                         value={c.grNo}
                         onChange={(e) => handleContainerRowChange(idx, 'grNo', e.target.value.toUpperCase())}
-                        className="px-2 py-0.5 rounded border border-slate-200 text-slate-700 font-semibold w-24 text-xs focus:outline-none focus:border-blue-500"
+                        className="w-full px-2.5 py-1 rounded border border-slate-200 text-slate-700 font-semibold text-xs focus:outline-none focus:border-blue-500"
                       />
                     </td>
                   </tr>
