@@ -166,7 +166,7 @@ export default function Header({
   };
 
   return (
-    <header className="sticky top-0 z-20 bg-white border-b border-slate-200/80 px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-4 shadow-xs font-sans">
+    <header className="sticky top-0 z-20 bg-white border-b border-slate-200/80 px-4 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-4 shadow-xs font-sans">
       {/* Left: Brand Logo + Amazon-style "All" Button */}
       <div className="flex items-center gap-3 shrink-0">
         <button
@@ -179,18 +179,20 @@ export default function Header({
           <span>All</span>
         </button>
 
-        {/* Brand: clean text "elogisol Technologies" (Clickable to Home/Dashboard) */}
+        {/* Brand: SPJ GROUP OF COMPANIES Logo (Clickable to Home/Dashboard) */}
         <button
           type="button"
           onClick={() => {
             if (onSelectView) onSelectView('Dashboard');
           }}
-          className="flex items-center pr-3 sm:pr-4 border-r border-slate-200 select-none cursor-pointer hover:opacity-75 active:scale-95 transition text-left"
-          title="Go to Home Dashboard"
+          className="flex items-center pr-3 sm:pr-4 border-r border-slate-200 select-none cursor-pointer hover:opacity-85 active:scale-95 transition shrink-0"
+          title="SPJ Group of Companies - Go to Dashboard"
         >
-          <span className="font-heading font-extrabold text-[rgb(25,40,57)] text-sm sm:text-base tracking-tight leading-none whitespace-nowrap">
-            elogisol Technologies
-          </span>
+          <img
+            src="/spj-logo.png"
+            alt="SPJ Group of Companies"
+            className="h-6 sm:h-7 w-auto object-contain max-w-[170px]"
+          />
         </button>
       </div>
 
