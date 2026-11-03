@@ -28,7 +28,7 @@ export default function DashboardView({
   });
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto font-sans">
+    <div className="space-y-6 w-full font-sans">
       {/* Top Header */}
       <div>
         <h1 className="text-xl font-bold font-heading text-[rgb(25,40,57)]">

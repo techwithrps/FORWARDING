@@ -117,7 +117,7 @@ export default function DocumentationUpdateView({ jobs = [], onUpdateJob }) {
   const uniqueLines = Array.from(new Set(docRows.map(r => r.line).filter(Boolean)));
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto">
+    <div className="space-y-5 w-full">
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
         <div>

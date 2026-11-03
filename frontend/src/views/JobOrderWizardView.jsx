@@ -498,7 +498,7 @@ export default function JobOrderWizardView({
   const totalMarginVal = totalSellVal - totalBuyVal;
 
   return (
-    <div className="space-y-3.5 max-w-6xl mx-auto font-sans pb-10">
+    <div className="space-y-3.5 w-full font-sans pb-10">
       {/* 1. Header with Compact Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
         <div>

@@ -7,7 +7,7 @@ export default function VesselIntelligenceHubView({ initialTab = 'RADAR' }) {
   const [activeTab, setActiveTab] = useState(initialTab); // 'RADAR' or 'PLANNING'
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto font-sans">
+    <div className="space-y-4 w-full font-sans">
       {/* Sleek Minimal Tab Switcher Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
         <div className="flex items-center gap-2.5">

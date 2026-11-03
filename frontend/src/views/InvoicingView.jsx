@@ -163,7 +163,7 @@ export default function InvoicingView({ jobs = [], job = null, triggerGenerateIn
   const todayStr = new Date().toLocaleDateString('en-GB');
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto">
+    <div className="space-y-4 w-full">
       {/* Top Header Controls */}
       <div className="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
         <div>

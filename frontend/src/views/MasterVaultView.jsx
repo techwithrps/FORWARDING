@@ -571,7 +571,7 @@ export default function MasterVaultView({
   ];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto font-sans text-slate-800">
+    <div className="space-y-6 w-full font-sans text-slate-800">
       {/* ================= GLOBAL MASTER HEADER ================= */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3 bg-white p-4 rounded-xl shadow-xs">
         <div>
