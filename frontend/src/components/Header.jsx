@@ -193,7 +193,7 @@ export default function Header({
             <img
               src="/spj-logo.png"
               alt="SPJ Group of Companies"
-              className="h-6 sm:h-7 w-auto object-contain max-w-[170px]"
+              className="h-9 sm:h-10 md:h-11 w-auto object-contain max-w-[210px] sm:max-w-[260px] drop-shadow-2xs"
             />
           </button>
 
