@@ -833,23 +833,6 @@ export default function JobOrderWizardView({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  setRouteFilterOnly(true);
-                  setSelectedCarrierFilter('ALL');
-                  setShowSailingPicker(true);
-                }}
-                className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 active:scale-95 text-white font-bold text-[11px] flex items-center gap-1.5 shadow-xs transition cursor-pointer"
-                title="Select from Active Ocean Sailings to auto-fill Line, Vessel, Voyage & Cut-offs"
-              >
-                <Ship className="w-3.5 h-3.5 text-cyan-200" />
-                <span>
-                  Auto-Fill from Sailings ({form.pod && routeMatchingSailings.length > 0 ? routeMatchingSailings.length : allSailings.length})
-                </span>
-                <span className="px-1 py-0.2 rounded bg-white/20 text-[9px] font-mono">⚡ 1-Click</span>
-              </button>
-
-              <button
-                type="button"
                 onClick={onOpenQuickAddShipper}
                 className="text-[11px] text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 cursor-pointer"
               >
@@ -928,18 +911,7 @@ export default function JobOrderWizardView({
 
             {/* Row 2: Vessel & Dates */}
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[10px] font-bold text-slate-600 uppercase">Vessel Name</label>
-                <button
-                  type="button"
-                  onClick={() => setShowSailingPicker(true)}
-                  className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-0.5 cursor-pointer"
-                  title="Pick from 31 Active Sailings"
-                >
-                  <Zap className="w-2.5 h-2.5 text-amber-500" />
-                  <span>Pick Sailing</span>
-                </button>
-              </div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Vessel Name</label>
               <input
                 type="text"
                 placeholder="MAERSK COLOMBO"
