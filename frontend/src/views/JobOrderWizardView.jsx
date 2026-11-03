@@ -192,37 +192,9 @@ export default function JobOrderWizardView({
   const [autoFilledToast, setAutoFilledToast] = useState(null);
   const [autoFilledFields, setAutoFilledFields] = useState({});
 
-  const autoFillTargetKeys = new Set([
-    'shippingLine',
-    'lineBookingNo',
-    'vesselName',
-    'voyage',
-    'etdDate',
-    'etaDate',
-    'portCutDate',
-    'siCutDate',
-    'pod',
-    'bookingValidity'
-  ]);
-
-  // Dynamic input styling:
-  // - Unfilled auto-fill targets & mandatory fields are framed in soft red ("red se frame krdo")
-  // - As soon as they are filled / auto-fetched, they turn crisp emerald green ("fill hote he green krdo")
-  const getFieldClass = (fieldName, isMandatory, value) => {
-    const isAutoFillTarget = autoFillTargetKeys.has(fieldName);
-
-    // 1. If filled (via autofill from sailings/copilot or user input) -> GREEN
-    if ((autoFilledFields[fieldName] || isAutoFillTarget || isMandatory) && Boolean(value)) {
-      return 'border border-emerald-400 bg-emerald-50/25 text-emerald-950 font-bold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 transition';
-    }
-
-    // 2. If it is an autofill target or mandatory field and is currently EMPTY -> RED frame
-    if ((isAutoFillTarget || isMandatory) && !value) {
-      return 'border border-rose-200/90 bg-rose-50/10 text-slate-700 focus:border-rose-300 focus:ring-1 focus:ring-rose-100 transition';
-    }
-
-    // 3. Regular optional input
-    return 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500 transition';
+  // Clean standard input styling
+  const getFieldClass = () => {
+    return 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500 outline-none transition';
   };
 
   const allSailings = defaultSchedulesData?.sailings || [];
@@ -900,16 +872,9 @@ export default function JobOrderWizardView({
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[10px] font-bold text-slate-600 uppercase">
-                  POL (Port of Loading) <span className="text-rose-500 font-bold">*</span>
-                </label>
-                {autoFilledFields.pol && form.pol && (
-                  <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                    ✓ Matched
-                  </span>
-                )}
-              </div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                POL (Port of Loading) <span className="text-rose-500 font-bold">*</span>
+              </label>
               <select
                 value={form.pol}
                 onChange={(e) => {
@@ -930,16 +895,9 @@ export default function JobOrderWizardView({
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">
-                    POD (Port of Discharge) <span className="text-rose-500 font-bold">*</span>
-                  </label>
-                  {autoFilledFields.pod && form.pod && (
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                      ✓ Set
-                    </span>
-                  )}
-                </div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase">
+                  POD (Port of Discharge) <span className="text-rose-500 font-bold">*</span>
+                </label>
                 <button
                   type="button"
                   onClick={() => {
@@ -1074,16 +1032,9 @@ export default function JobOrderWizardView({
             {/* Row 2: Shipping Line -> Line Booking No -> Booking Validity -> Vessel Name (4 Cols) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1 border-t border-slate-100">
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">
-                    Shipping Line <span className="text-rose-500 font-bold">*</span>
-                  </label>
-                  {autoFilledFields.shippingLine && form.shippingLine && (
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                      ✓ Auto-fetched
-                    </span>
-                  )}
-                </div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                  Shipping Line <span className="text-rose-500 font-bold">*</span>
+                </label>
                 <select
                   value={form.shippingLine}
                   onChange={(e) => {
@@ -1105,14 +1056,7 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">Line Booking No</label>
-                  {autoFilledFields.lineBookingNo && form.lineBookingNo && (
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                      ✓ Set
-                    </span>
-                  )}
-                </div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Line Booking No</label>
                 <input
                   type="text"
                   placeholder="e.g. BK-982104"
@@ -1123,14 +1067,7 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">Booking Validity</label>
-                  {autoFilledFields.bookingValidity && form.bookingValidity && (
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                      ✓ Set
-                    </span>
-                  )}
-                </div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Booking Validity</label>
                 <input
                   type="date"
                   value={form.bookingValidity || ''}
@@ -1140,14 +1077,7 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">Vessel Name</label>
-                  {autoFilledFields.vesselName && form.vesselName && (
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                      ✓ Live
-                    </span>
-                  )}
-                </div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Vessel Name</label>
                 <input
                   type="text"
                   placeholder="e.g. CNC TIGER"
@@ -1161,14 +1091,7 @@ export default function JobOrderWizardView({
             {/* Row 3: Voyage -> ETD -> ETA -> Port Cut-off -> SI Cut-off (5 Cols Compact Line) */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1.5 border-t border-slate-100 bg-slate-50/60 p-2.5 rounded-lg border border-slate-200/60">
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">Voyage</label>
-                  {autoFilledFields.voyage && form.voyage && (
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                      ✓ Live
-                    </span>
-                  )}
-                </div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Voyage</label>
                 <input
                   type="text"
                   placeholder="e.g. 0UW4JW1MA"
@@ -1179,14 +1102,7 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">ETD (Departure)</label>
-                  {autoFilledFields.etdDate && form.etdDate && (
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                      ✓ Set
-                    </span>
-                  )}
-                </div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">ETD (Departure)</label>
                 <input
                   type="date"
                   value={form.etdDate}
@@ -1196,14 +1112,7 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">ETA (Arrival)</label>
-                  {autoFilledFields.etaDate && form.etaDate && (
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                      ✓ Set
-                    </span>
-                  )}
-                </div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">ETA (Arrival)</label>
                 <input
                   type="date"
                   value={form.etaDate || ''}
@@ -1213,14 +1122,7 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">Port Cut-off</label>
-                  {autoFilledFields.portCutDate && form.portCutDate && (
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                      ✓ Set
-                    </span>
-                  )}
-                </div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Port Cut-off</label>
                 <input
                   type="date"
                   value={form.portCutDate}
@@ -1230,14 +1132,7 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">SI Cut-off</label>
-                  {autoFilledFields.siCutDate && form.siCutDate && (
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                      ✓ Set
-                    </span>
-                  )}
-                </div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">SI Cut-off</label>
                 <input
                   type="date"
                   value={form.siCutDate}
@@ -1289,11 +1184,7 @@ export default function JobOrderWizardView({
                     max="50"
                     value={line.noOfCont}
                     onChange={(e) => handleEquipmentLineChange(idx, "noOfCont", e.target.value)}
-                    className={`w-full px-2.5 py-1.5 rounded-md text-xs font-mono font-bold outline-none transition ${
-                      !line.noOfCont || Number(line.noOfCont) <= 0
-                        ? 'border border-rose-200/90 bg-rose-50/10 text-slate-700 focus:border-rose-300 focus:ring-1 focus:ring-rose-100'
-                        : 'border border-emerald-400 bg-emerald-50/25 text-emerald-950 font-bold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200'
-                    }`}
+                    className="w-full px-2.5 py-1.5 rounded-md text-xs font-mono font-bold bg-white border border-slate-200 text-slate-800 focus:border-blue-500 outline-none transition"
                   />
                 </div>
 
@@ -1390,11 +1281,7 @@ export default function JobOrderWizardView({
                         placeholder="MSKU1234567"
                         value={c.contNo}
                         onChange={(e) => handleContainerRowChange(idx, 'contNo', e.target.value.toUpperCase())}
-                        className={`px-2 py-1 rounded font-bold w-28 text-xs focus:outline-none transition ${
-                          !c.contNo
-                            ? 'border border-rose-200/90 bg-rose-50/10 text-slate-700 focus:border-rose-300 focus:ring-1 focus:ring-rose-100'
-                            : 'border border-emerald-400 bg-emerald-50/25 text-emerald-950 font-bold focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200'
-                        }`}
+                        className="px-2 py-1 rounded border border-slate-200 font-bold w-28 text-xs text-slate-800 bg-white focus:outline-none focus:border-blue-500 transition"
                       />
                     </td>
 
@@ -1457,7 +1344,7 @@ export default function JobOrderWizardView({
                         placeholder="GR-2026-084"
                         value={c.grNo}
                         onChange={(e) => handleContainerRowChange(idx, 'grNo', e.target.value.toUpperCase())}
-                        className="px-2 py-1 rounded border border-slate-200 text-emerald-700 font-semibold w-24 text-xs focus:outline-none focus:border-emerald-500"
+                        className="px-2 py-1 rounded border border-slate-200 text-slate-700 font-semibold w-24 text-xs focus:outline-none focus:border-blue-500"
                       />
                     </td>
                   </tr>
