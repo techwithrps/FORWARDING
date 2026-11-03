@@ -396,15 +396,6 @@ export function AppleHelloPageTransition({ activeView }) {
         {/* Subtle iridescent glow orb */}
         <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-48 h-48 bg-gradient-to-tr from-blue-500/20 via-indigo-500/20 to-violet-500/20 rounded-full blur-2xl pointer-events-none" />
 
-        {/* SPJ Group of Companies Official Logo */}
-        <div className="flex justify-center items-center relative z-10">
-          <img
-            src="/spj-logo.png"
-            alt="SPJ Group of Companies"
-            className="h-8 sm:h-9 w-auto object-contain drop-shadow-xs"
-          />
-        </div>
-
         {/* The Iconic Apple "hello" Style Cursive Script */}
         <div className="relative z-10 space-y-1">
           <h1 className="font-apple-script text-5xl sm:text-6xl md:text-7xl font-bold apple-shimmer-text tracking-wide drop-shadow-xs lowercase">
@@ -452,12 +443,13 @@ export function AppleWelcomeModal({ isOpen, onClose }) {
           <X className="w-4 h-4" />
         </button>
 
-        {/* Official SPJ Group of Companies Logo */}
-        <div className="flex justify-center items-center pt-2 relative z-10">
+        {/* Official SPJ Group of Companies Logo (Transparent & Prominent) */}
+        <div className="flex justify-center items-center pt-3 pb-1 relative z-10">
           <img
             src="/spj-logo.png"
             alt="SPJ Group of Companies"
-            className="h-11 sm:h-13 w-auto object-contain drop-shadow-xs"
+            className="h-14 sm:h-16 md:h-18 w-auto max-w-[280px] sm:max-w-[330px] object-contain select-none"
+            style={{ mixBlendMode: 'multiply' }}
           />
         </div>
 
