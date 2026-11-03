@@ -81,6 +81,21 @@ export default function JobOrderWizardView({
     'Trans-World Logistics (New York, USA)'
   ];
 
+  const polList = [
+    { code: 'INNSA1', shortCode: 'INNSA', name: 'Nhava Sheva - JNPT (INNSA1)', flag: '🇮🇳' },
+    { code: 'INMUN1', shortCode: 'INMUN', name: 'Mundra Port (INMUN1)', flag: '🇮🇳' },
+    { code: 'INPAV1', shortCode: 'INPAV', name: 'Pipavav Port (INPAV1)', flag: '🇮🇳' },
+    { code: 'INHZR1', shortCode: 'INHZR', name: 'Hazira Port, Surat (INHZR1)', flag: '🇮🇳' },
+    { code: 'INMAA1', shortCode: 'INMAA', name: 'Chennai Port (INMAA1)', flag: '🇮🇳' },
+    { code: 'INTUT1', shortCode: 'INTUT', name: 'Tuticorin / VOC (INTUT1)', flag: '🇮🇳' },
+    { code: 'INCOK1', shortCode: 'INCOK', name: 'Cochin / ICTT (INCOK1)', flag: '🇮🇳' },
+    { code: 'INCCU1', shortCode: 'INCCU', name: 'Kolkata Port (INCCU1)', flag: '🇮🇳' },
+    { code: 'INVTZ1', shortCode: 'INVTZ', name: 'Visakhapatnam (INVTZ1)', flag: '🇮🇳' },
+    { code: 'INKAT1', shortCode: 'INKAT', name: 'Kattupalli Port (INKAT1)', flag: '🇮🇳' },
+    { code: 'INIXY1', shortCode: 'INIXY', name: 'Kandla / Deendayal (INIXY1)', flag: '🇮🇳' },
+    { code: 'INMRM1', shortCode: 'INMRM', name: 'Mormugao / Goa (INMRM1)', flag: '🇮🇳' }
+  ];
+
   const podList = [
     { code: 'AEJEA', name: 'JEBEL ALI, UAE (AEJEA)', flag: '🇦🇪' },
     { code: 'USNYC', name: 'NEW YORK / NJ, USA (USNYC)', flag: '🇺🇸' },
@@ -118,6 +133,7 @@ export default function JobOrderWizardView({
     consignee: '',
     shippingLine: '',
     lineBookingNo: '',
+    emptyPickupLocation: 'Dadri ICD Depot (CONCOR)',
     fromLocation: 'Dadri ICD (INICD6)',
     toLocation: 'Nhava Sheva-NSFT (INNSA1)',
     pol: 'INNSA1',
@@ -125,6 +141,7 @@ export default function JobOrderWizardView({
     vesselName: '',
     voyage: '',
     etdDate: '',
+    etaDate: '',
     siCutDate: '',
     portCutDate: '',
     bookingValidity: '',
@@ -237,26 +254,28 @@ export default function JobOrderWizardView({
     const portCut = sailing.cutOffs?.containerYard ? sailing.cutOffs.containerYard.split(' ')[0] : (sailing.departure || '');
     const siCut = sailing.cutOffs?.shippingInstructions ? sailing.cutOffs.shippingInstructions.split(' ')[0] : portCut;
     const etd = sailing.departure || '';
+    const eta = sailing.arrival || '';
 
     const sPol = sailing.originLocode || sailing.origin || '';
     const sPod = sailing.destinationLocode || sailing.destination || '';
+    const matchedPol = polList.find(p => p.shortCode === sPol || p.code === sPol);
 
     setForm(prev => ({
       ...prev,
       shippingLine: mappedLine || prev.shippingLine,
       vesselName: sailing.vesselName || prev.vesselName,
       voyage: sailing.voyageNo || prev.voyage,
+      etdDate: etd,
+      etaDate: eta,
       portCutDate: portCut,
       siCutDate: siCut,
-      bookingValidity: etd,
-      etdDate: etd,
-      pol: sPol === 'INMUN' ? 'INMUN1' : (sPol === 'INNSA' ? 'INNSA1' : prev.pol),
+      pol: matchedPol ? matchedPol.code : prev.pol,
       pod: sPod || prev.pod
     }));
 
     setFormError('');
     setShowSailingPicker(false);
-    setAutoFilledToast(`⚡ Auto-filled: ${sailing.vesselName} (${sailing.voyageNo}) · ${mappedLine || sailing.carrier} · Cut-offs & Dates set!`);
+    setAutoFilledToast(`⚡ Auto-filled: ${sailing.vesselName} (${sailing.voyageNo}) · ${mappedLine || sailing.carrier} · ETD & Cut-offs set!`);
     setTimeout(() => setAutoFilledToast(null), 4500);
   };
 
@@ -684,16 +703,17 @@ export default function JobOrderWizardView({
 
       {/* 3. Compact High-Density Form */}
       <form onSubmit={handleSubmit} className="space-y-3">
-        {/* CARD 1: Routing & Shipment Type (6-Col High Density Grid) */}
-        <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
+        {/* CARD 1: Routing & Shipment Type (SPJ-2 Full Logistics Route Chain) */}
+        <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
           <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
             <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider font-mono">
               1. Routing &amp; Shipment Specification
             </span>
-            <span className="text-[10px] text-slate-400 font-mono">Export Haulage Railhead</span>
+            <span className="text-[10px] text-slate-400 font-mono">SPJ-2 Full Logistics Route Chain</span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          {/* Row 1: Shipment Specs & Loading / Discharge Ports */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
             <div>
               <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
                 Jo Type <span className="text-rose-500 font-bold">*</span>
@@ -703,7 +723,7 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, joType: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium outline-none transition ${
                   !form.joType
-                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200'
+                    ? 'border border-rose-300 bg-rose-50/20 text-slate-800 focus:border-rose-400 focus:ring-1 focus:ring-rose-200'
                     : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
                 }`}
               >
@@ -726,7 +746,7 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, modeOfShipment: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium outline-none transition ${
                   !form.modeOfShipment
-                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200'
+                    ? 'border border-rose-300 bg-rose-50/20 text-slate-800 focus:border-rose-400 focus:ring-1 focus:ring-rose-200'
                     : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
                 }`}
               >
@@ -738,49 +758,7 @@ export default function JobOrderWizardView({
 
             <div>
               <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
-                Origin (ICD) <span className="text-rose-500 font-bold">*</span>
-              </label>
-              <select
-                value={form.fromLocation}
-                onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium outline-none transition ${
-                  !form.fromLocation
-                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200'
-                    : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
-                }`}
-              >
-                <option value="Dadri ICD (INICD6)">Dadri ICD (INICD6)</option>
-                <option value="Moradabad ICD (INMBD6)">Moradabad ICD (INMBD6)</option>
-                <option value="Piyala ICD (INPYA6)">Piyala ICD (INPYA6)</option>
-                <option value="Ludhiana ICD (INLDH6)">Ludhiana ICD (INLDH6)</option>
-                <option value="Kanpur ICD (INKNU6)">Kanpur ICD (INKNU6)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
-                Gateway Port <span className="text-rose-500 font-bold">*</span>
-              </label>
-              <select
-                value={form.toLocation}
-                onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium outline-none transition ${
-                  !form.toLocation
-                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200'
-                    : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
-                }`}
-              >
-                <option value="Nhava Sheva-NSFT (INNSA1)">Nhava Sheva-NSFT</option>
-                <option value="Nhava Sheva-BMCT (INNSA1)">Nhava Sheva-BMCT</option>
-                <option value="Nhava Sheva-GTI (INNSA1)">Nhava Sheva-GTI</option>
-                <option value="Mundra Port (INMUN1)">Mundra Port (INMUN1)</option>
-                <option value="Pipavav Port (INPAV1)">Pipavav Port (INPAV1)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
-                POL <span className="text-rose-500 font-bold">*</span>
+                POL (Loading Port) <span className="text-rose-500 font-bold">*</span>
               </label>
               <select
                 value={form.pol}
@@ -790,14 +768,17 @@ export default function JobOrderWizardView({
                   setRouteFilterOnly(true);
                   setSelectedCarrierFilter('ALL');
                 }}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none transition ${
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none transition ${
                   !form.pol
-                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200'
+                    ? 'border border-rose-300 bg-rose-50/20 text-slate-800 focus:border-rose-400 focus:ring-1 focus:ring-rose-200'
                     : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
                 }`}
               >
-                <option value="INNSA1">Nhava Sheva (INNSA1)</option>
-                <option value="INMUN1">Mundra Port (INMUN1)</option>
+                {polList.map((p) => (
+                  <option key={p.code} value={p.code}>
+                    {p.flag} {p.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -839,7 +820,7 @@ export default function JobOrderWizardView({
                 }}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium outline-none transition ${
                   !form.pod
-                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200 shadow-2xs font-bold'
+                    ? 'border border-rose-300 bg-rose-50/20 text-slate-800 focus:border-rose-400 focus:ring-1 focus:ring-rose-200 font-bold'
                     : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
                 }`}
               >
@@ -852,9 +833,80 @@ export default function JobOrderWizardView({
               </select>
             </div>
           </div>
+
+          {/* Row 2: SPJ-2 Logistics Movement Chain (Empty Pickup -> Stuffing Location -> Handover Location -> Gateway Port) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1.5 border-t border-slate-100">
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                Empty Pickup Location
+              </label>
+              <select
+                value={form.emptyPickupLocation || 'Dadri ICD Depot (CONCOR)'}
+                onChange={(e) => setForm({ ...form, emptyPickupLocation: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+              >
+                <option value="Dadri ICD Depot (CONCOR)">Dadri ICD Depot (CONCOR)</option>
+                <option value="Piyala ICD Depot">Piyala ICD Depot</option>
+                <option value="ACTL Faridabad Yard">ACTL Faridabad Yard</option>
+                <option value="Garhi Harsaru (GRH) Depot">Garhi Harsaru (GRH) Depot</option>
+                <option value="TKD Tughlakabad Depot">TKD Tughlakabad Depot</option>
+                <option value="Nhava Sheva Empty Yard">Nhava Sheva Empty Yard</option>
+                <option value="Mundra Port Empty Depot">Mundra Port Empty Depot</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                To Pickup / Stuffing Location
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Shipper Factory / Aligarh Plant"
+                value={form.fromLocation}
+                onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                Handover Location
+              </label>
+              <select
+                value={form.handoverLocation || 'Dadri ICD CFS Complex'}
+                onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+              >
+                <option value="Dadri ICD CFS Complex">Dadri ICD CFS Complex</option>
+                <option value="Piyala ICD CFS Complex">Piyala ICD CFS Complex</option>
+                <option value="Nhava Sheva Buffer Yard">Nhava Sheva Buffer Yard</option>
+                <option value="Mundra CFS Complex">Mundra CFS Complex</option>
+                <option value="Gateway Port Terminal Gate">Gateway Port Terminal Gate</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                Gateway Port Terminal
+              </label>
+              <select
+                value={form.toLocation}
+                onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+              >
+                <option value="Nhava Sheva-NSFT (INNSA1)">Nhava Sheva-NSFT (INNSA1)</option>
+                <option value="Nhava Sheva-BMCT (INNSA1)">Nhava Sheva-BMCT (INNSA1)</option>
+                <option value="Nhava Sheva-GTI (INNSA1)">Nhava Sheva-GTI (INNSA1)</option>
+                <option value="Mundra Port-MDCC (INMUN1)">Mundra Port-MDCC (INMUN1)</option>
+                <option value="Pipavav Port-APMT (INPAV1)">Pipavav Port-APMT (INPAV1)</option>
+                <option value="Hazira Port (INHZR1)">Hazira Port (INHZR1)</option>
+                <option value="Chennai Port (INMAA1)">Chennai Port (INMAA1)</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        {/* CARD 2: Stakeholders, Vessel & Dates (Combined 4-Col Grid) */}
+        {/* CARD 2: Stakeholders, Vessel & Dates (Combined Grid) */}
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
           <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 flex-wrap gap-2">
             <div className="flex items-center gap-2">
@@ -862,7 +914,7 @@ export default function JobOrderWizardView({
                 2. Stakeholders, Ocean Liner &amp; Vessel Cut-offs
               </span>
               <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                Route: {form.pol === 'INMUN1' ? 'Mundra (INMUN)' : 'Nhava Sheva (INNSA)'} ➔ {form.pod ? (podList.find(p => p.code === form.pod)?.name || form.pod) : 'Select POD'}
+                Route: {polList.find(p => p.code === form.pol)?.name || form.pol} ➔ {form.pod ? (podList.find(p => p.code === form.pod)?.name || form.pod) : 'Select POD'}
               </span>
             </div>
 
@@ -878,170 +930,185 @@ export default function JobOrderWizardView({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-            {/* Row 1 */}
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
-                Consignor (Shipper) <span className="text-rose-500 font-bold">*</span>
-              </label>
-              <select
-                value={form.consignor}
-                onChange={(e) => handleConsignorChange(e.target.value)}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate transition ${
-                  !form.consignor
-                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200 shadow-2xs'
-                    : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
-                }`}
-              >
-                <option value="">-- Select Consignor --</option>
-                {shippersList.map((name, i) => (
-                  <option key={i} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
+          <div className="space-y-2.5">
+            {/* Row 1: Stakeholders & Line */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                  Consignor (Shipper) <span className="text-rose-500 font-bold">*</span>
+                </label>
+                <select
+                  value={form.consignor}
+                  onChange={(e) => handleConsignorChange(e.target.value)}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate transition ${
+                    !form.consignor
+                      ? 'border border-rose-300 bg-rose-50/20 text-slate-800 focus:border-rose-400 focus:ring-1 focus:ring-rose-200'
+                      : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
+                  }`}
+                >
+                  <option value="">-- Select Consignor --</option>
+                  {shippersList.map((name, i) => (
+                    <option key={i} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Consignee</label>
+                <select
+                  value={form.consignee}
+                  onChange={(e) => setForm({ ...form, consignee: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none truncate"
+                >
+                  <option value="">-- Select Consignee --</option>
+                  {consigneesList.map((name, i) => (
+                    <option key={i} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                  Shipping Line <span className="text-rose-500 font-bold">*</span>
+                </label>
+                <select
+                  value={form.shippingLine}
+                  onChange={(e) => {
+                    setForm({ ...form, shippingLine: e.target.value });
+                    setFormError('');
+                  }}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate transition ${
+                    !form.shippingLine
+                      ? 'border border-rose-300 bg-rose-50/20 text-slate-800 focus:border-rose-400 focus:ring-1 focus:ring-rose-200'
+                      : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
+                  }`}
+                >
+                  <option value="">-- Select Line --</option>
+                  {linesList.map((name, i) => (
+                    <option key={i} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                  {form.shippingLine && !linesList.includes(form.shippingLine) && (
+                    <option value={form.shippingLine}>{form.shippingLine}</option>
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Line Booking No</label>
+                <input
+                  type="text"
+                  placeholder="e.g. BK-982104"
+                  value={form.lineBookingNo}
+                  onChange={(e) => setForm({ ...form, lineBookingNo: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Consignee</label>
-              <select
-                value={form.consignee}
-                onChange={(e) => setForm({ ...form, consignee: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none truncate"
-              >
-                <option value="">-- Select Consignee --</option>
-                {consigneesList.map((name, i) => (
-                  <option key={i} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
+            {/* Row 2: Vessel & Maritime Cut-offs (Matched to SPJ-2 Vessel Updation) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-1 border-t border-slate-100">
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Vessel Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. CNC TIGER"
+                  value={form.vesselName}
+                  onChange={(e) => setForm({ ...form, vesselName: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Voyage</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 0UW4JW1MA"
+                  value={form.voyage}
+                  onChange={(e) => setForm({ ...form, voyage: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">ETD Date (Departure)</label>
+                <input
+                  type="date"
+                  value={form.etdDate}
+                  onChange={(e) => setForm({ ...form, etdDate: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Port Cut-off Date</label>
+                <input
+                  type="date"
+                  value={form.portCutDate}
+                  onChange={(e) => setForm({ ...form, portCutDate: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">SI Cut-off Date</label>
+                <input
+                  type="date"
+                  value={form.siCutDate}
+                  onChange={(e) => setForm({ ...form, siCutDate: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
-                Shipping Line <span className="text-rose-500 font-bold">*</span>
-              </label>
-              <select
-                value={form.shippingLine}
-                onChange={(e) => {
-                  setForm({ ...form, shippingLine: e.target.value });
-                  setFormError('');
-                }}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate transition ${
-                  !form.shippingLine
-                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200 shadow-2xs'
-                    : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
-                }`}
-              >
-                <option value="">-- Select Line --</option>
-                {linesList.map((name, i) => (
-                  <option key={i} value={name}>
-                    {name}
-                  </option>
-                ))}
-                {form.shippingLine && !linesList.includes(form.shippingLine) && (
-                  <option value={form.shippingLine}>{form.shippingLine}</option>
-                )}
-              </select>
-            </div>
+            {/* Row 3: SPJ-2 Operational Transit Fields (ETA, Validity, Temp, Transporter) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1 border-t border-slate-100">
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">ETA Date (Arrival)</label>
+                <input
+                  type="date"
+                  value={form.etaDate || ''}
+                  onChange={(e) => setForm({ ...form, etaDate: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
 
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Line Booking No</label>
-              <input
-                type="text"
-                placeholder="BK-982104"
-                value={form.lineBookingNo}
-                onChange={(e) => setForm({ ...form, lineBookingNo: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
-              />
-            </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Booking Re-Validity</label>
+                <input
+                  type="date"
+                  value={form.bookingValidity || ''}
+                  onChange={(e) => setForm({ ...form, bookingValidity: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
 
-            {/* Row 2: Vessel & Dates */}
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Vessel Name</label>
-              <input
-                type="text"
-                placeholder="MAERSK COLOMBO"
-                value={form.vesselName}
-                onChange={(e) => setForm({ ...form, vesselName: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
-              />
-            </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Set Temp (°C / Reefer)</label>
+                <input
+                  type="text"
+                  placeholder="-18°C (Frozen) / Ambient"
+                  value={form.temperature || ''}
+                  onChange={(e) => setForm({ ...form, temperature: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
 
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Voyage</label>
-              <input
-                type="text"
-                placeholder="2604W"
-                value={form.voyage}
-                onChange={(e) => setForm({ ...form, voyage: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">SI Cut-off Date</label>
-              <input
-                type="date"
-                value={form.siCutDate}
-                onChange={(e) => setForm({ ...form, siCutDate: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Port Cut-off Date</label>
-              <input
-                type="date"
-                value={form.portCutDate}
-                onChange={(e) => setForm({ ...form, portCutDate: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
-              />
-            </div>
-
-            {/* Row 3 (SPJ-2 Operations: Validity, Reefer Temp, Transporter, Handover) */}
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Booking Re-Validity</label>
-              <input
-                type="date"
-                value={form.bookingValidity || ''}
-                onChange={(e) => setForm({ ...form, bookingValidity: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Set Temp (°C / Reefer)</label>
-              <input
-                type="text"
-                placeholder="-18°C (Frozen) / Ambient"
-                value={form.temperature || ''}
-                onChange={(e) => setForm({ ...form, temperature: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Transporter</label>
-              <input
-                type="text"
-                placeholder="SPJ Fleet Logistics / CONCOR"
-                value={form.transporter || ''}
-                onChange={(e) => setForm({ ...form, transporter: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Handover Location (CFS)</label>
-              <input
-                type="text"
-                placeholder="Dadri ICD CFS Complex"
-                value={form.handoverLocation || ''}
-                onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
-              />
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Transporter</label>
+                <input
+                  type="text"
+                  placeholder="SPJ Fleet Logistics / CONCOR"
+                  value={form.transporter || ''}
+                  onChange={(e) => setForm({ ...form, transporter: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -1085,7 +1152,7 @@ export default function JobOrderWizardView({
                     onChange={(e) => handleEquipmentLineChange(idx, "noOfCont", e.target.value)}
                     className={`w-full px-2.5 py-1.5 rounded-md text-xs font-mono font-bold outline-none transition ${
                       !line.noOfCont || Number(line.noOfCont) <= 0
-                        ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900'
+                        ? 'border border-rose-300 bg-rose-50/20 text-slate-800 focus:border-rose-400 focus:ring-1 focus:ring-rose-200'
                         : 'bg-white border border-slate-200 text-slate-900 focus:border-blue-500'
                     }`}
                   />
@@ -1184,7 +1251,7 @@ export default function JobOrderWizardView({
                         onChange={(e) => handleContainerRowChange(idx, 'contNo', e.target.value.toUpperCase())}
                         className={`px-2 py-1 rounded font-bold w-28 text-xs focus:outline-none transition ${
                           !c.contNo
-                            ? 'border-2 border-rose-400 bg-rose-50/40 text-rose-900 focus:border-rose-600 focus:ring-1 focus:ring-rose-200'
+                            ? 'border border-rose-300 bg-rose-50/20 text-slate-800 focus:border-rose-400 focus:ring-1 focus:ring-rose-200'
                             : 'border border-slate-200 font-bold text-blue-700 bg-white focus:border-blue-500'
                         }`}
                       />
@@ -1429,7 +1496,7 @@ export default function JobOrderWizardView({
                   <Ship className="w-10 h-10 mx-auto text-slate-300 stroke-[1.5]" />
                   <div>
                     <p className="text-sm font-bold text-slate-700">
-                      No pre-cached sailings found for {form.pol === 'INMUN1' ? 'Mundra (INMUN)' : 'Nhava Sheva (INNSA)'} ➔ {form.pod ? (podList.find(p => p.code === form.pod)?.name || form.pod) : 'selected port'}
+                      No pre-cached sailings found for {polList.find(p => p.code === form.pol)?.name || form.pol} ➔ {form.pod ? (podList.find(p => p.code === form.pod)?.name || form.pod) : 'selected port'}
                     </p>
                     <p className="text-xs text-slate-500 mt-1">
                       Try selecting another POD or view all 31 pre-cached sailings across global routes.
