@@ -42,7 +42,8 @@ export default function Header({
   onOpenPartyModal,
   jobs = [],
   parties = [],
-  onSelectJob
+  onSelectJob,
+  onOpenWelcome
 }) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -179,21 +180,38 @@ export default function Header({
           <span>All</span>
         </button>
 
-        {/* Brand: SPJ GROUP OF COMPANIES Logo (Clickable to Home/Dashboard) */}
-        <button
-          type="button"
-          onClick={() => {
-            if (onSelectView) onSelectView('Dashboard');
-          }}
-          className="flex items-center pr-3 sm:pr-4 border-r border-slate-200 select-none cursor-pointer hover:opacity-85 active:scale-95 transition shrink-0"
-          title="SPJ Group of Companies - Go to Dashboard"
-        >
-          <img
-            src="/spj-logo.png"
-            alt="SPJ Group of Companies"
-            className="h-6 sm:h-7 w-auto object-contain max-w-[170px]"
-          />
-        </button>
+        {/* Brand: SPJ GROUP OF COMPANIES Logo + Apple-Style Version 2.O Badge */}
+        <div className="flex items-center gap-2 pr-3 sm:pr-4 border-r border-slate-200 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              if (onSelectView) onSelectView('Dashboard');
+            }}
+            className="flex items-center select-none cursor-pointer hover:opacity-85 active:scale-95 transition shrink-0"
+            title="SPJ Group of Companies - Go to Dashboard"
+          >
+            <img
+              src="/spj-logo.png"
+              alt="SPJ Group of Companies"
+              className="h-6 sm:h-7 w-auto object-contain max-w-[170px]"
+            />
+          </button>
+
+          {/* Apple-style Frosted Glass Version 2.O Tag */}
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenWelcome) onOpenWelcome();
+            }}
+            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-900/[0.04] hover:bg-slate-900/[0.08] active:scale-95 border border-slate-300/70 shadow-2xs backdrop-blur-md transition-all select-none cursor-pointer group"
+            title="Click to view Version 2.O Welcome details"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 animate-pulse"></span>
+            <span className="text-[10.5px] font-black tracking-wider uppercase bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent group-hover:scale-105 transition-transform">
+              Version 2.O
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Center: Universal Interactive Search Bar */}

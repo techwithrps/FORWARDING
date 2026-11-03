@@ -19,6 +19,7 @@ import FleetMovementView from './views/FleetMovementView.jsx';
 import ShipmentLifecycleHubView from './views/ShipmentLifecycleHubView.jsx';
 import VesselIntelligenceHubView from './views/VesselIntelligenceHubView.jsx';
 import AICopilot from './components/AICopilot.jsx';
+import { AppleDynamicIsland, AppleWelcomeModal } from './components/AppleExperience.jsx';
 
 import {
   Search,
@@ -70,6 +71,15 @@ export default function App() {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showInlinePartyModal, setShowInlinePartyModal] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState(null);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(() => {
+    // Show on initial load if not already dismissed in this session
+    return !sessionStorage.getItem('spj_v2_welcomed');
+  });
+
+  const handleDismissWelcome = () => {
+    sessionStorage.setItem('spj_v2_welcomed', 'true');
+    setShowWelcomeModal(false);
+  };
 
   // Keyboard shortcut Cmd+K / Ctrl+K
   useEffect(() => {
@@ -523,7 +533,16 @@ export default function App() {
       />
 
       {/* 2. Main Workspace Layout (Full-Width Clean Workspace) */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto relative">
+        {/* Apple iOS-Style Dynamic Island Floating Page Indicator */}
+        <AppleDynamicIsland activeView={activeView} />
+
+        {/* Apple iOS-Style "Welcome to Version 2.O" Greeting Modal */}
+        <AppleWelcomeModal
+          isOpen={showWelcomeModal}
+          onClose={handleDismissWelcome}
+        />
+
         {/* Top Header with Universal Search & Amazon-Style 'All' Button */}
         <Header
           userRole={userRole}
@@ -540,6 +559,7 @@ export default function App() {
             setSelectedJobId(id);
             setActiveView('ShipmentStatus');
           }}
+          onOpenWelcome={() => setShowWelcomeModal(true)}
         />
 
         {/* Central Dynamic View Container */}
@@ -550,7 +570,10 @@ export default function App() {
             <LoginView
               userRole={userRole}
               setUserRole={setUserRole}
-              onLoginSuccess={() => setActiveView('Dashboard')}
+              onLoginSuccess={() => {
+                setShowWelcomeModal(true);
+                setActiveView('Dashboard');
+              }}
             />
           )}
 
