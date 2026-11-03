@@ -23,7 +23,10 @@ import {
   X,
   Calendar,
   Anchor,
-  Clock
+  Clock,
+  Route,
+  Box,
+  Layers
 } from 'lucide-react';
 
 export default function JobOrderWizardView({
@@ -777,8 +780,8 @@ export default function JobOrderWizardView({
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded bg-blue-600/10 text-blue-700 text-[11px] font-bold flex items-center justify-center font-mono">
-                01
+              <span className="w-5 h-5 rounded bg-blue-600/10 text-blue-700 flex items-center justify-center">
+                <Route className="w-3.5 h-3.5" />
               </span>
               <h2 className="text-xs font-bold text-slate-800 tracking-tight">
                 Routing &amp; Shipment Specification
@@ -985,8 +988,8 @@ export default function JobOrderWizardView({
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2 flex-wrap gap-2">
             <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded bg-blue-600/10 text-blue-700 text-[11px] font-bold flex items-center justify-center font-mono">
-                02
+              <span className="w-5 h-5 rounded bg-blue-600/10 text-blue-700 flex items-center justify-center">
+                <Ship className="w-3.5 h-3.5" />
               </span>
               <h2 className="text-xs font-bold text-slate-800 tracking-tight">
                 Stakeholders, Liner &amp; Vessel Schedule
@@ -1250,8 +1253,8 @@ export default function JobOrderWizardView({
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded bg-blue-600/10 text-blue-700 text-[11px] font-bold flex items-center justify-center font-mono">
-                03
+              <span className="w-5 h-5 rounded bg-blue-600/10 text-blue-700 flex items-center justify-center">
+                <Box className="w-3.5 h-3.5" />
               </span>
               <h2 className="text-xs font-bold text-slate-800 tracking-tight">
                 Equipment Count &amp; Container Sizes
@@ -1328,8 +1331,8 @@ export default function JobOrderWizardView({
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-2 gap-2">
             <div className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded bg-blue-600/10 text-blue-700 text-[11px] font-bold flex items-center justify-center font-mono">
-                04
+              <span className="w-5 h-5 rounded bg-blue-600/10 text-blue-700 flex items-center justify-center">
+                <Layers className="w-3.5 h-3.5" />
               </span>
               <h2 className="text-xs font-bold text-slate-800 tracking-tight">
                 Container Allotment &amp; Manifest ({containers.length} Units)
