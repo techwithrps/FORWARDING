@@ -753,11 +753,18 @@ export default function JobOrderWizardView({
       <form onSubmit={handleSubmit} className="space-y-3">
         {/* CARD 1: Routing & Shipment Type (SPJ-2 Full Logistics Route Chain) */}
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-            <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider font-mono">
-              1. Routing &amp; Shipment Specification
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <div className="flex items-center gap-2">
+              <span className="w-5 h-5 rounded bg-blue-600/10 text-blue-700 text-[11px] font-bold flex items-center justify-center font-mono">
+                01
+              </span>
+              <h2 className="text-xs font-bold text-slate-800 tracking-tight">
+                Routing &amp; Shipment Specification
+              </h2>
+            </div>
+            <span className="text-[10px] font-medium text-slate-400 bg-slate-100/70 px-2 py-0.5 rounded border border-slate-200/60">
+              SPJ-2 Full Logistics Route Chain
             </span>
-            <span className="text-[10px] text-slate-400 font-mono">SPJ-2 Full Logistics Route Chain</span>
           </div>
 
           {/* Row 1: Shipment Specs & Initial Movement (JO Type -> Mode -> Empty Pickup -> Stuffing) */}
@@ -952,14 +959,17 @@ export default function JobOrderWizardView({
           </div>
         </div>
 
-        {/* CARD 2: Stakeholders, Vessel & Dates (Combined Grid) */}
+        {/* CARD 2: Stakeholders, Liner & Vessel Schedule */}
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 flex-wrap gap-2">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2 flex-wrap gap-2">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider font-mono">
-                2. Stakeholders, Ocean Liner &amp; Vessel Cut-offs
+              <span className="w-5 h-5 rounded bg-blue-600/10 text-blue-700 text-[11px] font-bold flex items-center justify-center font-mono">
+                02
               </span>
-              <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+              <h2 className="text-xs font-bold text-slate-800 tracking-tight">
+                Stakeholders, Liner &amp; Vessel Schedule
+              </h2>
+              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                 Route: {polList.find(p => p.code === form.pol)?.name || form.pol} ➔ {form.pod ? (podList.find(p => p.code === form.pod)?.name || form.pod) : 'Select POD'}
               </span>
             </div>
@@ -970,14 +980,14 @@ export default function JobOrderWizardView({
                 onClick={onOpenQuickAddShipper}
                 className="text-[11px] text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 cursor-pointer"
               >
-                <PlusCircle className="w-3 h-3" />
+                <PlusCircle className="w-3.5 h-3.5" />
                 <span>+ Add Shipper</span>
               </button>
             </div>
           </div>
 
           <div className="space-y-2.5">
-            {/* Row 1: Stakeholders & Line */}
+            {/* Row 1: Stakeholders & Line (4 Cols) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
               <div>
                 <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
@@ -1056,8 +1066,8 @@ export default function JobOrderWizardView({
               </div>
             </div>
 
-            {/* Row 2: Vessel & Maritime Cut-offs (Matched to SPJ-2 Vessel Updation) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-1 border-t border-slate-100">
+            {/* Row 2: Vessel & Operational Context (4 Cols) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1 border-t border-slate-100">
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-[10px] font-bold text-slate-600 uppercase">Vessel Name</label>
@@ -1095,8 +1105,33 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Transporter</label>
+                <input
+                  type="text"
+                  placeholder="SPJ Fleet Logistics / CONCOR"
+                  value={form.transporter || ''}
+                  onChange={(e) => setForm({ ...form, transporter: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Set Temp (°C / Reefer)</label>
+                <input
+                  type="text"
+                  placeholder="-18°C (Frozen) / Ambient"
+                  value={form.temperature || ''}
+                  onChange={(e) => setForm({ ...form, temperature: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Row 3: ALL DATES IN ONE LINE (5 Cols Compact Schedule Strip) */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1.5 border-t border-slate-100 bg-slate-50/60 p-2.5 rounded-lg border border-slate-200/60">
+              <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">ETD Date</label>
+                  <label className="text-[10px] font-bold text-slate-600 uppercase">ETD (Departure)</label>
                   {autoFilledFields.etdDate && form.etdDate && (
                     <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
                       ✓ Set
@@ -1107,7 +1142,24 @@ export default function JobOrderWizardView({
                   type="date"
                   value={form.etdDate}
                   onChange={(e) => setForm({ ...form, etdDate: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('etdDate', false, form.etdDate)}`}
+                  className={`w-full px-2 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('etdDate', false, form.etdDate)}`}
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[10px] font-bold text-slate-600 uppercase">ETA (Arrival)</label>
+                  {autoFilledFields.etaDate && form.etaDate && (
+                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
+                      ✓ Set
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="date"
+                  value={form.etaDate || ''}
+                  onChange={(e) => setForm({ ...form, etaDate: e.target.value })}
+                  className={`w-full px-2 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('etaDate', false, form.etaDate)}`}
                 />
               </div>
 
@@ -1124,7 +1176,7 @@ export default function JobOrderWizardView({
                   type="date"
                   value={form.portCutDate}
                   onChange={(e) => setForm({ ...form, portCutDate: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('portCutDate', false, form.portCutDate)}`}
+                  className={`w-full px-2 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('portCutDate', false, form.portCutDate)}`}
                 />
               </div>
 
@@ -1141,59 +1193,17 @@ export default function JobOrderWizardView({
                   type="date"
                   value={form.siCutDate}
                   onChange={(e) => setForm({ ...form, siCutDate: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('siCutDate', false, form.siCutDate)}`}
-                />
-              </div>
-            </div>
-
-            {/* Row 3: SPJ-2 Operational Transit Fields (ETA, Validity, Temp, Transporter) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1 border-t border-slate-100">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[10px] font-bold text-slate-600 uppercase">ETA Date (Arrival)</label>
-                  {autoFilledFields.etaDate && form.etaDate && (
-                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                      ✓ Set
-                    </span>
-                  )}
-                </div>
-                <input
-                  type="date"
-                  value={form.etaDate || ''}
-                  onChange={(e) => setForm({ ...form, etaDate: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('etaDate', false, form.etaDate)}`}
+                  className={`w-full px-2 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('siCutDate', false, form.siCutDate)}`}
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Booking Re-Validity</label>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Booking Validity</label>
                 <input
                   type="date"
                   value={form.bookingValidity || ''}
                   onChange={(e) => setForm({ ...form, bookingValidity: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Set Temp (°C / Reefer)</label>
-                <input
-                  type="text"
-                  placeholder="-18°C (Frozen) / Ambient"
-                  value={form.temperature || ''}
-                  onChange={(e) => setForm({ ...form, temperature: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Transporter</label>
-                <input
-                  type="text"
-                  placeholder="SPJ Fleet Logistics / CONCOR"
-                  value={form.transporter || ''}
-                  onChange={(e) => setForm({ ...form, transporter: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:bg-white focus:border-blue-500 outline-none"
+                  className="w-full px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-mono text-slate-800 focus:border-blue-500 outline-none"
                 />
               </div>
             </div>
@@ -1202,11 +1212,14 @@ export default function JobOrderWizardView({
 
         {/* CARD 3: Equipment Count & Size Allotment (Type & Rates removed) */}
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider font-mono">
-                3. Equipment Count &amp; Container Sizes
+              <span className="w-5 h-5 rounded bg-blue-600/10 text-blue-700 text-[11px] font-bold flex items-center justify-center font-mono">
+                03
               </span>
+              <h2 className="text-xs font-bold text-slate-800 tracking-tight">
+                Equipment Count &amp; Container Sizes
+              </h2>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200">
                 {totalContainersCount} Units Total
               </span>
@@ -1277,12 +1290,14 @@ export default function JobOrderWizardView({
 
         {/* CARD 4: Container Details Table (Compact Repeater) */}
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-1.5 gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-2 gap-2">
             <div className="flex items-center gap-2">
-              <Ship className="w-3.5 h-3.5 text-blue-600" />
-              <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider font-mono">
-                4. Container Allotment ({containers.length} Units)
+              <span className="w-5 h-5 rounded bg-blue-600/10 text-blue-700 text-[11px] font-bold flex items-center justify-center font-mono">
+                04
               </span>
+              <h2 className="text-xs font-bold text-slate-800 tracking-tight">
+                Container Allotment &amp; Manifest ({containers.length} Units)
+              </h2>
             </div>
 
             <div className="flex items-center gap-1.5">
