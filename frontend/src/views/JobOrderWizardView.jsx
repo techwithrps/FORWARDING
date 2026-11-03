@@ -193,8 +193,12 @@ export default function JobOrderWizardView({
   const [autoFilledFields, setAutoFilledFields] = useState({});
 
   // Dynamic Validation Rims (Standard Professional Executive Style)
-  // - Filled: Elegant Emerald Green rim with soft ambient tint
-  // - Unfilled: Refined Rose Red rim with soft subtle tint
+  // - When colorModeActive is false: Clean neutral standard appearance
+  // - When colorModeActive is true (Auto-Fill / Validate clicked):
+  //     - Filled: Elegant Emerald Green rim with soft ambient tint
+  //     - Unfilled: Refined Rose Red rim with soft subtle tint
+  const [colorModeActive, setColorModeActive] = useState(false);
+
   const isValueFilled = (val) => {
     if (val === undefined || val === null) return false;
     const str = String(val).trim();
@@ -204,6 +208,10 @@ export default function JobOrderWizardView({
   };
 
   const getFieldClass = (valOrName, isRequired, explicitVal) => {
+    if (!colorModeActive) {
+      return 'bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 outline-none transition-all duration-150';
+    }
+
     let val = explicitVal !== undefined ? explicitVal : valOrName;
     if (typeof val === 'string' && form && Object.prototype.hasOwnProperty.call(form, val) && explicitVal === undefined && isRequired !== undefined) {
       val = form[val];
@@ -213,7 +221,7 @@ export default function JobOrderWizardView({
     if (filled) {
       return 'border border-emerald-500 bg-emerald-50/[0.14] text-slate-900 font-semibold focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-200 outline-none transition-all duration-150';
     }
-    return 'border border-rose-300 hover:border-rose-400 bg-rose-50/[0.14] text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-200 outline-none transition-all duration-150';
+    return 'border border-rose-400 bg-rose-50/[0.14] text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-200 outline-none transition-all duration-150';
   };
 
   const allSailings = defaultSchedulesData?.sailings || [];
@@ -278,6 +286,7 @@ export default function JobOrderWizardView({
   });
 
   const handleSelectSailing = (sailing) => {
+    setColorModeActive(true);
     const mappedLine = mapCarrierToShippingLine(sailing.carrier);
     const portCut = sailing.cutOffs?.containerYard ? sailing.cutOffs.containerYard.split(' ')[0] : (sailing.departure || '');
     const siCut = sailing.cutOffs?.shippingInstructions ? sailing.cutOffs.shippingInstructions.split(' ')[0] : portCut;
@@ -390,6 +399,7 @@ export default function JobOrderWizardView({
   // AI Copilot Live Form Fill Listener
   useEffect(() => {
     if (copilotFillData && copilotFillData.form) {
+      setColorModeActive(true);
       setForm(prev => ({
         ...prev,
         ...copilotFillData.form
@@ -416,8 +426,58 @@ export default function JobOrderWizardView({
     setForm(prev => ({ ...prev, consignor: shipperName }));
   };
 
+  // ⚡ 1-Click Complete Auto-Fill with Dynamic Validation Rims
+  const handleAutoFillSample = () => {
+    setColorModeActive(true);
+    setForm(prev => ({
+      ...prev,
+      consignor: shippersList[0] || 'Fair Exports (India) Pvt Ltd',
+      consignee: consigneesList[0] || 'Al Maya Trading LLC (Dubai, UAE)',
+      shippingLine: 'Maersk Line',
+      lineBookingNo: 'BK-982104',
+      emptyPickupLocation: 'Dadri ICD Depot (CONCOR)',
+      fromLocation: 'Fair Exports Processing Plant, Dadri',
+      toLocation: 'Nhava Sheva-NSFT (INNSA1)',
+      pol: 'INNSA1',
+      pod: 'AEJEA',
+      vesselName: 'MAERSK COLOMBO',
+      voyage: '2604W',
+      etdDate: todayStr,
+      etaDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+      siCutDate: todayStr,
+      portCutDate: todayStr,
+      bookingValidity: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
+      temperature: '-18°C',
+      transporter: 'SPJ Fleet Logistics',
+      handoverLocation: 'Dadri ICD CFS Complex',
+      noOfCont: 1,
+      size: '40',
+      type: 'HC'
+    }));
+    setContainers([
+      {
+        sr: 1,
+        contNo: 'MSKU1234567',
+        size: '40',
+        type: 'HC',
+        tareWeight: '3820',
+        cargoWeight: '24500',
+        grossWeight: '28320',
+        sealNo: 'ML-IN-938210',
+        vehicleNo: 'HR55AN2094',
+        grNo: 'GR-2026-084',
+        grDate: todayStr,
+        remarks: ''
+      }
+    ]);
+    setFormError('');
+    setQuickFillNotice('⚡ Form Auto-Filled! Green = Completed, Red = Empty.');
+    setTimeout(() => setQuickFillNotice(''), 3500);
+  };
+
   // Clear Form for fresh blank entry
   const handleClearForm = () => {
+    setColorModeActive(false);
     setForm({
       joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
       joDate: todayStr,
@@ -632,6 +692,7 @@ export default function JobOrderWizardView({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setColorModeActive(true);
     if (!form.consignor) {
       setFormError('Please select Consignor (Shipper)');
       return;
@@ -743,6 +804,17 @@ export default function JobOrderWizardView({
               <span className="truncate max-w-[200px]">{quickFillNotice}</span>
             </span>
           )}
+
+          {/* ⚡ Auto-Fill Button */}
+          <button
+            type="button"
+            onClick={handleAutoFillSample}
+            className="px-2.5 py-1 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold text-[11px] shadow-2xs flex items-center gap-1 transition cursor-pointer select-none"
+            title="1-Click Auto-Fill Booking Form & Reveal Validation Colors"
+          >
+            <Zap className="w-3 h-3 text-amber-300" />
+            <span>Auto-Fill</span>
+          </button>
 
           <button
             type="button"
@@ -990,6 +1062,20 @@ export default function JobOrderWizardView({
             </div>
 
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setRouteFilterOnly(true);
+                  setSelectedCarrierFilter('ALL');
+                  setShowSailingPicker(true);
+                }}
+                className="px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-[10px] border border-blue-200 flex items-center gap-1 cursor-pointer transition select-none"
+                title="Auto-fill Line, Vessel & Dates from Active Sailings"
+              >
+                <Ship className="w-3 h-3 text-blue-600" />
+                <span>Auto-Fill Sailings</span>
+              </button>
+
               <button
                 type="button"
                 onClick={onOpenQuickAddShipper}
@@ -1389,17 +1475,23 @@ export default function JobOrderWizardView({
 
         {/* 4. Action Save Button Bar */}
         <div className="flex items-center justify-between pt-1.5 pb-1">
-          <div className="text-[10px] text-slate-500 font-medium flex items-center gap-2">
-            <span className="inline-flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-rose-400 inline-block"></span>
-              Unfilled / Blank (Red Rim)
-            </span>
-            <span className="text-slate-300">•</span>
-            <span className="inline-flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-              Filled / Valid (Green Rim)
-            </span>
-          </div>
+          {colorModeActive ? (
+            <div className="text-[10px] text-slate-600 font-medium flex items-center gap-2 animate-fade-in">
+              <span className="inline-flex items-center gap-1 font-semibold text-rose-700">
+                <span className="w-2 h-2 rounded-full bg-rose-500 inline-block shadow-xs"></span>
+                Unfilled / Required (Red Rim)
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block shadow-xs"></span>
+                Auto-Filled / Valid (Green Rim)
+              </span>
+            </div>
+          ) : (
+            <div className="text-[10px] text-slate-400 font-mono">
+              Click ⚡ Auto-Fill or Auto-Fill Sailings to populate &amp; reveal validation colors
+            </div>
+          )}
 
           <button
             type="submit"
