@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Dancing+Script:wght@600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -124,4 +125,36 @@
   -webkit-background-clip: text;
   background-clip: text;
   animation: appleShimmer 3.5s linear infinite;
+}
+
+/* Apple "Hello" Signature Script Animation & Cursive Style */
+.font-apple-script {
+  font-family: 'Caveat', 'Dancing Script', cursive, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+@keyframes appleHelloFade {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(18px);
+    filter: blur(10px);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+  80% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.03) translateY(-8px);
+    filter: blur(6px);
+  }
+}
+
+.apple-hello-card {
+  animation: appleHelloFade 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

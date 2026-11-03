@@ -19,7 +19,7 @@ import FleetMovementView from './views/FleetMovementView.jsx';
 import ShipmentLifecycleHubView from './views/ShipmentLifecycleHubView.jsx';
 import VesselIntelligenceHubView from './views/VesselIntelligenceHubView.jsx';
 import AICopilot from './components/AICopilot.jsx';
-import { AppleDynamicIsland, AppleWelcomeModal } from './components/AppleExperience.jsx';
+import { AppleHelloPageTransition, AppleWelcomeModal } from './components/AppleExperience.jsx';
 
 import {
   Search,
@@ -534,8 +534,8 @@ export default function App() {
 
       {/* 2. Main Workspace Layout (Full-Width Clean Workspace) */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto relative">
-        {/* Apple iOS-Style Dynamic Island Floating Page Indicator */}
-        <AppleDynamicIsland activeView={activeView} />
+        {/* Apple "Hello" Signature Script Transition Overlay on each page change */}
+        <AppleHelloPageTransition activeView={activeView} />
 
         {/* Apple iOS-Style "Welcome to Version 2.O" Greeting Modal */}
         <AppleWelcomeModal

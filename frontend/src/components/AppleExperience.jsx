@@ -27,61 +27,344 @@ import {
   MapPin
 } from 'lucide-react';
 
-// View catalog mapping for icons, friendly titles & categories
+// View catalog mapping with Apple script friendly names and icons
 export const VIEW_METADATA = {
-  Dashboard: { label: 'Executive Dashboard', subtitle: 'Real-time KPIs & Volume Analytics', icon: LayoutDashboard, color: 'text-blue-600', bg: 'bg-blue-50' },
-  Login: { label: 'Authentication & Security', subtitle: 'Role-Based Access Control', icon: KeyRound, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-  ContainerBooking: { label: 'Container Booking (JO)', subtitle: 'Single-Screen Full Route Dispatch', icon: PlusCircle, color: 'text-blue-600', bg: 'bg-blue-50' },
-  VesselPlanDetails: { label: 'Vessel Plan & Gateway Port', subtitle: 'Live Ocean Schedules & Cut-offs', icon: Anchor, color: 'text-cyan-600', bg: 'bg-cyan-50' },
-  ShipmentStatus: { label: 'Shipment Lifecycle Hub', subtitle: 'End-to-End Milestone Tracking', icon: Navigation, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  RateTariff: { label: 'Rate Tariff Master', subtitle: 'Commercial Buy & Sell Freight Rates', icon: TrendingUp, color: 'text-violet-600', bg: 'bg-violet-50' },
-  RateApproval: { label: 'Rate Approval Workflow', subtitle: 'Commercial Quotations & Sign-offs', icon: FileCheck, color: 'text-amber-600', bg: 'bg-amber-50' },
-  EmptyBooking: { label: 'Empty Container Booking', subtitle: 'Depot & Yard Allotment Orders', icon: Box, color: 'text-slate-600', bg: 'bg-slate-50' },
-  EmptyInventory: { label: 'Empty Depot Inventory', subtitle: 'Live Container Yard Stock', icon: Box, color: 'text-slate-600', bg: 'bg-slate-50' },
-  TripPendency: { label: 'Trip Pendency Ledger', subtitle: 'Awaiting Driver & Vehicle Dispatch', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-  GrGeneration: { label: 'GR Generation (Lorry Receipt)', subtitle: 'E-Way & Consignment Notes', icon: Truck, color: 'text-blue-600', bg: 'bg-blue-50' },
-  RunningPosition: { label: 'Live Vehicle GPS Tracking', subtitle: 'Highway Checkpoints & Route Status', icon: Navigation, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  TripClose: { label: 'Trip Close & Settlement', subtitle: 'Driver Diesel & Toll Reconciliation', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  EdiUpdate: { label: 'EDI Transmission Update', subtitle: 'Customs & Port Terminal EDI Filing', icon: Send, color: 'text-blue-600', bg: 'bg-blue-50' },
-  RailOutStatus: { label: 'Rail Out Status', subtitle: 'CONCOR Rake Loading & Departure', icon: Train, color: 'text-cyan-600', bg: 'bg-cyan-50' },
-  SobUpdate: { label: 'Shipped On Board (SOB)', subtitle: 'Ocean Vessel Sailing Confirmation', icon: Ship, color: 'text-blue-600', bg: 'bg-blue-50' },
-  DocumentUpdate: { label: 'Document & Shipping Bill', subtitle: 'Customs LEO & Shipping Bills', icon: FileText, color: 'text-slate-600', bg: 'bg-slate-50' },
-  BlStatusUpdate: { label: 'Bill of Lading (BL) Status', subtitle: 'OBL / Seaway Bill Release', icon: FileCheck, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-  TelexStatusUpdate: { label: 'Telex Release Update', subtitle: 'Destination Cargo Surrender', icon: Send, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  TrUpdate: { label: 'Terminal TR Update', subtitle: 'Port Container Gate In & Out', icon: ShieldCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
-  HandoverUpdate: { label: 'Customs Handover Update', subtitle: 'CFS & Terminal Port Handover', icon: FileText, color: 'text-slate-600', bg: 'bg-slate-50' },
-  EgmUpdate: { label: 'EGM Filing Status', subtitle: 'Export General Manifest Finalization', icon: FileCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
-  ShipmentDischargeStatus: { label: 'Shipment Discharge Status', subtitle: 'Destination Port Unloading ETA', icon: Ship, color: 'text-cyan-600', bg: 'bg-cyan-50' },
-  Invoice: { label: 'Tax Invoice (IRN / GST)', subtitle: 'Automated E-Invoice Generation', icon: Receipt, color: 'text-blue-600', bg: 'bg-blue-50' },
-  CreditDebitNotes: { label: 'Credit & Debit Notes', subtitle: 'Financial Ledger Adjustments', icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50' },
-  CommercialReports: { label: 'Commercial P&L Reports', subtitle: 'Shipment Margin & Profit Ledger', icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  DSRReport: { label: 'Daily Status Report (DSR)', subtitle: 'Container Movement Export Ledger', icon: FileSpreadsheet, color: 'text-blue-600', bg: 'bg-blue-50' },
-  CompanyMaster: { label: 'Company Master', subtitle: 'Branches, Legal Entities & PAN', icon: Building2, color: 'text-slate-600', bg: 'bg-slate-50' },
-  CustomerMaster: { label: 'Customer Master', subtitle: 'Shippers, Consignees & Exporters', icon: UserCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
-  VendorMaster: { label: 'Vendor Master', subtitle: 'Shipping Lines, CFS & Transporters', icon: Building2, color: 'text-slate-600', bg: 'bg-slate-50' },
-  TerminalMaster: { label: 'Terminal Master', subtitle: 'ICD, CFS & Gateway Sea Ports', icon: MapPin, color: 'text-cyan-600', bg: 'bg-cyan-50' },
-  TaxHead: { label: 'Tax Head Master', subtitle: 'HSN/SAC Codes & GST Slabs', icon: Receipt, color: 'text-purple-600', bg: 'bg-purple-50' },
-  TaxHeadGroup: { label: 'Tax Head Group', subtitle: 'Freight & Handling Charge Groups', icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50' },
-  ServiceMaster: { label: 'Service Master', subtitle: 'Tariff Service Line Items', icon: Receipt, color: 'text-blue-600', bg: 'bg-blue-50' },
-  UomMaster: { label: 'Unit of Measure (UOM)', subtitle: 'Measurement Standard Codes', icon: Box, color: 'text-slate-600', bg: 'bg-slate-50' },
-  CommodityMaster: { label: 'Commodity Master', subtitle: 'Reefer & Dry Cargo Classifications', icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  BankMaster: { label: 'Bank Master', subtitle: 'Company Remittance & Accounts', icon: Building2, color: 'text-slate-600', bg: 'bg-slate-50' },
-  PortMaster: { label: 'Location & Port Master', subtitle: 'UN/LOCODE Master Registry', icon: MapPin, color: 'text-cyan-600', bg: 'bg-cyan-50' },
-  DriverMaster: { label: 'Driver Master', subtitle: 'Trailer Drivers & License KYC', icon: UserCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
-  VehicleMaster: { label: 'Vehicle Master', subtitle: 'GPS Fleet Trailer Inventory', icon: Truck, color: 'text-blue-600', bg: 'bg-blue-50' }
+  Dashboard: {
+    helloText: 'dashboard',
+    label: 'Executive Dashboard',
+    subtitle: 'Real-time KPIs & Volume Analytics',
+    icon: LayoutDashboard,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50'
+  },
+  Login: {
+    helloText: 'welcome',
+    label: 'Authentication & Security',
+    subtitle: 'Role-Based Access Control',
+    icon: KeyRound,
+    color: 'text-indigo-600',
+    bg: 'bg-indigo-50'
+  },
+  ContainerBooking: {
+    helloText: 'container booking',
+    label: 'Container Booking (JO)',
+    subtitle: 'Single-Screen Full Route Chain',
+    icon: PlusCircle,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50'
+  },
+  VesselPlanDetails: {
+    helloText: 'vessel plan',
+    label: 'Vessel Plan & Gateway Port',
+    subtitle: 'Live Ocean Schedules & Cut-offs',
+    icon: Anchor,
+    color: 'text-cyan-600',
+    bg: 'bg-cyan-50'
+  },
+  ShipmentStatus: {
+    helloText: 'shipment lifecycle',
+    label: 'Shipment Lifecycle Hub',
+    subtitle: 'End-to-End Milestone Tracking',
+    icon: Navigation,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50'
+  },
+  RateTariff: {
+    helloText: 'rate tariff',
+    label: 'Rate Tariff Master',
+    subtitle: 'Commercial Buy & Sell Freight Rates',
+    icon: TrendingUp,
+    color: 'text-violet-600',
+    bg: 'bg-violet-50'
+  },
+  RateApproval: {
+    helloText: 'rate approval',
+    label: 'Rate Approval Workflow',
+    subtitle: 'Commercial Quotations & Sign-offs',
+    icon: FileCheck,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50'
+  },
+  EmptyBooking: {
+    helloText: 'empty booking',
+    label: 'Empty Container Booking',
+    subtitle: 'Depot & Yard Allotment Orders',
+    icon: Box,
+    color: 'text-slate-600',
+    bg: 'bg-slate-50'
+  },
+  EmptyInventory: {
+    helloText: 'empty inventory',
+    label: 'Empty Depot Inventory',
+    subtitle: 'Live Container Yard Stock',
+    icon: Box,
+    color: 'text-slate-600',
+    bg: 'bg-slate-50'
+  },
+  TripPendency: {
+    helloText: 'trip pendency',
+    label: 'Trip Pendency Ledger',
+    subtitle: 'Awaiting Driver & Vehicle Dispatch',
+    icon: Clock,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50'
+  },
+  GrGeneration: {
+    helloText: 'goods receipt',
+    label: 'GR Generation (Lorry Receipt)',
+    subtitle: 'E-Way & Consignment Notes',
+    icon: Truck,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50'
+  },
+  RunningPosition: {
+    helloText: 'live tracking',
+    label: 'Live Vehicle GPS Tracking',
+    subtitle: 'Highway Checkpoints & Route Status',
+    icon: Navigation,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50'
+  },
+  TripClose: {
+    helloText: 'trip close',
+    label: 'Trip Close & Settlement',
+    subtitle: 'Driver Diesel & Toll Reconciliation',
+    icon: CheckCircle2,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50'
+  },
+  EdiUpdate: {
+    helloText: 'edi update',
+    label: 'EDI Transmission Update',
+    subtitle: 'Customs & Port Terminal EDI Filing',
+    icon: Send,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50'
+  },
+  RailOutStatus: {
+    helloText: 'rail out',
+    label: 'Rail Out Status',
+    subtitle: 'CONCOR Rake Loading & Departure',
+    icon: Train,
+    color: 'text-cyan-600',
+    bg: 'bg-cyan-50'
+  },
+  SobUpdate: {
+    helloText: 'shipped on board',
+    label: 'Shipped On Board (SOB)',
+    subtitle: 'Ocean Vessel Sailing Confirmation',
+    icon: Ship,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50'
+  },
+  DocumentUpdate: {
+    helloText: 'documentation',
+    label: 'Document & Shipping Bill',
+    subtitle: 'Customs LEO & Shipping Bills',
+    icon: FileText,
+    color: 'text-slate-600',
+    bg: 'bg-slate-50'
+  },
+  BlStatusUpdate: {
+    helloText: 'bill of lading',
+    label: 'Bill of Lading (BL) Status',
+    subtitle: 'OBL / Seaway Bill Release',
+    icon: FileCheck,
+    color: 'text-indigo-600',
+    bg: 'bg-indigo-50'
+  },
+  TelexStatusUpdate: {
+    helloText: 'telex release',
+    label: 'Telex Release Update',
+    subtitle: 'Destination Cargo Surrender',
+    icon: Send,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50'
+  },
+  TrUpdate: {
+    helloText: 'terminal update',
+    label: 'Terminal TR Update',
+    subtitle: 'Port Container Gate In & Out',
+    icon: ShieldCheck,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50'
+  },
+  HandoverUpdate: {
+    helloText: 'customs handover',
+    label: 'Customs Handover Update',
+    subtitle: 'CFS & Terminal Port Handover',
+    icon: FileText,
+    color: 'text-slate-600',
+    bg: 'bg-slate-50'
+  },
+  EgmUpdate: {
+    helloText: 'egm manifest',
+    label: 'EGM Filing Status',
+    subtitle: 'Export General Manifest Finalization',
+    icon: FileCheck,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50'
+  },
+  ShipmentDischargeStatus: {
+    helloText: 'cargo discharge',
+    label: 'Shipment Discharge Status',
+    subtitle: 'Destination Port Unloading ETA',
+    icon: Ship,
+    color: 'text-cyan-600',
+    bg: 'bg-cyan-50'
+  },
+  Invoice: {
+    helloText: 'tax invoice',
+    label: 'Tax Invoice (IRN / GST)',
+    subtitle: 'Automated E-Invoice Generation',
+    icon: Receipt,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50'
+  },
+  CreditDebitNotes: {
+    helloText: 'credit & debit',
+    label: 'Credit & Debit Notes',
+    subtitle: 'Financial Ledger Adjustments',
+    icon: CreditCard,
+    color: 'text-purple-600',
+    bg: 'bg-purple-50'
+  },
+  CommercialReports: {
+    helloText: 'p&l reports',
+    label: 'Commercial P&L Reports',
+    subtitle: 'Shipment Margin & Profit Ledger',
+    icon: TrendingUp,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50'
+  },
+  DSRReport: {
+    helloText: 'dsr ledger',
+    label: 'Daily Status Report (DSR)',
+    subtitle: 'Container Movement Export Ledger',
+    icon: FileSpreadsheet,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50'
+  },
+  CompanyMaster: {
+    helloText: 'company master',
+    label: 'Company Master',
+    subtitle: 'Branches, Legal Entities & PAN',
+    icon: Building2,
+    color: 'text-slate-600',
+    bg: 'bg-slate-50'
+  },
+  CustomerMaster: {
+    helloText: 'customer master',
+    label: 'Customer Master',
+    subtitle: 'Shippers, Consignees & Exporters',
+    icon: UserCheck,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50'
+  },
+  VendorMaster: {
+    helloText: 'vendor master',
+    label: 'Vendor Master',
+    subtitle: 'Shipping Lines, CFS & Transporters',
+    icon: Building2,
+    color: 'text-slate-600',
+    bg: 'bg-slate-50'
+  },
+  TerminalMaster: {
+    helloText: 'terminal master',
+    label: 'Terminal Master',
+    subtitle: 'ICD, CFS & Gateway Sea Ports',
+    icon: MapPin,
+    color: 'text-cyan-600',
+    bg: 'bg-cyan-50'
+  },
+  TaxHead: {
+    helloText: 'tax head',
+    label: 'Tax Head Master',
+    subtitle: 'HSN/SAC Codes & GST Slabs',
+    icon: Receipt,
+    color: 'text-purple-600',
+    bg: 'bg-purple-50'
+  },
+  TaxHeadGroup: {
+    helloText: 'tax group',
+    label: 'Tax Head Group',
+    subtitle: 'Freight & Handling Charge Groups',
+    icon: FileText,
+    color: 'text-purple-600',
+    bg: 'bg-purple-50'
+  },
+  ServiceMaster: {
+    helloText: 'service master',
+    label: 'Service Master',
+    subtitle: 'Tariff Service Line Items',
+    icon: Receipt,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50'
+  },
+  UomMaster: {
+    helloText: 'unit of measure',
+    label: 'Unit of Measure (UOM)',
+    subtitle: 'Measurement Standard Codes',
+    icon: Box,
+    color: 'text-slate-600',
+    bg: 'bg-slate-50'
+  },
+  CommodityMaster: {
+    helloText: 'commodity master',
+    label: 'Commodity Master',
+    subtitle: 'Reefer & Dry Cargo Classifications',
+    icon: ShieldCheck,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50'
+  },
+  BankMaster: {
+    helloText: 'bank master',
+    label: 'Bank Master',
+    subtitle: 'Company Remittance & Accounts',
+    icon: Building2,
+    color: 'text-slate-600',
+    bg: 'bg-slate-50'
+  },
+  PortMaster: {
+    helloText: 'port master',
+    label: 'Location & Port Master',
+    subtitle: 'UN/LOCODE Master Registry',
+    icon: MapPin,
+    color: 'text-cyan-600',
+    bg: 'bg-cyan-50'
+  },
+  DriverMaster: {
+    helloText: 'driver master',
+    label: 'Driver Master',
+    subtitle: 'Trailer Drivers & License KYC',
+    icon: UserCheck,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50'
+  },
+  VehicleMaster: {
+    helloText: 'vehicle master',
+    label: 'Vehicle Master',
+    subtitle: 'GPS Fleet Trailer Inventory',
+    icon: Truck,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50'
+  }
 };
 
 /**
- * Apple iOS-Style Dynamic Island Floating Pill
- * Displays when any page opens/changes, with frosted glassmorphism & fluid spring animation
+ * Apple "Hello" Signature Script Transition Overlay
+ * Appears when ANY page opens, writing that page's name in iconic Apple "hello" cursive script
+ * over a frosted glassmorphism background, then seamlessly dissolves.
  */
-export function AppleDynamicIsland({ activeView }) {
+export function AppleHelloPageTransition({ activeView }) {
   const [visible, setVisible] = useState(false);
-  const [currentMeta, setCurrentMeta] = useState(null);
+  const [meta, setMeta] = useState(null);
 
   useEffect(() => {
     if (!activeView) return;
-    const meta = VIEW_METADATA[activeView] || {
+
+    const current = VIEW_METADATA[activeView] || {
+      helloText: activeView.replace(/([A-Z])/g, ' $1').toLowerCase().trim(),
       label: activeView.replace(/([A-Z])/g, ' $1').trim(),
       subtitle: 'SPJ Logistics Operating System',
       icon: LayoutDashboard,
@@ -89,50 +372,52 @@ export function AppleDynamicIsland({ activeView }) {
       bg: 'bg-blue-50'
     };
 
-    setCurrentMeta(meta);
+    setMeta(current);
     setVisible(true);
 
     const timer = setTimeout(() => {
       setVisible(false);
-    }, 2400);
+    }, 1300);
 
     return () => clearTimeout(timer);
   }, [activeView]);
 
-  if (!visible || !currentMeta) return null;
+  if (!visible || !meta) return null;
 
-  const Icon = currentMeta.icon || LayoutDashboard;
+  const Icon = meta.icon || LayoutDashboard;
 
   return (
     <div
       onClick={() => setVisible(false)}
-      className="fixed top-3 sm:top-3.5 left-1/2 -translate-x-1/2 z-[100] cursor-pointer select-none transition-all duration-300"
-      title="Click to dismiss"
+      className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-slate-950/20 backdrop-blur-xl transition-all cursor-pointer select-none"
+      title="Click to skip animation"
     >
-      <div className="apple-dynamic-island apple-glass px-4 py-2 sm:px-5 sm:py-2.5 rounded-full flex items-center gap-3 max-w-[90vw] hover:scale-105 active:scale-95 transition-transform duration-200 shadow-[0_16px_40px_rgba(0,0,0,0.12)]">
-        {/* Apple Squircle Icon Badge */}
-        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full ${currentMeta.bg} ${currentMeta.color} flex items-center justify-center shrink-0 border border-black/5 shadow-2xs`}>
-          <Icon className="w-4 h-4 stroke-[2.2]" />
+      <div className="apple-hello-card apple-glass px-8 py-7 sm:px-12 sm:py-9 rounded-3xl text-center space-y-3.5 max-w-lg shadow-[0_25px_70px_rgba(0,0,0,0.18)] border border-white/80 overflow-hidden relative">
+        {/* Subtle iridescent glow orb */}
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-48 h-48 bg-gradient-to-tr from-blue-500/20 via-indigo-500/20 to-violet-500/20 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Squircle App Icon */}
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-white/90 border border-white/80 text-blue-600 shadow-sm shadow-blue-500/20 relative z-10">
+          <Icon className="w-6 h-6 stroke-[2.2]" />
         </div>
 
-        {/* Page Title & Subtitle */}
-        <div className="flex flex-col text-left pr-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-[13px] font-black text-slate-900 tracking-tight truncate font-sans">
-              {currentMeta.label}
-            </span>
-            <span className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-blue-50 text-blue-700 text-[9px] font-mono font-extrabold border border-blue-200">
-              <span className="w-1 h-1 rounded-full bg-blue-600 animate-pulse"></span>
-              v2.O
-            </span>
+        {/* The Iconic Apple "hello" Style Cursive Script */}
+        <div className="relative z-10 space-y-1">
+          <h1 className="font-apple-script text-5xl sm:text-6xl md:text-7xl font-bold apple-shimmer-text tracking-wide drop-shadow-xs lowercase">
+            {meta.helloText}
+          </h1>
+          <div className="text-xs sm:text-sm font-black text-slate-800 tracking-tight font-sans">
+            {meta.label}
           </div>
-          <span className="text-[10px] sm:text-[10.5px] font-medium text-slate-500 truncate -mt-0.5">
-            {currentMeta.subtitle}
+        </div>
+
+        {/* Apple Subtitle Pill */}
+        <div className="relative z-10 pt-1">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/[0.05] border border-slate-300/60 text-[10.5px] font-mono font-extrabold text-slate-700 tracking-wide uppercase shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+            Version 2.O &bull; SPJ Group of Companies
           </span>
         </div>
-
-        {/* Apple Subtle Glow Indicator */}
-        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)] shrink-0 ml-1"></div>
       </div>
     </div>
   );
@@ -140,17 +425,14 @@ export function AppleDynamicIsland({ activeView }) {
 
 /**
  * Apple iOS-Style "Welcome to Version 2.O" Greeting Modal
- * Appears when logging in or opening the platform, with iconic Apple glassmorphism
+ * Appears when logging in or opening the platform
  */
-export function AppleWelcomeModal({ isOpen, onClose, username = 'Rishabh' }) {
+export function AppleWelcomeModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-md animate-fade-in font-sans">
-      <div
-        className="fixed inset-0"
-        onClick={onClose}
-      />
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-xl animate-fade-in font-sans">
+      <div className="fixed inset-0" onClick={onClose} />
 
       <div className="relative apple-welcome-card apple-glass w-full max-w-lg rounded-3xl p-6 sm:p-8 text-center space-y-6 shadow-[0_30px_90px_rgba(0,0,0,0.22)] border border-white/80 overflow-hidden">
         {/* Apple subtle ambient gradient glow */}
@@ -167,16 +449,21 @@ export function AppleWelcomeModal({ isOpen, onClose, username = 'Rishabh' }) {
         </button>
 
         {/* Apple-style Logo & Sparkle Header */}
-        <div className="space-y-3 relative z-10">
+        <div className="space-y-2.5 relative z-10">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 ring-4 ring-white/80">
             <Sparkles className="w-7 h-7 animate-pulse" />
           </div>
 
           <div className="space-y-1">
+            {/* The iconic Apple cursive "hello" text */}
+            <div className="font-apple-script text-5xl sm:text-6xl font-bold apple-shimmer-text tracking-wide lowercase">
+              hello
+            </div>
+
             <div className="text-[11px] font-black tracking-widest uppercase text-blue-600 font-mono">
               SPJ GROUP OF COMPANIES
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 apple-shimmer-text">
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
               Welcome to Version 2.O
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto font-medium">
