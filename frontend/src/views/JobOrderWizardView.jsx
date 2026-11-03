@@ -760,7 +760,7 @@ export default function JobOrderWizardView({
             <span className="text-[10px] text-slate-400 font-mono">SPJ-2 Full Logistics Route Chain</span>
           </div>
 
-          {/* Row 1: Shipment Specs & Loading / Discharge Ports */}
+          {/* Row 1: Shipment Specs & Initial Movement (JO Type -> Mode -> Empty Pickup -> Stuffing) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
             <div>
               <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
@@ -793,6 +793,77 @@ export default function JobOrderWizardView({
                 <option value="Multimodal (Rail + Road)">Multimodal (Rail + Road / Both)</option>
                 <option value="By Rail">By Rail (CONCOR Rake)</option>
                 <option value="By Road">By Road (Trailer / Direct)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                Empty Pickup Location
+              </label>
+              <select
+                value={form.emptyPickupLocation || 'Dadri ICD Depot (CONCOR)'}
+                onChange={(e) => setForm({ ...form, emptyPickupLocation: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+              >
+                <option value="Dadri ICD Depot (CONCOR)">Dadri ICD Depot (CONCOR)</option>
+                <option value="Piyala ICD Depot">Piyala ICD Depot</option>
+                <option value="ACTL Faridabad Yard">ACTL Faridabad Yard</option>
+                <option value="Garhi Harsaru (GRH) Depot">Garhi Harsaru (GRH) Depot</option>
+                <option value="TKD Tughlakabad Depot">TKD Tughlakabad Depot</option>
+                <option value="Nhava Sheva Empty Yard">Nhava Sheva Empty Yard</option>
+                <option value="Mundra Port Empty Depot">Mundra Port Empty Depot</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                To Pickup / Stuffing Location
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Shipper Factory / Aligarh Plant"
+                value={form.fromLocation}
+                onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Row 2: Handover -> Gateway Terminal -> POL -> POD */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1.5 border-t border-slate-100">
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                Handover Location
+              </label>
+              <select
+                value={form.handoverLocation || 'Dadri ICD CFS Complex'}
+                onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+              >
+                <option value="Dadri ICD CFS Complex">Dadri ICD CFS Complex</option>
+                <option value="Piyala ICD CFS Complex">Piyala ICD CFS Complex</option>
+                <option value="Nhava Sheva Buffer Yard">Nhava Sheva Buffer Yard</option>
+                <option value="Mundra CFS Complex">Mundra CFS Complex</option>
+                <option value="Gateway Port Terminal Gate">Gateway Port Terminal Gate</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                Gateway Port Terminal
+              </label>
+              <select
+                value={form.toLocation}
+                onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+              >
+                <option value="Nhava Sheva-NSFT (INNSA1)">Nhava Sheva-NSFT (INNSA1)</option>
+                <option value="Nhava Sheva-BMCT (INNSA1)">Nhava Sheva-BMCT (INNSA1)</option>
+                <option value="Nhava Sheva-GTI (INNSA1)">Nhava Sheva-GTI (INNSA1)</option>
+                <option value="Mundra Port-MDCC (INMUN1)">Mundra Port-MDCC (INMUN1)</option>
+                <option value="Pipavav Port-APMT (INPAV1)">Pipavav Port-APMT (INPAV1)</option>
+                <option value="Hazira Port (INHZR1)">Hazira Port (INHZR1)</option>
+                <option value="Chennai Port (INMAA1)">Chennai Port (INMAA1)</option>
               </select>
             </div>
 
@@ -876,77 +947,6 @@ export default function JobOrderWizardView({
                     {p.name}
                   </option>
                 ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Row 2: SPJ-2 Logistics Movement Chain (Empty Pickup -> Stuffing Location -> Handover Location -> Gateway Port) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1.5 border-t border-slate-100">
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
-                Empty Pickup Location
-              </label>
-              <select
-                value={form.emptyPickupLocation || 'Dadri ICD Depot (CONCOR)'}
-                onChange={(e) => setForm({ ...form, emptyPickupLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
-              >
-                <option value="Dadri ICD Depot (CONCOR)">Dadri ICD Depot (CONCOR)</option>
-                <option value="Piyala ICD Depot">Piyala ICD Depot</option>
-                <option value="ACTL Faridabad Yard">ACTL Faridabad Yard</option>
-                <option value="Garhi Harsaru (GRH) Depot">Garhi Harsaru (GRH) Depot</option>
-                <option value="TKD Tughlakabad Depot">TKD Tughlakabad Depot</option>
-                <option value="Nhava Sheva Empty Yard">Nhava Sheva Empty Yard</option>
-                <option value="Mundra Port Empty Depot">Mundra Port Empty Depot</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
-                To Pickup / Stuffing Location
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Shipper Factory / Aligarh Plant"
-                value={form.fromLocation}
-                onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
-                Handover Location
-              </label>
-              <select
-                value={form.handoverLocation || 'Dadri ICD CFS Complex'}
-                onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
-              >
-                <option value="Dadri ICD CFS Complex">Dadri ICD CFS Complex</option>
-                <option value="Piyala ICD CFS Complex">Piyala ICD CFS Complex</option>
-                <option value="Nhava Sheva Buffer Yard">Nhava Sheva Buffer Yard</option>
-                <option value="Mundra CFS Complex">Mundra CFS Complex</option>
-                <option value="Gateway Port Terminal Gate">Gateway Port Terminal Gate</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
-                Gateway Port Terminal
-              </label>
-              <select
-                value={form.toLocation}
-                onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
-              >
-                <option value="Nhava Sheva-NSFT (INNSA1)">Nhava Sheva-NSFT (INNSA1)</option>
-                <option value="Nhava Sheva-BMCT (INNSA1)">Nhava Sheva-BMCT (INNSA1)</option>
-                <option value="Nhava Sheva-GTI (INNSA1)">Nhava Sheva-GTI (INNSA1)</option>
-                <option value="Mundra Port-MDCC (INMUN1)">Mundra Port-MDCC (INMUN1)</option>
-                <option value="Pipavav Port-APMT (INPAV1)">Pipavav Port-APMT (INPAV1)</option>
-                <option value="Hazira Port (INHZR1)">Hazira Port (INHZR1)</option>
-                <option value="Chennai Port (INMAA1)">Chennai Port (INMAA1)</option>
               </select>
             </div>
           </div>
