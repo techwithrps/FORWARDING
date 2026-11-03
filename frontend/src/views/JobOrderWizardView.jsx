@@ -695,11 +695,17 @@ export default function JobOrderWizardView({
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
             <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Jo Type *</label>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                Jo Type <span className="text-rose-500 font-bold">*</span>
+              </label>
               <select
                 value={form.joType}
                 onChange={(e) => setForm({ ...form, joType: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium outline-none transition ${
+                  !form.joType
+                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200'
+                    : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
+                }`}
               >
                 <option value="Export FCL">Export FCL (Laden)</option>
                 <option value="Import FCL">Import FCL (Delivery)</option>
@@ -712,11 +718,17 @@ export default function JobOrderWizardView({
             </div>
 
             <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Mode *</label>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                Mode <span className="text-rose-500 font-bold">*</span>
+              </label>
               <select
                 value={form.modeOfShipment}
                 onChange={(e) => setForm({ ...form, modeOfShipment: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium outline-none transition ${
+                  !form.modeOfShipment
+                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200'
+                    : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
+                }`}
               >
                 <option value="Multimodal (Rail + Road)">Multimodal (Rail + Road / Both)</option>
                 <option value="By Rail">By Rail (CONCOR Rake)</option>
@@ -725,11 +737,17 @@ export default function JobOrderWizardView({
             </div>
 
             <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Origin (ICD) *</label>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                Origin (ICD) <span className="text-rose-500 font-bold">*</span>
+              </label>
               <select
                 value={form.fromLocation}
                 onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium outline-none transition ${
+                  !form.fromLocation
+                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200'
+                    : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
+                }`}
               >
                 <option value="Dadri ICD (INICD6)">Dadri ICD (INICD6)</option>
                 <option value="Moradabad ICD (INMBD6)">Moradabad ICD (INMBD6)</option>
@@ -740,11 +758,17 @@ export default function JobOrderWizardView({
             </div>
 
             <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Gateway Port *</label>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                Gateway Port <span className="text-rose-500 font-bold">*</span>
+              </label>
               <select
                 value={form.toLocation}
                 onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium outline-none transition ${
+                  !form.toLocation
+                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200'
+                    : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
+                }`}
               >
                 <option value="Nhava Sheva-NSFT (INNSA1)">Nhava Sheva-NSFT</option>
                 <option value="Nhava Sheva-BMCT (INNSA1)">Nhava Sheva-BMCT</option>
@@ -755,7 +779,9 @@ export default function JobOrderWizardView({
             </div>
 
             <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">POL *</label>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                POL <span className="text-rose-500 font-bold">*</span>
+              </label>
               <select
                 value={form.pol}
                 onChange={(e) => {
@@ -764,7 +790,11 @@ export default function JobOrderWizardView({
                   setRouteFilterOnly(true);
                   setSelectedCarrierFilter('ALL');
                 }}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-mono focus:bg-white focus:border-blue-500 outline-none"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none transition ${
+                  !form.pol
+                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200'
+                    : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
+                }`}
               >
                 <option value="INNSA1">Nhava Sheva (INNSA1)</option>
                 <option value="INMUN1">Mundra Port (INMUN1)</option>
@@ -773,7 +803,9 @@ export default function JobOrderWizardView({
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-[10px] font-bold text-slate-600 uppercase">POD (Discharge) *</label>
+                <label className="text-[10px] font-bold text-slate-600 uppercase">
+                  POD (Discharge) <span className="text-rose-500 font-bold">*</span>
+                </label>
                 <button
                   type="button"
                   onClick={() => {
@@ -805,7 +837,11 @@ export default function JobOrderWizardView({
                     setShowSailingPicker(true);
                   }
                 }}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-medium focus:bg-white focus:border-blue-500 outline-none"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-medium outline-none transition ${
+                  !form.pod
+                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200 shadow-2xs font-bold'
+                    : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
+                }`}
               >
                 <option value="">-- Select POD --</option>
                 {podList.map((p) => (
@@ -845,11 +881,17 @@ export default function JobOrderWizardView({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
             {/* Row 1 */}
             <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Consignor (Shipper) *</label>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                Consignor (Shipper) <span className="text-rose-500 font-bold">*</span>
+              </label>
               <select
                 value={form.consignor}
                 onChange={(e) => handleConsignorChange(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-bold focus:bg-white focus:border-blue-500 outline-none truncate"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate transition ${
+                  !form.consignor
+                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200 shadow-2xs'
+                    : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
+                }`}
               >
                 <option value="">-- Select Consignor --</option>
                 {shippersList.map((name, i) => (
@@ -877,14 +919,20 @@ export default function JobOrderWizardView({
             </div>
 
             <div>
-              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">Shipping Line *</label>
+              <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                Shipping Line <span className="text-rose-500 font-bold">*</span>
+              </label>
               <select
                 value={form.shippingLine}
                 onChange={(e) => {
                   setForm({ ...form, shippingLine: e.target.value });
                   setFormError('');
                 }}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-bold focus:bg-white focus:border-blue-500 outline-none truncate"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate transition ${
+                  !form.shippingLine
+                    ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900 focus:ring-2 focus:ring-rose-200 shadow-2xs'
+                    : 'bg-slate-50 border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500'
+                }`}
               >
                 <option value="">-- Select Line --</option>
                 {linesList.map((name, i) => (
@@ -1026,14 +1074,20 @@ export default function JobOrderWizardView({
             {equipmentLines.map((line, idx) => (
               <div key={line.id} className="flex items-center gap-3 bg-slate-50/70 p-2 rounded-lg border border-slate-200/80">
                 <div className="w-36">
-                  <label className="text-[9px] font-bold text-slate-500 uppercase block mb-0.5">No Of Cont *</label>
+                  <label className="text-[9px] font-bold text-slate-500 uppercase block mb-0.5">
+                    No Of Cont <span className="text-rose-500 font-bold">*</span>
+                  </label>
                   <input
                     type="number"
                     min="1"
                     max="50"
                     value={line.noOfCont}
                     onChange={(e) => handleEquipmentLineChange(idx, "noOfCont", e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-md bg-white border border-slate-200 text-xs font-mono font-bold text-slate-900 focus:border-blue-500 outline-none"
+                    className={`w-full px-2.5 py-1.5 rounded-md text-xs font-mono font-bold outline-none transition ${
+                      !line.noOfCont || Number(line.noOfCont) <= 0
+                        ? 'border-2 border-rose-500 bg-rose-50/40 text-rose-900'
+                        : 'bg-white border border-slate-200 text-slate-900 focus:border-blue-500'
+                    }`}
                   />
                 </div>
 
@@ -1105,7 +1159,9 @@ export default function JobOrderWizardView({
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
                 <tr>
                   <th className="py-1.5 px-2.5">#</th>
-                  <th className="py-1.5 px-2.5">Container No *</th>
+                  <th className="py-1.5 px-2.5">
+                    Container No <span className="text-rose-500 font-bold">*</span>
+                  </th>
                   <th className="py-1.5 px-2.5">Size/Type</th>
                   <th className="py-1.5 px-2.5">Tare (kg)</th>
                   <th className="py-1.5 px-2.5">Cargo (kg)</th>
@@ -1126,7 +1182,11 @@ export default function JobOrderWizardView({
                         placeholder="MSKU1234567"
                         value={c.contNo}
                         onChange={(e) => handleContainerRowChange(idx, 'contNo', e.target.value.toUpperCase())}
-                        className="px-2 py-1 rounded border border-slate-200 font-bold text-blue-700 w-28 text-xs focus:outline-none focus:border-blue-500"
+                        className={`px-2 py-1 rounded font-bold w-28 text-xs focus:outline-none transition ${
+                          !c.contNo
+                            ? 'border-2 border-rose-400 bg-rose-50/40 text-rose-900 focus:border-rose-600 focus:ring-1 focus:ring-rose-200'
+                            : 'border border-slate-200 font-bold text-blue-700 bg-white focus:border-blue-500'
+                        }`}
                       />
                     </td>
 
