@@ -97,10 +97,10 @@ export default function EmptyManagementView() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold font-heading text-[rgb(25,40,57)]">
-              Empty Container Management
+              {activeTab === 'BOOKING' ? '17. Empty Booking' : '18. Empty Inventory'}
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
-              Doc Items 17 &amp; 18
+              Empty Containers Desk
             </span>
           </div>
           <p className="text-xs text-slate-500 font-sans mt-0.5">
@@ -120,8 +120,8 @@ export default function EmptyManagementView() {
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
         {[
-          { id: 'INVENTORY', label: 'Empty Container Inventory (Stock Ledger)', icon: Box },
-          { id: 'BOOKING', label: 'Empty Container Bookings (Pick-up Orders)', icon: Calendar }
+          { id: 'BOOKING', label: '17. Empty Booking', icon: Calendar },
+          { id: 'INVENTORY', label: '18. Empty Inventory', icon: Box }
         ].map((t) => {
           const Icon = t.icon;
           const isAct = activeTab === t.id;

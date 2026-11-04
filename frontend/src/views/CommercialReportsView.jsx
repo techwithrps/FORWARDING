@@ -66,7 +66,7 @@ export default function CommercialReportsView({ jobs = [] }) {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold font-heading text-[rgb(25,40,57)]">
-              Commercial &amp; Financial Reports
+              37. Commercial P&amp;L Reports
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
               SPJ-2 Accounts &amp; Audit

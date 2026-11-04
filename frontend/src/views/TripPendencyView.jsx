@@ -142,7 +142,7 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold font-heading text-[rgb(25,40,57)]">
-              Trip Pendency
+              20. Trip Pendency &amp; 21. GR Generation
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200">
               {pendingContainers.length} Containers Awaiting GR

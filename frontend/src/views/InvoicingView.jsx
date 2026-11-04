@@ -169,7 +169,7 @@ export default function InvoicingView({ jobs = [], job = null, triggerGenerateIn
         <div>
           <h1 className="text-xl font-bold font-heading text-[rgb(25,40,57)] flex items-center gap-2">
             <Receipt className="w-5 h-5 text-blue-600" />
-            <span>Tax Invoice Management</span>
+            <span>35. Tax Invoice (IRN)</span>
           </h1>
           <p className="text-xs text-slate-500 font-sans">
             Commercial Billing &bull; GST Itemized Invoices &bull; Panvaya E-Invoice NIC IRN Portal

@@ -106,7 +106,7 @@ export default function CommercialTariffView({ activeSubPage = 'RateTariff' }) {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold font-heading text-[rgb(25,40,57)]">
-              {activeTab === 'TARIFF' ? '15. Rate Tariff Master' : '16. Rate Approval Workflow'}
+              {activeTab === 'TARIFF' ? '15. Rate Tariff' : '16. Rate Approval'}
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
               Commercial Desk

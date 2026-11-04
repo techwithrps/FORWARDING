@@ -103,7 +103,7 @@ export default function FleetMovementView({ jobs = [], activeSubPage = 'RunningP
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold font-heading text-[rgb(25,40,57)]">
-              {activeTab === 'RUNNING' ? '22. Vehicle Running Position' : '23. Trip Close & Gate-In POD'}
+              {activeTab === 'RUNNING' ? '22. Running Position' : '23. Trip Close'}
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
               Fleet &amp; Rail Operations
@@ -134,7 +134,7 @@ export default function FleetMovementView({ jobs = [], activeSubPage = 'RunningP
           }
         >
           <Navigation className="w-3.5 h-3.5" />
-          <span>Page 22: Vehicle Running Position ({containers.filter(c => c.runningStatus !== 'COMPLETED').length})</span>
+          <span>22. Running Position ({containers.filter(c => c.runningStatus !== 'COMPLETED').length})</span>
         </button>
 
         <button
@@ -147,7 +147,7 @@ export default function FleetMovementView({ jobs = [], activeSubPage = 'RunningP
           }
         >
           <FileCheck className="w-3.5 h-3.5" />
-          <span>Page 23: Trip Close &amp; Completed Trips</span>
+          <span>23. Trip Close ({containers.filter(c => c.runningStatus === 'COMPLETED').length})</span>
         </button>
       </div>
 

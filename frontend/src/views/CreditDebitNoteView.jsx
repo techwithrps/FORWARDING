@@ -116,7 +116,7 @@ export default function CreditDebitNoteView({ jobs = [] }) {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold font-heading text-[rgb(25,40,57)]">
-              Credit Note &amp; Debit Note
+              36. Credit &amp; Debit Notes
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
               GST Section 34 Compliant
