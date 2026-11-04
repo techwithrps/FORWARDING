@@ -981,7 +981,7 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, emptyPickupLocation: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.emptyPickupLocation)}`}
               >
-                <option value="">-- Select --</option>
+                <option value="">-- Leave Blank (If Not Assigned) --</option>
                 <option value="Dadri ICD Depot (CONCOR)">Dadri ICD Depot (CONCOR)</option>
                 <option value="Piyala ICD Depot">Piyala ICD Depot</option>
                 <option value="ACTL Faridabad Yard">ACTL Faridabad Yard</option>
@@ -998,6 +998,7 @@ export default function JobOrderWizardView({
               </label>
               <input
                 type="text"
+                placeholder="e.g. Factory / Warehouse Gate"
                 value={form.fromLocation}
                 onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.fromLocation)}`}
@@ -1016,7 +1017,7 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.handoverLocation)}`}
               >
-                <option value="">-- Select --</option>
+                <option value="">-- Leave Blank (If Direct) --</option>
                 <option value="Dadri ICD CFS Complex">Dadri ICD CFS Complex</option>
                 <option value="Piyala ICD CFS Complex">Piyala ICD CFS Complex</option>
                 <option value="Nhava Sheva Buffer Yard">Nhava Sheva Buffer Yard</option>
@@ -1034,7 +1035,7 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.toLocation)}`}
               >
-                <option value="">-- Select --</option>
+                <option value="">-- Leave Blank (If Inland / Pending) --</option>
                 <option value="Nhava Sheva-NSFT (INNSA1)">Nhava Sheva-NSFT (INNSA1)</option>
                 <option value="Nhava Sheva-BMCT (INNSA1)">Nhava Sheva-BMCT (INNSA1)</option>
                 <option value="Nhava Sheva-GTI (INNSA1)">Nhava Sheva-GTI (INNSA1)</option>
@@ -1186,7 +1187,7 @@ export default function JobOrderWizardView({
                   onChange={(e) => setForm({ ...form, consignee: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none truncate font-semibold ${getFieldClass(form.consignee)}`}
                 >
-                  <option value="">-- Select Consignee --</option>
+                  <option value="">-- Leave Blank / To Order --</option>
                   {consigneesList.map((name, i) => (
                     <option key={i} value={name}>
                       {name}
@@ -1204,7 +1205,7 @@ export default function JobOrderWizardView({
                   onChange={(e) => setForm({ ...form, chaName: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.chaName)}`}
                 >
-                  <option value="">-- Direct Shipper (Self CHA) --</option>
+                  <option value="">-- Leave Blank (Direct Shipper / Self CHA) --</option>
                   {chaList.map((cha, i) => (
                     <option key={i} value={cha}>{cha}</option>
                   ))}
@@ -1215,13 +1216,18 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                   On Account Of (Third Party)
                 </label>
-                <input
-                  type="text"
-                  placeholder="Optional / Direct"
+                <select
                   value={form.onAccount || ''}
                   onChange={(e) => setForm({ ...form, onAccount: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.onAccount)}`}
-                />
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.onAccount)}`}
+                >
+                  <option value="">-- Leave Blank (Direct Shipper) --</option>
+                  {shippersList.map((name, i) => (
+                    <option key={i} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -1255,6 +1261,7 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Line Booking No</label>
                 <input
                   type="text"
+                  placeholder="Optional / Leave Blank"
                   value={form.lineBookingNo}
                   onChange={(e) => setForm({ ...form, lineBookingNo: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('lineBookingNo', false, form.lineBookingNo)}`}
@@ -1275,6 +1282,7 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Vessel Name</label>
                 <input
                   type="text"
+                  placeholder="e.g. MAERSK COLOMBO (Auto-Fill Sailings)"
                   value={form.vesselName}
                   onChange={(e) => setForm({ ...form, vesselName: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass('vesselName', false, form.vesselName)}`}
@@ -1288,6 +1296,7 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Voyage</label>
                 <input
                   type="text"
+                  placeholder="e.g. 2604W"
                   value={form.voyage}
                   onChange={(e) => setForm({ ...form, voyage: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('voyage', false, form.voyage)}`}
@@ -1488,13 +1497,13 @@ export default function JobOrderWizardView({
                     Container No <span className="text-rose-500 font-bold">*</span>
                   </th>
                   <th className="py-2 px-2.5 min-w-[70px] whitespace-nowrap">Size/Type</th>
-                  <th className="py-2 px-2.5 min-w-[85px]">Tare 🔒</th>
+                  <th className="py-2 px-2.5 min-w-[85px]">Tare 🔒 (Auto)</th>
                   <th className="py-2 px-2.5 min-w-[95px]">
                     Cargo (kg) <span className="text-rose-500 font-bold">*</span>
                   </th>
-                  <th className="py-2 px-2.5 min-w-[95px]">Gross 🔒</th>
-                  <th className="py-2 px-2.5 min-w-[120px]">Line Seal</th>
-                  <th className="py-2 px-2.5 min-w-[120px]">Customs Seal</th>
+                  <th className="py-2 px-2.5 min-w-[95px]">Gross 🔒 (Auto)</th>
+                  <th className="py-2 px-2.5 min-w-[125px]">Line Seal (Optional)</th>
+                  <th className="py-2 px-2.5 min-w-[125px]">Customs Seal (Optional)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white font-mono text-xs">
@@ -1552,7 +1561,8 @@ export default function JobOrderWizardView({
                         value={c.sealNo}
                         onChange={(e) => handleContainerRowChange(idx, 'sealNo', e.target.value.toUpperCase())}
                         className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.sealNo)}`}
-                        placeholder="ML-IN-XXXX"
+                        placeholder="Optional (At Stuffing)"
+                        title="Shipping Line Seal (Filled during Stuffing/Gate-in)"
                       />
                     </td>
 
@@ -1562,8 +1572,8 @@ export default function JobOrderWizardView({
                         value={c.agentSeal || ''}
                         onChange={(e) => handleContainerRowChange(idx, 'agentSeal', e.target.value.toUpperCase())}
                         className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.agentSeal)}`}
-                        placeholder="CS-XXXX"
-                        title="Customs / Shipper Bottle Seal"
+                        placeholder="Optional (At Stuffing)"
+                        title="Customs / Shipper Bottle Seal (Filled during Stuffing/Docs)"
                       />
                     </td>
                   </tr>
