@@ -981,7 +981,7 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, emptyPickupLocation: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.emptyPickupLocation)}`}
               >
-                <option value="">-- Leave Blank (If Not Assigned) --</option>
+                <option value="">-- Select --</option>
                 <option value="Dadri ICD Depot (CONCOR)">Dadri ICD Depot (CONCOR)</option>
                 <option value="Piyala ICD Depot">Piyala ICD Depot</option>
                 <option value="ACTL Faridabad Yard">ACTL Faridabad Yard</option>
@@ -1017,7 +1017,7 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.handoverLocation)}`}
               >
-                <option value="">-- Leave Blank (If Direct) --</option>
+                <option value="">-- Select --</option>
                 <option value="Dadri ICD CFS Complex">Dadri ICD CFS Complex</option>
                 <option value="Piyala ICD CFS Complex">Piyala ICD CFS Complex</option>
                 <option value="Nhava Sheva Buffer Yard">Nhava Sheva Buffer Yard</option>
@@ -1035,7 +1035,7 @@ export default function JobOrderWizardView({
                 onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.toLocation)}`}
               >
-                <option value="">-- Leave Blank (If Inland / Pending) --</option>
+                <option value="">-- Select --</option>
                 <option value="Nhava Sheva-NSFT (INNSA1)">Nhava Sheva-NSFT (INNSA1)</option>
                 <option value="Nhava Sheva-BMCT (INNSA1)">Nhava Sheva-BMCT (INNSA1)</option>
                 <option value="Nhava Sheva-GTI (INNSA1)">Nhava Sheva-GTI (INNSA1)</option>
@@ -1187,7 +1187,7 @@ export default function JobOrderWizardView({
                   onChange={(e) => setForm({ ...form, consignee: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none truncate font-semibold ${getFieldClass(form.consignee)}`}
                 >
-                  <option value="">-- Leave Blank / To Order --</option>
+                  <option value="">-- Select Consignee --</option>
                   {consigneesList.map((name, i) => (
                     <option key={i} value={name}>
                       {name}
@@ -1205,7 +1205,7 @@ export default function JobOrderWizardView({
                   onChange={(e) => setForm({ ...form, chaName: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.chaName)}`}
                 >
-                  <option value="">-- Leave Blank (Direct Shipper / Self CHA) --</option>
+                  <option value="">-- Select (Nahi toh blank rehne do) --</option>
                   {chaList.map((cha, i) => (
                     <option key={i} value={cha}>{cha}</option>
                   ))}
@@ -1221,7 +1221,7 @@ export default function JobOrderWizardView({
                   onChange={(e) => setForm({ ...form, onAccount: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.onAccount)}`}
                 >
-                  <option value="">-- Leave Blank (Direct Shipper) --</option>
+                  <option value="">-- Select (Nahi toh blank rehne do) --</option>
                   {shippersList.map((name, i) => (
                     <option key={i} value={name}>
                       {name}
@@ -1261,7 +1261,7 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Line Booking No</label>
                 <input
                   type="text"
-                  placeholder="Optional / Leave Blank"
+                  placeholder="Nahi toh blank rehne do (Optional)"
                   value={form.lineBookingNo}
                   onChange={(e) => setForm({ ...form, lineBookingNo: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('lineBookingNo', false, form.lineBookingNo)}`}
@@ -1561,8 +1561,8 @@ export default function JobOrderWizardView({
                         value={c.sealNo}
                         onChange={(e) => handleContainerRowChange(idx, 'sealNo', e.target.value.toUpperCase())}
                         className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.sealNo)}`}
-                        placeholder="Optional (At Stuffing)"
-                        title="Shipping Line Seal (Filled during Stuffing/Gate-in)"
+                        placeholder="Nahi toh blank rehne do"
+                        title="Shipping Line Seal (Stuffing stage par bharega)"
                       />
                     </td>
 
@@ -1572,8 +1572,8 @@ export default function JobOrderWizardView({
                         value={c.agentSeal || ''}
                         onChange={(e) => handleContainerRowChange(idx, 'agentSeal', e.target.value.toUpperCase())}
                         className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.agentSeal)}`}
-                        placeholder="Optional (At Stuffing)"
-                        title="Customs / Shipper Bottle Seal (Filled during Stuffing/Docs)"
+                        placeholder="Nahi toh blank rehne do"
+                        title="Customs / Shipper Bottle Seal (Stuffing stage par bharega)"
                       />
                     </td>
                   </tr>
