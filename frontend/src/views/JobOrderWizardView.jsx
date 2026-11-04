@@ -367,74 +367,15 @@ export default function JobOrderWizardView({
     setTimeout(() => setAutoFilledToast(null), 4500);
   };
 
-  // Auto-Match & Auto-Fill live Sailing as soon as POD is selected
+  // When POD is selected, automatically open live vessel sailings list matching POL & POD
   const handlePodChange = (val) => {
     setFormError('');
-    if (!val) {
-      setForm(prev => ({
-        ...prev,
-        pod: '',
-        vesselName: '',
-        voyage: '',
-        etdDate: '',
-        etaDate: '',
-        portCutDate: '',
-        siCutDate: ''
-      }));
-      setIsScheduleLocked(false);
-      return;
-    }
-
-    const cleanPol = (form.pol || 'INNSA1').slice(0, 5).toUpperCase();
-    const cleanPod = val.trim().toUpperCase();
-
-    // Find best live sailing matching POL & POD
-    const matchedSailing = allSailings.find(s => {
-      const sPol = (s.originLocode || s.origin || '').toUpperCase();
-      const sPod = (s.destinationLocode || s.destination || '').toUpperCase();
-      const polMatch = !cleanPol || sPol.startsWith(cleanPol);
-      const podMatch = cleanPod && (sPod.startsWith(cleanPod) || cleanPod.startsWith(sPod));
-      return polMatch && podMatch;
-    });
-
-    if (matchedSailing) {
-      const mappedLine = mapCarrierToShippingLine(matchedSailing.carrier);
-      const portCut = matchedSailing.cutOffs?.containerYard ? matchedSailing.cutOffs.containerYard.split(' ')[0] : (matchedSailing.departure || '');
-      const siCut = matchedSailing.cutOffs?.shippingInstructions ? matchedSailing.cutOffs.shippingInstructions.split(' ')[0] : portCut;
-      const etd = matchedSailing.departure || '';
-      const eta = matchedSailing.arrival || '';
-
-      setForm(prev => ({
-        ...prev,
-        pod: val,
-        shippingLine: mappedLine || prev.shippingLine,
-        vesselName: matchedSailing.vesselName || prev.vesselName,
-        voyage: matchedSailing.voyageNo || prev.voyage,
-        etdDate: etd,
-        etaDate: eta,
-        portCutDate: portCut,
-        siCutDate: siCut
-      }));
-
-      setIsScheduleLocked(true);
-
-      setAutoFilledFields(prev => ({
-        ...prev,
-        pod: true,
-        shippingLine: Boolean(mappedLine),
-        vesselName: true,
-        voyage: true,
-        etdDate: true,
-        etaDate: true,
-        portCutDate: true,
-        siCutDate: true
-      }));
-
-      setAutoFilledToast(`⚡ POD ${val} Auto-Matched: ${matchedSailing.vesselName} (${matchedSailing.voyageNo}) · ${mappedLine || matchedSailing.carrier} · ETD ${etd} (Auto)`);
-      setTimeout(() => setAutoFilledToast(null), 4500);
-    } else {
-      setForm(prev => ({ ...prev, pod: val }));
-      setIsScheduleLocked(false);
+    setForm(prev => ({ ...prev, pod: val }));
+    if (val) {
+      setRouteFilterOnly(true);
+      setSelectedCarrierFilter('ALL');
+      setSailingSearch('');
+      setShowSailingPicker(true);
     }
   };
 
