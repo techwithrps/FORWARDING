@@ -80,6 +80,21 @@ export default function JobOrderWizardView({
     ];
   }, [parties]);
 
+  const chaList = useMemo(() => {
+    if (parties && parties.length > 0) {
+      const list = parties
+        .filter(p => p.type === 'CHA' || p.type === 'FORWARDER')
+        .map(p => p.name);
+      if (list.length > 0) return list;
+    }
+    return [
+      'Jeena & Company (CHA)',
+      'DHL Global Forwarding (CHA)',
+      'Total Logistics (CHA)',
+      'Fair Clear Services (CHA)'
+    ];
+  }, [parties]);
+
   const linesList = [
     'Maersk Line India Pvt Ltd',
     'Mediterranean Shipping Co (MSC)',
@@ -165,6 +180,14 @@ export default function JobOrderWizardView({
     temperature: '',
     transporter: '',
     handoverLocation: '',
+    chaName: '',
+    onAccount: '',
+    packageType: 'Cartons',
+    cartons: '',
+    cbm: '',
+    fpod: '',
+    hblNo: '',
+    boeNo: '',
     noOfCont: 1,
     size: '',
     type: '',
@@ -184,6 +207,7 @@ export default function JobOrderWizardView({
       cargoWeight: '',
       grossWeight: '',
       sealNo: '',
+      agentSeal: '',
       vehicleNo: '',
       grNo: '',
       grDate: todayStr,
@@ -631,6 +655,7 @@ export default function JobOrderWizardView({
           cargoWeight: '24500',
           grossWeight: '28320',
           sealNo: `ML-IN-${Math.floor(100000 + Math.random() * 900000)}`,
+          agentSeal: `CS-${Math.floor(100000 + Math.random() * 900000)}`,
           vehicleNo: `HR55AN${Math.floor(1000 + Math.random() * 9000)}`,
           grNo: `GR-2026-0${Math.floor(10 + Math.random() * 90)}`,
           grDate: todayStr,
@@ -774,6 +799,14 @@ export default function JobOrderWizardView({
       portCutDate: form.portCutDate,
       siCutDate: form.siCutDate,
       bookingValidity: form.bookingValidity,
+      chaName: form.chaName || '',
+      onAccount: form.onAccount || '',
+      packageType: form.packageType || 'Cartons',
+      cartons: Number(form.cartons) || 0,
+      cbm: Number(form.cbm) || 0,
+      fpod: form.fpod || '',
+      hblNo: form.hblNo || '',
+      boeNo: form.boeNo || '',
       containersCount: totalContainersCount,
       equipmentBreakdown: equipmentLines,
       status: "STUFFED",
@@ -791,6 +824,7 @@ export default function JobOrderWizardView({
         cargoWeight: Number(c.cargoWeight) || 24500,
         grossWeight: Number(c.grossWeight) || 28320,
         sealNo: c.sealNo || `ML-IN-${Math.floor(100000 + Math.random() * 900000)}`,
+        agentSeal: c.agentSeal || `CS-${Math.floor(100000 + Math.random() * 900000)}`,
         truckNo: c.vehicleNo || 'HR55AN2094',
         grNo: c.grNo || `GR-2026-084${idx + 1}`
       }))
@@ -1186,6 +1220,83 @@ export default function JobOrderWizardView({
               </div>
             </div>
 
+            {/* Row 1b: Customs CHA -> On Account -> Packaging Type -> Cartons & Volume CBM (4 Cols) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1.5 border-t border-slate-100">
+              <div>
+                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                  Customs CHA Agent
+                </label>
+                <select
+                  value={form.chaName || ''}
+                  onChange={(e) => setForm({ ...form, chaName: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.chaName)}`}
+                >
+                  <option value="">-- Direct Shipper (Self CHA) --</option>
+                  {chaList.map((cha, i) => (
+                    <option key={i} value={cha}>{cha}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                  On Account Of (Third Party)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Leave blank if direct"
+                  value={form.onAccount || ''}
+                  onChange={(e) => setForm({ ...form, onAccount: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.onAccount)}`}
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                  Packaging Type
+                </label>
+                <select
+                  value={form.packageType || 'Cartons'}
+                  onChange={(e) => setForm({ ...form, packageType: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200"
+                >
+                  <option value="Cartons">Corrugated Cartons</option>
+                  <option value="Pallets">Wooden Pallets</option>
+                  <option value="Bags">HDPE Bags / Sacks</option>
+                  <option value="Drums">Steel / Plastic Drums</option>
+                  <option value="Loose">Loose / Bulk Cargo</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                    Cartons
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 1400"
+                    value={form.cartons || ''}
+                    onChange={(e) => setForm({ ...form, cartons: e.target.value })}
+                    className="w-full px-2 py-1.5 rounded-lg text-xs font-mono font-bold outline-none border border-slate-200 text-right pr-2"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                    Volume (CBM)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="e.g. 68.5"
+                    value={form.cbm || ''}
+                    onChange={(e) => setForm({ ...form, cbm: e.target.value })}
+                    className="w-full px-2 py-1.5 rounded-lg text-xs font-mono font-bold outline-none border border-slate-200 text-right pr-2"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Row 2: Shipping Line -> Line Booking No -> Booking Validity -> Vessel Name (4 Cols) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1.5 border-t border-slate-100">
               <div>
@@ -1440,7 +1551,8 @@ export default function JobOrderWizardView({
                     Cargo (kg) <span className="text-rose-500 font-bold">*</span>
                   </th>
                   <th className="py-2 px-2.5 min-w-[95px]">Gross 🔒</th>
-                  <th className="py-2 px-2.5 min-w-[140px]">Seal No</th>
+                  <th className="py-2 px-2.5 min-w-[120px]">Line Seal</th>
+                  <th className="py-2 px-2.5 min-w-[120px]">Customs Seal</th>
                   <th className="py-2 px-2.5 min-w-[130px]">Vehicle No</th>
                   <th className="py-2 px-2.5 min-w-[140px]">GR No</th>
                 </tr>
@@ -1500,6 +1612,18 @@ export default function JobOrderWizardView({
                         value={c.sealNo}
                         onChange={(e) => handleContainerRowChange(idx, 'sealNo', e.target.value.toUpperCase())}
                         className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.sealNo)}`}
+                        placeholder="ML-IN-XXXX"
+                      />
+                    </td>
+
+                    <td className="py-1.5 px-2.5">
+                      <input
+                        type="text"
+                        value={c.agentSeal || ''}
+                        onChange={(e) => handleContainerRowChange(idx, 'agentSeal', e.target.value.toUpperCase())}
+                        className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.agentSeal)}`}
+                        placeholder="CS-XXXX"
+                        title="Customs / Shipper Bottle Seal"
                       />
                     </td>
 

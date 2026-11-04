@@ -269,6 +269,15 @@ export default function App() {
           fromLocation: j.fromLocation,
           pod: j.toLocation,
           toLocation: j.toLocation,
+          chaName: j.chaName || '',
+          onAccount: j.onAccount || '',
+          packageType: j.packageType || 'Cartons',
+          cartons: Number(j.cartons) || 0,
+          cbm: Number(j.cbm) || 0,
+          fpod: j.fpod || '',
+          boeNo: j.boeNo || '',
+          boeDate: j.boeDate || null,
+          hblNo: j.hblNo || '',
           containersCount: j.containersCount || (j.containers ? j.containers.length : 1),
           status: j.status,
           sellFreight: j.sellFreight,
@@ -291,6 +300,8 @@ export default function App() {
             cargo: c.cargoWeight,
             seal: c.sealNo,
             sealNo: c.sealNo,
+            agentSeal: c.agentSeal || '',
+            customSeal: c.agentSeal || '',
             gr: c.grNumber,
             grNumber: c.grNumber,
             grDate: c.grDate,
@@ -310,8 +321,15 @@ export default function App() {
           name: p.name,
           type: p.party_type || 'SHIPPER',
           gstin: p.gstin || 'N/A',
+          pan: p.pan || (p.gstin && p.gstin.length >= 12 ? p.gstin.slice(2, 12) : 'N/A'),
           city: p.city || 'Delhi NCR',
-          state: p.state || ''
+          state: p.state || '',
+          contactPerson: p.contact_person || '',
+          mobile: p.mobile || p.contact_no || '',
+          email: p.email_comm || p.email_ops || '',
+          creditLimit: p.credit_limit || '10,00,000',
+          creditPeriod: p.credit_period || '30',
+          paymentTerms: p.payment_terms || '30 Days'
         })));
       }
     } catch (err) {

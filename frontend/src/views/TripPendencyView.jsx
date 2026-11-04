@@ -42,7 +42,8 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
           origin: job.origin || 'Dadri ICD',
           pod: job.pod || 'Port',
           bookingNo: job.bookingNo || '-',
-          sealNo: c.seal || '',
+          sealNo: c.seal || c.sealNo || '',
+          agentSeal: c.agentSeal || c.customSeal || '',
           cargoWeight: c.cargoWeight || 24000,
           vehicleNo: c.truck && c.truck !== 'TBA' ? c.truck : '',
           driverName: '',
@@ -112,6 +113,7 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
       contNo: item.contNo,
       size: item.size,
       sealNo: item.sealNo || 'SL-88192',
+      agentSeal: item.agentSeal || '',
       weight: item.cargoWeight || 24000,
       origin: item.origin,
       pod: item.pod,
@@ -396,8 +398,8 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
                   <span className="font-bold text-blue-700">{activeGrModal.contNo} ({activeGrModal.size})</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Seal No &amp; Weight:</span>
-                  <span className="font-bold">{activeGrModal.sealNo} &bull; {activeGrModal.weight} kg</span>
+                  <span className="text-slate-500 block">Seal &amp; Weight:</span>
+                  <span className="font-bold">{activeGrModal.sealNo}{activeGrModal.agentSeal ? ` | Cust: ${activeGrModal.agentSeal}` : ''} &bull; {activeGrModal.weight} kg</span>
                 </div>
                 <div>
                   <span className="text-slate-500 block">Vehicle / Truck No:</span>

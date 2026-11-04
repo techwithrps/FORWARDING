@@ -260,6 +260,8 @@ export default function ShipmentCockpitView({
                 <span className="font-semibold text-[rgb(25,40,57)]">{currentJob.customer || currentJob.consignor}</span> &bull; {currentJob.origin || currentJob.fromLocation} &rarr;{' '}
                 <span className="font-semibold text-blue-700">{currentJob.pod || currentJob.toLocation}</span> &bull; Vessel:{' '}
                 <span className="font-semibold text-[rgb(25,40,57)]">{currentJob.vessel || 'TBA'}</span>
+                {currentJob.cartons ? ` • Pkgs: ${currentJob.cartons} ${currentJob.packageType || 'Cartons'} (${currentJob.cbm || 0} CBM)` : ''}
+                {currentJob.chaName ? ` • CHA: ${currentJob.chaName}` : ''}
               </p>
             </div>
 
@@ -282,7 +284,8 @@ export default function ShipmentCockpitView({
                   <th className="py-2.5 px-3">Sr.</th>
                   <th className="py-2.5 px-3">Cont No *</th>
                   <th className="py-2.5 px-3">Size/Type</th>
-                  <th className="py-2.5 px-3">Seal No</th>
+                  <th className="py-2.5 px-3">Line Seal</th>
+                  <th className="py-2.5 px-3">Customs Seal</th>
                   <th className="py-2.5 px-3">Gross Wt (kg)</th>
                   <th className="py-2.5 px-3">Vehicle No</th>
                   <th className="py-2.5 px-3">GR No</th>
@@ -316,6 +319,15 @@ export default function ShipmentCockpitView({
                           placeholder="e.g. MSK98124"
                           value={c.seal || c.sealNo || ''}
                           onChange={(e) => handleContainerFieldChange(idx, 'seal', e.target.value.toUpperCase())}
+                          className="px-2 py-1 rounded border border-slate-200 font-mono text-xs w-28 focus:outline-none focus:border-blue-500"
+                        />
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <input
+                          type="text"
+                          placeholder="e.g. CS98124"
+                          value={c.agentSeal || c.customSeal || ''}
+                          onChange={(e) => handleContainerFieldChange(idx, 'agentSeal', e.target.value.toUpperCase())}
                           className="px-2 py-1 rounded border border-slate-200 font-mono text-xs w-28 focus:outline-none focus:border-blue-500"
                         />
                       </td>

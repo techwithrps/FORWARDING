@@ -23,6 +23,7 @@ router.get('/', async (req, res) => {
           grossWeight: Number(c.gross_weight) || 0,
           cargoWeight: Number(c.cargo_weight) || 0,
           sealNo: c.seal_number || '',
+          agentSeal: c.agent_seal || c.custom_seal || '',
           grNumber: c.gr_number || '',
           grDate: c.gr_date || null,
           truckNo: c.truck_number || '',
@@ -48,6 +49,15 @@ router.get('/', async (req, res) => {
         voyage: job.voyage,
         commodity: job.commodity,
         temperature: job.temperature,
+        chaName: job.cha_name || '',
+        onAccount: job.on_account || '',
+        packageType: job.package_type || 'Cartons',
+        cartons: Number(job.cartons) || 0,
+        cbm: Number(job.cbm) || 0,
+        fpod: job.fpod || '',
+        boeNo: job.boe_no || '',
+        boeDate: job.boe_date || null,
+        hblNo: job.hbl_no || '',
         containersCount: containers.length || job.total_containers || 1,
         status: job.status,
         containers: containers,
@@ -100,9 +110,11 @@ router.post('/', async (req, res) => {
         id, job_number, customer_name, shipping_line_name, booking_no,
         origin_port_code, origin_port_name, pod_port_code, pod_port_name,
         vessel_name, voyage, commodity, temperature, total_containers,
-        sell_freight, buy_freight, status, remarks
+        sell_freight, buy_freight, status, remarks,
+        cha_name, on_account, package_type, cartons, cbm, fpod, hbl_no, boe_no, boe_date
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
+        $19, $20, $21, $22, $23, $24, $25, $26, $27
       ) RETURNING *;
     `;
     const jobValues = [
@@ -123,7 +135,16 @@ router.post('/', async (req, res) => {
       b.sellFreight || 135000,
       b.buyFreight || 118000,
       'BOOKED',
-      b.remarks || ''
+      b.remarks || '',
+      b.chaName || '',
+      b.onAccount || '',
+      b.packageType || 'Cartons',
+      Number(b.cartons) || 0,
+      Number(b.cbm) || 0,
+      b.fpod || '',
+      b.hblNo || '',
+      b.boeNo || '',
+      b.boeDate || null
     ];
     const jobRes = await client.query(jobQuery, jobValues);
     const createdJob = jobRes.rows[0];
@@ -137,7 +158,8 @@ router.post('/', async (req, res) => {
           tareWeight: 4200,
           grossWeight: 28500,
           cargoWeight: 24300,
-          sealNo: 'ML-IN-' + Math.floor(100000 + Math.random() * 900000)
+          sealNo: 'ML-IN-' + Math.floor(100000 + Math.random() * 900000),
+          agentSeal: 'CUST-' + Math.floor(100000 + Math.random() * 900000)
         }];
 
     const createdContainers = [];
@@ -147,8 +169,8 @@ router.post('/', async (req, res) => {
       const contQuery = `
         INSERT INTO job_containers (
           id, job_id, container_number, size_type, tare_weight, gross_weight,
-          cargo_weight, seal_number, current_status, milestone_dates
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          cargo_weight, seal_number, agent_seal, current_status, milestone_dates
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *;
       `;
       const contValues = [
@@ -160,6 +182,7 @@ router.post('/', async (req, res) => {
         Number(c.grossWeight) || 28500,
         Number(c.cargoWeight) || 24300,
         c.sealNo || ('SL-' + Math.floor(100000 + Math.random() * 900000)),
+        c.agentSeal || ('CS-' + Math.floor(100000 + Math.random() * 900000)),
         'ALLOTTED',
         JSON.stringify({ ALLOTTED: new Date().toISOString() })
       ];
