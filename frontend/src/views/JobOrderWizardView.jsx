@@ -1186,7 +1186,7 @@ export default function JobOrderWizardView({
                   onChange={(e) => setForm({ ...form, consignee: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none truncate font-semibold ${getFieldClass(form.consignee)}`}
                 >
-                  <option value="">-- Select --</option>
+                  <option value="">-- Select Consignee --</option>
                   {consigneesList.map((name, i) => (
                     <option key={i} value={name}>
                       {name}
@@ -1195,33 +1195,6 @@ export default function JobOrderWizardView({
                 </select>
               </div>
 
-              <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Transporter</label>
-                <input
-                  type="text"
-                  value={form.transporter || ''}
-                  onChange={(e) => setForm({ ...form, transporter: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.transporter)}`}
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                  Set Temp (°C / Reefer) <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>
-                </label>
-                <input
-                  type="text"
-                  readOnly
-                  tabIndex={-1}
-                  value={form.temperature || 'Ambient'}
-                  className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-extrabold bg-slate-100 text-slate-700 border border-slate-200 cursor-not-allowed select-none outline-none"
-                  title="Auto-set based on selected Commodity (Locked)"
-                />
-              </div>
-            </div>
-
-            {/* Row 1b: Customs CHA -> On Account -> Packaging Type -> Cartons & Volume CBM (4 Cols) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1.5 border-t border-slate-100">
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                   Customs CHA Agent
@@ -1244,56 +1217,11 @@ export default function JobOrderWizardView({
                 </label>
                 <input
                   type="text"
-                  placeholder="Leave blank if direct"
+                  placeholder="Optional / Direct"
                   value={form.onAccount || ''}
                   onChange={(e) => setForm({ ...form, onAccount: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.onAccount)}`}
                 />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                  Packaging Type
-                </label>
-                <select
-                  value={form.packageType || 'Cartons'}
-                  onChange={(e) => setForm({ ...form, packageType: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200"
-                >
-                  <option value="Cartons">Corrugated Cartons</option>
-                  <option value="Pallets">Wooden Pallets</option>
-                  <option value="Bags">HDPE Bags / Sacks</option>
-                  <option value="Drums">Steel / Plastic Drums</option>
-                  <option value="Loose">Loose / Bulk Cargo</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                    Cartons
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="e.g. 1400"
-                    value={form.cartons || ''}
-                    onChange={(e) => setForm({ ...form, cartons: e.target.value })}
-                    className="w-full px-2 py-1.5 rounded-lg text-xs font-mono font-bold outline-none border border-slate-200 text-right pr-2"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                    Volume (CBM)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="e.g. 68.5"
-                    value={form.cbm || ''}
-                    onChange={(e) => setForm({ ...form, cbm: e.target.value })}
-                    className="w-full px-2 py-1.5 rounded-lg text-xs font-mono font-bold outline-none border border-slate-200 text-right pr-2"
-                  />
-                </div>
               </div>
             </div>
 
@@ -1485,6 +1413,20 @@ export default function JobOrderWizardView({
                   </select>
                 </div>
 
+                <div className="w-36 sm:w-40">
+                  <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                    Set Temp <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    tabIndex={-1}
+                    value={form.temperature || 'Ambient'}
+                    className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-extrabold bg-slate-100 text-slate-700 border border-slate-200 cursor-not-allowed select-none outline-none"
+                    title="Auto-set based on selected Commodity (Locked)"
+                  />
+                </div>
+
                 {equipmentLines.length > 1 && (
                   <div className="pt-4">
                     <button
@@ -1553,8 +1495,6 @@ export default function JobOrderWizardView({
                   <th className="py-2 px-2.5 min-w-[95px]">Gross 🔒</th>
                   <th className="py-2 px-2.5 min-w-[120px]">Line Seal</th>
                   <th className="py-2 px-2.5 min-w-[120px]">Customs Seal</th>
-                  <th className="py-2 px-2.5 min-w-[130px]">Vehicle No</th>
-                  <th className="py-2 px-2.5 min-w-[140px]">GR No</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white font-mono text-xs">
@@ -1624,24 +1564,6 @@ export default function JobOrderWizardView({
                         className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.agentSeal)}`}
                         placeholder="CS-XXXX"
                         title="Customs / Shipper Bottle Seal"
-                      />
-                    </td>
-
-                    <td className="py-1.5 px-2.5">
-                      <input
-                        type="text"
-                        value={c.vehicleNo}
-                        onChange={(e) => handleContainerRowChange(idx, 'vehicleNo', e.target.value.toUpperCase())}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.vehicleNo)}`}
-                      />
-                    </td>
-
-                    <td className="py-1.5 px-2.5">
-                      <input
-                        type="text"
-                        value={c.grNo}
-                        onChange={(e) => handleContainerRowChange(idx, 'grNo', e.target.value.toUpperCase())}
-                        className={`w-full px-2.5 py-1.5 rounded-lg font-semibold text-xs outline-none ${getFieldClass(c.grNo)}`}
                       />
                     </td>
                   </tr>
