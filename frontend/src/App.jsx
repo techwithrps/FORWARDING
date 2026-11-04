@@ -62,7 +62,65 @@ class ViewErrorBoundary extends React.Component {
 }
 
 export default function App() {
-  const [activeView, setActiveView] = useState('Dashboard');
+  // Persistent routing across page refreshes via URL Hash, Search Params & localStorage
+  const getInitialView = () => {
+    try {
+      const hash = window.location.hash.replace('#', '').trim();
+      if (hash) return hash;
+      const params = new URLSearchParams(window.location.search);
+      const viewParam = params.get('view');
+      if (viewParam) return viewParam;
+      const saved = localStorage.getItem('forwarder_active_view');
+      if (saved) return saved;
+    } catch {
+      // ignore
+    }
+    return 'Dashboard';
+  };
+
+  const [activeView, setActiveViewState] = useState(getInitialView);
+
+  const setActiveView = (view) => {
+    if (!view) return;
+    setActiveViewState(view);
+    try {
+      localStorage.setItem('forwarder_active_view', view);
+      if (window.location.hash !== `#${view}`) {
+        window.history.pushState(null, '', `#${view}`);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  // Sync on browser back / forward navigation and hash changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      try {
+        const hash = window.location.hash.replace('#', '').trim();
+        if (hash && hash !== activeView) {
+          setActiveViewState(hash);
+          localStorage.setItem('forwarder_active_view', hash);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+    };
+  }, [activeView]);
+
+  // Keep URL hash synchronized on initial load
+  useEffect(() => {
+    if (activeView && !window.location.hash) {
+      window.history.replaceState(null, '', `#${activeView}`);
+    }
+  }, [activeView]);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openRecentDirectly, setOpenRecentDirectly] = useState(false);
   const [copilotFillData, setCopilotFillData] = useState(null);
