@@ -10,6 +10,8 @@ import DSRHubView from './views/DSRHubView.jsx';
 import MasterVaultView from './views/MasterVaultView.jsx';
 import DocumentationUpdateView from './views/DocumentationUpdateView.jsx';
 import TripPendencyView from './views/TripPendencyView.jsx';
+import GrGenerationView from './views/GrGenerationView.jsx';
+import GrSearchingView from './views/GrSearchingView.jsx';
 import CreditDebitNoteView from './views/CreditDebitNoteView.jsx';
 import EmptyManagementView from './views/EmptyManagementView.jsx';
 import CommercialReportsView from './views/CommercialReportsView.jsx';
@@ -668,13 +670,28 @@ export default function App() {
             />
           )}
 
-          {/* 20 & 21: Trip Pendency & GR Generation */}
-          {['TripPendency', 'GrGeneration'].includes(activeView) && (
+          {/* 20: Trip Pendency */}
+          {activeView === 'TripPendency' && (
             <TripPendencyView
               jobs={jobs}
               onUpdateContainerGR={handleUpdateContainerGR}
               onNewBookingClick={() => setActiveView('ContainerBooking')}
             />
+          )}
+
+          {/* 21: GR Generation */}
+          {activeView === 'GrGeneration' && (
+            <GrGenerationView
+              jobs={jobs}
+              onUpdateContainerGR={handleUpdateContainerGR}
+              onNavigateToTripPendency={() => setActiveView('TripPendency')}
+              onNavigateToGrSearching={() => setActiveView('GrSearching')}
+            />
+          )}
+
+          {/* GR Searching */}
+          {activeView === 'GrSearching' && (
+            <GrSearchingView onExit={() => setActiveView('GrGeneration')} />
           )}
 
           {/* 22 & 23: Vehicle Running Position & Trip Close */}

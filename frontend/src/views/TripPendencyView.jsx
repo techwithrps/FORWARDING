@@ -162,17 +162,7 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
         </button>
       </div>
 
-      {/* Info Alert explaining the Rule from FREIGHT_FORWARDING.docx */}
-      <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 text-blue-900 text-xs flex items-start gap-2.5 shadow-xs">
-        <Clock className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-        <div>
-          <span className="font-bold">Doc Business Logic (Item 20): </span>
-          <span>
-            Jaise hi container book hota hai aur uska GR generate nahi hua, wo automatically is Trip Pendency queue me dikhta hai. 
-            Truck No aur Driver punch karke <strong>Generate GR</strong> dabate hi wo Lorry Receipt generate karta hai aur movement ke liye <strong>Shipment Status</strong> me chala jata hai.
-          </span>
-        </div>
-      </div>
+      
 
       {/* Filter Bar */}
       <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-3">
@@ -254,17 +244,13 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
                 <th className="p-2.5 font-semibold min-w-[70px]">Size/Type</th>
                 <th className="p-2.5 font-semibold min-w-[130px]">Customer (Consignor)</th>
                 <th className="p-2.5 font-semibold min-w-[100px]">Line</th>
-                <th className="p-2.5 font-semibold min-w-[110px]">Route</th>
-                <th className="p-2.5 font-semibold min-w-[110px]">Vehicle No *</th>
-                <th className="p-2.5 font-semibold min-w-[110px]">Driver Name</th>
-                <th className="p-2.5 font-semibold min-w-[100px]">Driver Phone</th>
                 <th className="p-2.5 font-semibold min-w-[110px] text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="p-10 text-center text-slate-400 font-sans">
+                  <td colSpan={8} className="p-10 text-center text-slate-400 font-sans">
                     <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
                     <p className="font-medium text-slate-700 text-sm">No Pending Trips!</p>
                     <p className="text-xs text-slate-400 mt-0.5">
@@ -275,7 +261,6 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
               ) : (
                 filtered.map((item, idx) => {
                   const key = item.jobId + '-' + item.contIndex;
-                  const rowData = allotmentData[key] || {};
                   return (
                     <tr key={key} className="hover:bg-amber-50/40 transition font-sans">
                       <td className="p-2 text-center">
@@ -295,36 +280,6 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
                       <td className="p-2 font-mono text-slate-600">{item.size}</td>
                       <td className="p-2 font-medium text-[rgb(25,40,57)]">{item.customer}</td>
                       <td className="p-2 text-slate-700">{item.line}</td>
-                      <td className="p-2 text-slate-600 font-mono text-[11px]">
-                        {item.origin} &rarr; {item.pod}
-                      </td>
-                      <td className="p-2">
-                        <input
-                          type="text"
-                          placeholder="UP16BT...."
-                          value={rowData.vehicleNo !== undefined ? rowData.vehicleNo : item.vehicleNo}
-                          onChange={(e) => handleFieldChange(key, 'vehicleNo', e.target.value.toUpperCase())}
-                          className="w-24 px-2 py-1 rounded border border-slate-200 font-mono text-xs focus:outline-none focus:border-blue-500"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <input
-                          type="text"
-                          placeholder="Driver Name"
-                          value={rowData.driverName || ''}
-                          onChange={(e) => handleFieldChange(key, 'driverName', e.target.value)}
-                          className="w-28 px-2 py-1 rounded border border-slate-200 text-xs focus:outline-none focus:border-blue-500"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <input
-                          type="text"
-                          placeholder="Mobile No"
-                          value={rowData.driverPhone || ''}
-                          onChange={(e) => handleFieldChange(key, 'driverPhone', e.target.value)}
-                          className="w-24 px-2 py-1 rounded border border-slate-200 font-mono text-xs focus:outline-none focus:border-blue-500"
-                        />
-                      </td>
                       <td className="p-2 text-right">
                         <button
                           onClick={() => handleGenerateGr(item)}
