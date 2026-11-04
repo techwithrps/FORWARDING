@@ -363,7 +363,7 @@ export default function JobOrderWizardView({
 
     setFormError('');
     setShowSailingPicker(false);
-    setAutoFilledToast(`⚡ Auto-filled: ${sailing.vesselName} (${sailing.voyageNo}) · ${mappedLine || sailing.carrier} · ETD & Cut-offs set! 🔒 (Locked)`);
+    setAutoFilledToast(`⚡ Auto-filled: ${sailing.vesselName} (${sailing.voyageNo}) · ${mappedLine || sailing.carrier} · ETD & Cut-offs set! (Auto)`);
     setTimeout(() => setAutoFilledToast(null), 4500);
   };
 
@@ -430,7 +430,7 @@ export default function JobOrderWizardView({
         siCutDate: true
       }));
 
-      setAutoFilledToast(`⚡ POD ${val} Auto-Matched: ${matchedSailing.vesselName} (${matchedSailing.voyageNo}) · ${mappedLine || matchedSailing.carrier} · ETD ${etd} 🔒 (Locked)`);
+      setAutoFilledToast(`⚡ POD ${val} Auto-Matched: ${matchedSailing.vesselName} (${matchedSailing.voyageNo}) · ${mappedLine || matchedSailing.carrier} · ETD ${etd} (Auto)`);
       setTimeout(() => setAutoFilledToast(null), 4500);
     } else {
       setForm(prev => ({ ...prev, pod: val }));
@@ -1220,7 +1220,7 @@ export default function JobOrderWizardView({
                   className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] border border-slate-300 flex items-center gap-1 cursor-pointer transition select-none"
                   title="Unlock to edit schedule details manually"
                 >
-                  <span>🔓 Unlock</span>
+                  <span>Unlock</span>
                 </button>
               )}
 
@@ -1356,7 +1356,7 @@ export default function JobOrderWizardView({
 
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                  Vessel Name {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>}
+                  Vessel Name {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>}
                 </label>
                 <input
                   type="text"
@@ -1379,7 +1379,7 @@ export default function JobOrderWizardView({
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1.5 border-t border-slate-100 bg-slate-50/70 p-2 rounded-lg border border-slate-200/60">
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                  Voyage {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>}
+                  Voyage {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>}
                 </label>
                 <input
                   type="text"
@@ -1399,7 +1399,7 @@ export default function JobOrderWizardView({
 
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                  ETD (Departure) {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>}
+                  ETD (Departure) {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>}
                 </label>
                 <input
                   type="date"
@@ -1418,7 +1418,7 @@ export default function JobOrderWizardView({
 
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                  ETA (Arrival) {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>}
+                  ETA (Arrival) {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>}
                 </label>
                 <input
                   type="date"
@@ -1437,7 +1437,7 @@ export default function JobOrderWizardView({
 
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                  Port Cut-off {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>}
+                  Port Cut-off {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>}
                 </label>
                 <input
                   type="date"
@@ -1456,7 +1456,7 @@ export default function JobOrderWizardView({
 
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                  SI Cut-off {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>}
+                  SI Cut-off {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>}
                 </label>
                 <input
                   type="date"
@@ -1554,7 +1554,7 @@ export default function JobOrderWizardView({
 
                 <div className="w-36 sm:w-40">
                   <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                    Set Temp <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>
+                    Set Temp <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>
                   </label>
                   <input
                     type="text"
@@ -1627,11 +1627,11 @@ export default function JobOrderWizardView({
                     Container No <span className="text-rose-500 font-bold">*</span>
                   </th>
                   <th className="py-2 px-2.5 min-w-[70px] whitespace-nowrap">Size/Type</th>
-                  <th className="py-2 px-2.5 min-w-[85px]">Tare 🔒 (Auto)</th>
+                  <th className="py-2 px-2.5 min-w-[85px]">Tare (Auto)</th>
                   <th className="py-2 px-2.5 min-w-[95px]">
                     Cargo (kg) <span className="text-rose-500 font-bold">*</span>
                   </th>
-                  <th className="py-2 px-2.5 min-w-[95px]">Gross 🔒 (Auto)</th>
+                  <th className="py-2 px-2.5 min-w-[95px]">Gross (Auto)</th>
                   <th className="py-2 px-2.5 min-w-[125px]">Line Seal (Optional)</th>
                   <th className="py-2 px-2.5 min-w-[125px]">Customs Seal (Optional)</th>
                 </tr>
