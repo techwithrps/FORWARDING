@@ -239,13 +239,20 @@ export default function App() {
     city: ''
   });
 
+  const [commodities, setCommodities] = useState([]);
+
   // Central PostgreSQL data loader
   const loadInitialData = async () => {
     try {
-      const [bRes, pRes] = await Promise.allSettled([
+      const [bRes, pRes, cRes] = await Promise.allSettled([
         api.getBookings(),
-        api.getCustomers()
+        api.getCustomers(),
+        api.getCommodities()
       ]);
+
+      if (cRes.status === 'fulfilled' && cRes.value && cRes.value.data) {
+        setCommodities(cRes.value.data);
+      }
 
       if (bRes.status === 'fulfilled' && bRes.value && bRes.value.data) {
         setJobs(bRes.value.data.map(j => ({
@@ -630,6 +637,7 @@ export default function App() {
             <JobOrderWizardView
               parties={parties}
               jobs={jobs}
+              commodities={commodities}
               onOpenQuickAddShipper={() => setShowInlinePartyModal(true)}
               onCreateJob={handleCreateJob}
               onSelectJob={(id) => setSelectedJobId(id)}

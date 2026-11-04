@@ -70,6 +70,18 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET Next sequential Job Order number from live DB sequence
+router.get('/next-jo', async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT COALESCE(MAX("CONT_JO_ID"), 0) + 1 AS next_id FROM spjlive."FLEET_CONT_JO"');
+    const nextId = Number(rows[0]?.next_id || 94182);
+    res.json({ success: true, nextJoNo: `JO-${nextId}`, rawId: nextId });
+  } catch (err) {
+    console.error('Error fetching next JO sequence:', err);
+    res.json({ success: true, nextJoNo: 'JO-94182', rawId: 94182 });
+  }
+});
+
 // POST create a new Job Order with atomic container repeater rows
 router.post('/', async (req, res) => {
   const client = await db.pool.connect();
@@ -77,10 +89,10 @@ router.post('/', async (req, res) => {
     const b = req.body;
     await client.query('BEGIN');
 
-    // Generate or use provided JO Number
-    const countRes = await client.query('SELECT COUNT(*) FROM job_orders');
-    const nextSeq = String(Number(countRes.rows[0].count) + 1).padStart(4, '0');
-    const joNo = b.joNo || b.job_number || ('JO-2026-' + nextSeq);
+    // Get live next sequence from DB
+    const seqRes = await client.query('SELECT COALESCE(MAX("CONT_JO_ID"), 0) + 1 AS next_id FROM spjlive."FLEET_CONT_JO"');
+    const nextSeqId = Number(seqRes.rows[0]?.next_id || 94182);
+    const joNo = b.joNo || ('JO-' + nextSeqId);
     const jobId = 'JOB-' + joNo;
 
     const jobQuery = `

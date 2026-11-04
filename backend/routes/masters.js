@@ -6,7 +6,7 @@ const db = require('../config/db');
 router.get('/customers', async (req, res) => {
   try {
     const { rows } = await db.query(
-      "SELECT * FROM parties WHERE party_type IN ('SHIPPER', 'CONSIGNEE', 'FORWARDER', 'CHA') ORDER BY created_at DESC"
+      "SELECT * FROM parties WHERE party_type IN ('SHIPPER', 'CONSIGNEE', 'FORWARDER', 'CHA') ORDER BY name ASC"
     );
     res.json({ success: true, count: rows.length, data: rows });
   } catch (err) {

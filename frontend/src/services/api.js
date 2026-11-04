@@ -27,6 +27,7 @@ export const api = {
 
   // Bookings (Job Orders)
   getBookings: () => request('/bookings'),
+  getNextJoNo: () => request('/bookings/next-jo'),
   createBooking: (bookingData) =>
     request('/bookings', {
       method: 'POST',

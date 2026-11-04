@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { api } from '../services/api';
 import defaultSchedulesData from '../data/panvayaDefaultSchedules.json';
 import {
   Building2,
@@ -32,6 +33,7 @@ import {
 export default function JobOrderWizardView({
   parties,
   jobs = [],
+  commodities = [],
   onOpenQuickAddShipper,
   onCreateJob,
   onSelectJob,
@@ -44,19 +46,38 @@ export default function JobOrderWizardView({
 }) {
   const todayStr = new Date().toLocaleDateString('en-GB');
 
-  // Real Shippers & Lines from SPJLIVE
-  const shippersList = [
-    'Fair Exports (India) Pvt Ltd',
-    'Marhaba Frozen Foods',
-    'Allanasons Private Limited',
-    'Al Sameer Exports Pvt Ltd',
-    'Deepmala Foods',
-    'Deccan Edibles Pvt Ltd',
-    'Sri Sri Exim Agro India',
-    'White Globe',
-    'Sumal India',
-    'Ever Fruit Exports Pvt Ltd'
-  ];
+  // Dynamic Shippers from Local PostgreSQL (falls back to defaults)
+  const shippersList = useMemo(() => {
+    if (parties && parties.length > 0) {
+      const list = parties
+        .filter(p => !p.type || p.type === 'SHIPPER' || p.type === 'FORWARDER')
+        .map(p => p.name);
+      if (list.length > 0) return list;
+    }
+    return [
+      'Fair Exports (India) Pvt Ltd',
+      'Marhaba Frozen Foods',
+      'Allanasons Private Limited',
+      'Al Sameer Exports Pvt Ltd',
+      'Deepmala Foods',
+      'Deccan Edibles Pvt Ltd'
+    ];
+  }, [parties]);
+
+  const consigneesList = useMemo(() => {
+    if (parties && parties.length > 0) {
+      const list = parties
+        .filter(p => p.type === 'CONSIGNEE')
+        .map(p => p.name);
+      if (list.length > 0) return list;
+    }
+    return [
+      'Al Maya Trading LLC (Dubai, UAE)',
+      'EuroMeat B.V. (Rotterdam, Netherlands)',
+      'Al-Shaikh Trading Co. (Jeddah, KSA)',
+      'Gulf Import Corp (Dammam, KSA)'
+    ];
+  }, [parties]);
 
   const linesList = [
     'Maersk Line India Pvt Ltd',
@@ -74,14 +95,6 @@ export default function JobOrderWizardView({
     'ZIM Integrated Shipping',
     'Goodrich Maritime Pvt Ltd',
     'Navio Shipping Private Limited'
-  ];
-
-  const consigneesList = [
-    'Al Maya Trading LLC (Dubai, UAE)',
-    'EuroMeat B.V. (Rotterdam, Netherlands)',
-    'Al-Shaikh Trading Co. (Jeddah, KSA)',
-    'Gulf Import Corp (Dammam, KSA)',
-    'Trans-World Logistics (New York, USA)'
   ];
 
   const polList = [
@@ -191,6 +204,32 @@ export default function JobOrderWizardView({
   const [routeFilterOnly, setRouteFilterOnly] = useState(true);
   const [autoFilledToast, setAutoFilledToast] = useState(null);
   const [autoFilledFields, setAutoFilledFields] = useState({});
+
+  // Dynamic Commodities from PostgreSQL Database
+  const [dbCommodities, setDbCommodities] = useState(commodities);
+  useEffect(() => {
+    if (commodities && commodities.length > 0) {
+      setDbCommodities(commodities);
+    } else {
+      api.getCommodities().then(res => {
+        if (res && res.data && res.data.length > 0) setDbCommodities(res.data);
+      }).catch(() => {});
+    }
+  }, [commodities]);
+
+  // Live Next Sequential Job Order Number from PostgreSQL Sequence
+  useEffect(() => {
+    api.getNextJoNo().then(res => {
+      if (res && res.nextJoNo) {
+        setForm(prev => {
+          if (!prev.joNo || prev.joNo.startsWith('JO-2026-')) {
+            return { ...prev, joNo: res.nextJoNo };
+          }
+          return prev;
+        });
+      }
+    }).catch(() => {});
+  }, []);
 
   // Clean, high-end enterprise input styling (No colored boxes / clean uniform border)
   const getFieldClass = () => {
@@ -355,6 +394,31 @@ export default function JobOrderWizardView({
   const handleEquipmentLineChange = (idx, field, value) => {
     const updated = [...equipmentLines];
     updated[idx][field] = value;
+
+    if (field === "commodity") {
+      const matched = dbCommodities.find(c => c.name === value || c.code === value);
+      if (matched) {
+        if (matched.requires_reefer) {
+          updated[idx].type = "RF";
+          setForm(prev => ({
+            ...prev,
+            commodity: matched.name,
+            temperature: matched.standard_temp || "-18°C"
+          }));
+        } else {
+          updated[idx].type = "HC";
+          setForm(prev => ({
+            ...prev,
+            commodity: matched.name,
+            temperature: "Ambient"
+          }));
+        }
+      } else {
+        setForm(prev => ({ ...prev, commodity: value }));
+      }
+      syncContainersFromEquipment(updated);
+    }
+
     setEquipmentLines(updated);
     if (field === "noOfCont" || field === "size" || field === "type") {
       syncContainersFromEquipment(updated);
@@ -1288,23 +1352,20 @@ export default function JobOrderWizardView({
                 </div>
 
                 <div className="w-64 sm:w-72">
-                  <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Commodity</label>
+                  <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                    Commodity <span className="text-blue-500 font-mono text-[9px]">({dbCommodities.length} in DB)</span>
+                  </label>
                   <select
                     value={line.commodity || ''}
                     onChange={(e) => handleEquipmentLineChange(idx, "commodity", e.target.value)}
                     className={`w-full px-3 py-1.5 rounded-lg text-xs font-mono font-bold outline-none ${getFieldClass(line.commodity)}`}
                   >
                     <option value="">-- Select Commodity --</option>
-                    <option value="Frozen Boneless Buffalo Meat">Frozen Boneless Buffalo Meat</option>
-                    <option value="Rice & Agro Commodities">Rice &amp; Agro Commodities</option>
-                    <option value="Frozen Fish & Seafood">Frozen Fish &amp; Seafood</option>
-                    <option value="Spices & Oleoresins">Spices &amp; Oleoresins</option>
-                    <option value="Fresh Fruits & Vegetables">Fresh Fruits &amp; Vegetables</option>
-                    <option value="Garments & Textiles">Garments &amp; Textiles</option>
-                    <option value="Machinery & Engineering Goods">Machinery &amp; Engineering Goods</option>
-                    <option value="Chemicals (Non-Haz)">Chemicals (Non-Haz)</option>
-                    <option value="Pharmaceuticals">Pharmaceuticals</option>
-                    <option value="General Cargo (FAK)">General Cargo (FAK)</option>
+                    {dbCommodities.map((cmd) => (
+                      <option key={cmd.id || cmd.code} value={cmd.name}>
+                        {cmd.name} {cmd.requires_reefer ? '❄️ (Reefer -18°C)' : '📦 (Dry Box)'}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
