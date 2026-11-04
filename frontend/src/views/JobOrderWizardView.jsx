@@ -1139,7 +1139,7 @@ export default function JobOrderWizardView({
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => {
@@ -1148,22 +1148,11 @@ export default function JobOrderWizardView({
                   setShowSailingPicker(true);
                 }}
                 className="px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-[10px] border border-blue-200 flex items-center gap-1 cursor-pointer transition select-none"
-                title="Browse & Choose Alternative Vessel Sailing"
+                title="Auto-fill Line, Vessel & Dates from Active Sailings"
               >
                 <Ship className="w-3 h-3 text-blue-600" />
-                <span>{isScheduleLocked ? 'Change Sailing' : 'Auto-Fill Sailings'}</span>
+                <span>Auto-Fill Sailings</span>
               </button>
-
-              {isScheduleLocked && (
-                <button
-                  type="button"
-                  onClick={() => setIsScheduleLocked(false)}
-                  className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] border border-slate-300 flex items-center gap-1 cursor-pointer transition select-none"
-                  title="Unlock to edit schedule details manually"
-                >
-                  <span>Unlock</span>
-                </button>
-              )}
 
               <button
                 type="button"
