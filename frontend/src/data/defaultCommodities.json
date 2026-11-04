@@ -27,3 +27,4 @@
   { "id": "CMD-22", "code": "LEATHER", "name": "LEATHER", "requires_reefer": false, "standard_temp": "Ambient", "hazardous": false },
   { "id": "CMD-10", "code": "HOUSEHOLD", "name": "HOUSEHOLD ITEMS", "requires_reefer": false, "standard_temp": "Ambient", "hazardous": false }
 ]
+

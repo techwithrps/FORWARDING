@@ -1172,12 +1172,16 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Set Temp (°C / Reefer)</label>
+                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                  Set Temp (°C / Reefer) <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>
+                </label>
                 <input
                   type="text"
-                  value={form.temperature || ''}
-                  onChange={(e) => setForm({ ...form, temperature: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass(form.temperature)}`}
+                  readOnly
+                  tabIndex={-1}
+                  value={form.temperature || 'Ambient'}
+                  className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-extrabold bg-slate-100 text-slate-700 border border-slate-200 cursor-not-allowed select-none outline-none"
+                  title="Auto-set based on selected Commodity (Locked)"
                 />
               </div>
             </div>
@@ -1431,9 +1435,11 @@ export default function JobOrderWizardView({
                     Container No <span className="text-rose-500 font-bold">*</span>
                   </th>
                   <th className="py-2 px-2.5 min-w-[70px] whitespace-nowrap">Size/Type</th>
-                  <th className="py-2 px-2.5 min-w-[85px]">Tare (kg)</th>
-                  <th className="py-2 px-2.5 min-w-[95px]">Cargo (kg)</th>
-                  <th className="py-2 px-2.5 min-w-[95px]">Gross (kg)</th>
+                  <th className="py-2 px-2.5 min-w-[85px]">Tare 🔒</th>
+                  <th className="py-2 px-2.5 min-w-[95px]">
+                    Cargo (kg) <span className="text-rose-500 font-bold">*</span>
+                  </th>
+                  <th className="py-2 px-2.5 min-w-[95px]">Gross 🔒</th>
                   <th className="py-2 px-2.5 min-w-[140px]">Seal No</th>
                   <th className="py-2 px-2.5 min-w-[130px]">Vehicle No</th>
                   <th className="py-2 px-2.5 min-w-[140px]">GR No</th>
@@ -1459,10 +1465,12 @@ export default function JobOrderWizardView({
 
                     <td className="py-1.5 px-2.5">
                       <input
-                        type="number"
-                        value={c.tareWeight}
-                        onChange={(e) => handleContainerRowChange(idx, 'tareWeight', e.target.value)}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.tareWeight)}`}
+                        type="text"
+                        readOnly
+                        tabIndex={-1}
+                        value={c.tareWeight ? `${c.tareWeight} kg` : ''}
+                        className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200 cursor-not-allowed select-none outline-none text-right pr-2"
+                        title="ISO Standard Tare Weight (Auto-filled from Size)"
                       />
                     </td>
 
@@ -1477,10 +1485,12 @@ export default function JobOrderWizardView({
 
                     <td className="py-1.5 px-2.5">
                       <input
-                        type="number"
-                        value={c.grossWeight}
-                        onChange={(e) => handleContainerRowChange(idx, 'grossWeight', e.target.value)}
-                        className={`w-full px-2.5 py-1.5 rounded-lg font-bold text-xs outline-none ${getFieldClass(c.grossWeight)}`}
+                        type="text"
+                        readOnly
+                        tabIndex={-1}
+                        value={c.grossWeight ? `${c.grossWeight} kg` : ''}
+                        className="w-full px-2.5 py-1.5 rounded-lg font-mono font-extrabold text-xs bg-slate-100 text-slate-800 border border-slate-200 cursor-not-allowed select-none outline-none text-right pr-2"
+                        title="Auto-calculated (Tare + Cargo) - Locked"
                       />
                     </td>
 
