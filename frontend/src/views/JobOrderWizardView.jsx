@@ -1273,7 +1273,7 @@ export default function JobOrderWizardView({
                   />
                 </div>
 
-                <div className="w-72 sm:w-80">
+                <div className="w-56 sm:w-64">
                   <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Size</label>
                   <select
                     value={line.size}
@@ -1284,6 +1284,27 @@ export default function JobOrderWizardView({
                     <option value="40">40' (High Cube / Standard)</option>
                     <option value="20">20' (Standard Box)</option>
                     <option value="45">45' (High Cube)</option>
+                  </select>
+                </div>
+
+                <div className="w-64 sm:w-72">
+                  <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Commodity</label>
+                  <select
+                    value={line.commodity || ''}
+                    onChange={(e) => handleEquipmentLineChange(idx, "commodity", e.target.value)}
+                    className={`w-full px-3 py-1.5 rounded-lg text-xs font-mono font-bold outline-none ${getFieldClass(line.commodity)}`}
+                  >
+                    <option value="">-- Select Commodity --</option>
+                    <option value="Frozen Boneless Buffalo Meat">Frozen Boneless Buffalo Meat</option>
+                    <option value="Rice & Agro Commodities">Rice &amp; Agro Commodities</option>
+                    <option value="Frozen Fish & Seafood">Frozen Fish &amp; Seafood</option>
+                    <option value="Spices & Oleoresins">Spices &amp; Oleoresins</option>
+                    <option value="Fresh Fruits & Vegetables">Fresh Fruits &amp; Vegetables</option>
+                    <option value="Garments & Textiles">Garments &amp; Textiles</option>
+                    <option value="Machinery & Engineering Goods">Machinery &amp; Engineering Goods</option>
+                    <option value="Chemicals (Non-Haz)">Chemicals (Non-Haz)</option>
+                    <option value="Pharmaceuticals">Pharmaceuticals</option>
+                    <option value="General Cargo (FAK)">General Cargo (FAK)</option>
                   </select>
                 </div>
 
