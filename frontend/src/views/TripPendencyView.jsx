@@ -42,8 +42,7 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
           origin: job.origin || 'Dadri ICD',
           pod: job.pod || 'Port',
           bookingNo: job.bookingNo || '-',
-          sealNo: c.seal || c.sealNo || '',
-          agentSeal: c.agentSeal || c.customSeal || '',
+          sealNo: c.seal || '',
           cargoWeight: c.cargoWeight || 24000,
           vehicleNo: c.truck && c.truck !== 'TBA' ? c.truck : '',
           driverName: '',
@@ -113,7 +112,6 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
       contNo: item.contNo,
       size: item.size,
       sealNo: item.sealNo || 'SL-88192',
-      agentSeal: item.agentSeal || '',
       weight: item.cargoWeight || 24000,
       origin: item.origin,
       pod: item.pod,
@@ -142,7 +140,7 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold font-heading text-[rgb(25,40,57)]">
-              20. Trip Pendency &amp; 21. GR Generation
+              Trip Pendency
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200">
               {pendingContainers.length} Containers Awaiting GR
@@ -353,8 +351,8 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
                   <span className="font-bold text-blue-700">{activeGrModal.contNo} ({activeGrModal.size})</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Seal &amp; Weight:</span>
-                  <span className="font-bold">{activeGrModal.sealNo}{activeGrModal.agentSeal ? ` | Cust: ${activeGrModal.agentSeal}` : ''} &bull; {activeGrModal.weight} kg</span>
+                  <span className="text-slate-500 block">Seal No &amp; Weight:</span>
+                  <span className="font-bold">{activeGrModal.sealNo} &bull; {activeGrModal.weight} kg</span>
                 </div>
                 <div>
                   <span className="text-slate-500 block">Vehicle / Truck No:</span>
