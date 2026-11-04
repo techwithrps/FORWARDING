@@ -229,6 +229,7 @@ export default function JobOrderWizardView({
   const [routeFilterOnly, setRouteFilterOnly] = useState(true);
   const [autoFilledToast, setAutoFilledToast] = useState(null);
   const [autoFilledFields, setAutoFilledFields] = useState({});
+  const [isScheduleLocked, setIsScheduleLocked] = useState(false);
 
   // Dynamic Commodities from PostgreSQL Database (Instant fallback bundled)
   const [dbCommodities, setDbCommodities] = useState(() => (commodities && commodities.length > 0 ? commodities : defaultCommodities));
@@ -346,6 +347,8 @@ export default function JobOrderWizardView({
       pod: sPod || prev.pod
     }));
 
+    setIsScheduleLocked(true);
+
     setAutoFilledFields({
       shippingLine: Boolean(mappedLine),
       vesselName: Boolean(sailing.vesselName),
@@ -360,8 +363,79 @@ export default function JobOrderWizardView({
 
     setFormError('');
     setShowSailingPicker(false);
-    setAutoFilledToast(`⚡ Auto-filled: ${sailing.vesselName} (${sailing.voyageNo}) · ${mappedLine || sailing.carrier} · ETD & Cut-offs set!`);
+    setAutoFilledToast(`⚡ Auto-filled: ${sailing.vesselName} (${sailing.voyageNo}) · ${mappedLine || sailing.carrier} · ETD & Cut-offs set! 🔒 (Locked)`);
     setTimeout(() => setAutoFilledToast(null), 4500);
+  };
+
+  // Auto-Match & Auto-Fill live Sailing as soon as POD is selected
+  const handlePodChange = (val) => {
+    setFormError('');
+    if (!val) {
+      setForm(prev => ({
+        ...prev,
+        pod: '',
+        vesselName: '',
+        voyage: '',
+        etdDate: '',
+        etaDate: '',
+        portCutDate: '',
+        siCutDate: ''
+      }));
+      setIsScheduleLocked(false);
+      return;
+    }
+
+    const cleanPol = (form.pol || 'INNSA1').slice(0, 5).toUpperCase();
+    const cleanPod = val.trim().toUpperCase();
+
+    // Find best live sailing matching POL & POD
+    const matchedSailing = allSailings.find(s => {
+      const sPol = (s.originLocode || s.origin || '').toUpperCase();
+      const sPod = (s.destinationLocode || s.destination || '').toUpperCase();
+      const polMatch = !cleanPol || sPol.startsWith(cleanPol);
+      const podMatch = cleanPod && (sPod.startsWith(cleanPod) || cleanPod.startsWith(sPod));
+      return polMatch && podMatch;
+    });
+
+    if (matchedSailing) {
+      const mappedLine = mapCarrierToShippingLine(matchedSailing.carrier);
+      const portCut = matchedSailing.cutOffs?.containerYard ? matchedSailing.cutOffs.containerYard.split(' ')[0] : (matchedSailing.departure || '');
+      const siCut = matchedSailing.cutOffs?.shippingInstructions ? matchedSailing.cutOffs.shippingInstructions.split(' ')[0] : portCut;
+      const etd = matchedSailing.departure || '';
+      const eta = matchedSailing.arrival || '';
+
+      setForm(prev => ({
+        ...prev,
+        pod: val,
+        shippingLine: mappedLine || prev.shippingLine,
+        vesselName: matchedSailing.vesselName || prev.vesselName,
+        voyage: matchedSailing.voyageNo || prev.voyage,
+        etdDate: etd,
+        etaDate: eta,
+        portCutDate: portCut,
+        siCutDate: siCut
+      }));
+
+      setIsScheduleLocked(true);
+
+      setAutoFilledFields(prev => ({
+        ...prev,
+        pod: true,
+        shippingLine: Boolean(mappedLine),
+        vesselName: true,
+        voyage: true,
+        etdDate: true,
+        etaDate: true,
+        portCutDate: true,
+        siCutDate: true
+      }));
+
+      setAutoFilledToast(`⚡ POD ${val} Auto-Matched: ${matchedSailing.vesselName} (${matchedSailing.voyageNo}) · ${mappedLine || matchedSailing.carrier} · ETD ${etd} 🔒 (Locked)`);
+      setTimeout(() => setAutoFilledToast(null), 4500);
+    } else {
+      setForm(prev => ({ ...prev, pod: val }));
+      setIsScheduleLocked(false);
+    }
   };
 
   // Multiple Equipment & Commercial Rates Lines ("+ button rakho taki multiple add krsake")
@@ -587,6 +661,7 @@ export default function JobOrderWizardView({
       }
     ]);
     setEquipmentLines([{ id: 1, noOfCont: 1, size: '' }]);
+    setIsScheduleLocked(false);
     setFormError('');
     setQuickFillNotice('Form cleared for blank entry.');
     setTimeout(() => setQuickFillNotice(''), 2500);
@@ -1094,17 +1169,7 @@ export default function JobOrderWizardView({
               </div>
               <select
                 value={form.pod}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setForm({ ...form, pod: val });
-                  setFormError('');
-                  if (val) {
-                    setRouteFilterOnly(true);
-                    setSelectedCarrierFilter('ALL');
-                    setSailingSearch('');
-                    setShowSailingPicker(true);
-                  }
-                }}
+                onChange={(e) => handlePodChange(e.target.value)}
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('pod', true, form.pod)}`}
               >
                 <option value="">-- Select --</option>
@@ -1133,7 +1198,7 @@ export default function JobOrderWizardView({
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => {
@@ -1142,11 +1207,22 @@ export default function JobOrderWizardView({
                   setShowSailingPicker(true);
                 }}
                 className="px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-[10px] border border-blue-200 flex items-center gap-1 cursor-pointer transition select-none"
-                title="Auto-fill Line, Vessel & Dates from Active Sailings"
+                title="Browse & Choose Alternative Vessel Sailing"
               >
                 <Ship className="w-3 h-3 text-blue-600" />
-                <span>Auto-Fill Sailings</span>
+                <span>{isScheduleLocked ? 'Change Sailing' : 'Auto-Fill Sailings'}</span>
               </button>
+
+              {isScheduleLocked && (
+                <button
+                  type="button"
+                  onClick={() => setIsScheduleLocked(false)}
+                  className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] border border-slate-300 flex items-center gap-1 cursor-pointer transition select-none"
+                  title="Unlock to edit schedule details manually"
+                >
+                  <span>🔓 Unlock</span>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -1279,13 +1355,22 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Vessel Name</label>
+                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                  Vessel Name {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>}
+                </label>
                 <input
                   type="text"
-                  placeholder="e.g. MAERSK COLOMBO (Auto-Fill Sailings)"
+                  placeholder="e.g. MAERSK COLOMBO"
+                  readOnly={isScheduleLocked}
+                  tabIndex={isScheduleLocked ? -1 : 0}
                   value={form.vesselName}
                   onChange={(e) => setForm({ ...form, vesselName: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass('vesselName', false, form.vesselName)}`}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${
+                    isScheduleLocked
+                      ? 'bg-slate-100 text-slate-700 border border-slate-200 cursor-not-allowed select-none'
+                      : getFieldClass('vesselName', false, form.vesselName)
+                  }`}
+                  title={isScheduleLocked ? "Auto-filled from verified ocean schedule (Locked)" : ""}
                 />
               </div>
             </div>
@@ -1293,53 +1378,98 @@ export default function JobOrderWizardView({
             {/* Row 3: Voyage -> ETD -> ETA -> Port Cut-off -> SI Cut-off (5 Cols Compact Line) */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1.5 border-t border-slate-100 bg-slate-50/70 p-2 rounded-lg border border-slate-200/60">
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Voyage</label>
+                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                  Voyage {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>}
+                </label>
                 <input
                   type="text"
                   placeholder="e.g. 2604W"
+                  readOnly={isScheduleLocked}
+                  tabIndex={isScheduleLocked ? -1 : 0}
                   value={form.voyage}
                   onChange={(e) => setForm({ ...form, voyage: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('voyage', false, form.voyage)}`}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${
+                    isScheduleLocked
+                      ? 'bg-slate-100 text-slate-700 border border-slate-200 cursor-not-allowed select-none'
+                      : getFieldClass('voyage', false, form.voyage)
+                  }`}
+                  title={isScheduleLocked ? "Auto-filled from verified ocean schedule (Locked)" : ""}
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">ETD (Departure)</label>
+                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                  ETD (Departure) {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>}
+                </label>
                 <input
                   type="date"
+                  readOnly={isScheduleLocked}
+                  tabIndex={isScheduleLocked ? -1 : 0}
                   value={form.etdDate}
                   onChange={(e) => setForm({ ...form, etdDate: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('etdDate', false, form.etdDate)}`}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${
+                    isScheduleLocked
+                      ? 'bg-slate-100 text-slate-700 border border-slate-200 cursor-not-allowed select-none'
+                      : getFieldClass('etdDate', false, form.etdDate)
+                  }`}
+                  title={isScheduleLocked ? "Auto-filled from verified ocean schedule (Locked)" : ""}
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">ETA (Arrival)</label>
+                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                  ETA (Arrival) {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>}
+                </label>
                 <input
                   type="date"
+                  readOnly={isScheduleLocked}
+                  tabIndex={isScheduleLocked ? -1 : 0}
                   value={form.etaDate || ''}
                   onChange={(e) => setForm({ ...form, etaDate: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('etaDate', false, form.etaDate)}`}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${
+                    isScheduleLocked
+                      ? 'bg-slate-100 text-slate-700 border border-slate-200 cursor-not-allowed select-none'
+                      : getFieldClass('etaDate', false, form.etaDate)
+                  }`}
+                  title={isScheduleLocked ? "Auto-filled from verified ocean schedule (Locked)" : ""}
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Port Cut-off</label>
+                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                  Port Cut-off {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>}
+                </label>
                 <input
                   type="date"
+                  readOnly={isScheduleLocked}
+                  tabIndex={isScheduleLocked ? -1 : 0}
                   value={form.portCutDate}
                   onChange={(e) => setForm({ ...form, portCutDate: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('portCutDate', false, form.portCutDate)}`}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${
+                    isScheduleLocked
+                      ? 'bg-slate-100 text-slate-700 border border-slate-200 cursor-not-allowed select-none'
+                      : getFieldClass('portCutDate', false, form.portCutDate)
+                  }`}
+                  title={isScheduleLocked ? "Auto-filled from verified ocean schedule (Locked)" : ""}
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">SI Cut-off</label>
+                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                  SI Cut-off {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">🔒 (Auto)</span>}
+                </label>
                 <input
                   type="date"
+                  readOnly={isScheduleLocked}
+                  tabIndex={isScheduleLocked ? -1 : 0}
                   value={form.siCutDate}
                   onChange={(e) => setForm({ ...form, siCutDate: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('siCutDate', false, form.siCutDate)}`}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${
+                    isScheduleLocked
+                      ? 'bg-slate-100 text-slate-700 border border-slate-200 cursor-not-allowed select-none'
+                      : getFieldClass('siCutDate', false, form.siCutDate)
+                  }`}
+                  title={isScheduleLocked ? "Auto-filled from verified ocean schedule (Locked)" : ""}
                 />
               </div>
             </div>
