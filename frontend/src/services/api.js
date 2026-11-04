@@ -1,21 +1,30 @@
-const API_BASE = 'http://localhost:5001/api/v1';
+const API_BASE = import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:5001/api/v1'
+    : '/api/v1');
 
-// Helper for fetch with error handling and fallback
+// Helper for fetch with fast timeout and error handling
 async function request(endpoint, options = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2500);
+
   try {
     const res = await fetch(`${API_BASE}${endpoint}`, {
+      signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
         ...options.headers
       },
       ...options
     });
+    clearTimeout(timeoutId);
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
       throw new Error(errBody.message || errBody.error || `HTTP error ${res.status}`);
     }
     return await res.json();
   } catch (err) {
+    clearTimeout(timeoutId);
     console.warn(`[API] Failed to call ${endpoint}:`, err.message);
     throw err;
   }

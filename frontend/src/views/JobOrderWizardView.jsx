@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
 import defaultSchedulesData from '../data/panvayaDefaultSchedules.json';
+import defaultCommodities from '../data/defaultCommodities.json';
 import {
   Building2,
   MapPin,
@@ -205,8 +206,8 @@ export default function JobOrderWizardView({
   const [autoFilledToast, setAutoFilledToast] = useState(null);
   const [autoFilledFields, setAutoFilledFields] = useState({});
 
-  // Dynamic Commodities from PostgreSQL Database
-  const [dbCommodities, setDbCommodities] = useState(commodities);
+  // Dynamic Commodities from PostgreSQL Database (Instant fallback bundled)
+  const [dbCommodities, setDbCommodities] = useState(() => (commodities && commodities.length > 0 ? commodities : defaultCommodities));
   useEffect(() => {
     if (commodities && commodities.length > 0) {
       setDbCommodities(commodities);
