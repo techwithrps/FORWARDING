@@ -665,7 +665,7 @@ export default function App() {
 
           {/* GR Searching */}
           {activeView === 'GrSearching' && (
-            <GrSearchingView />
+            <GrSearchingView onExit={() => setActiveView('GrGeneration')} />
           )}
 
           {/* 22 & 23: Vehicle Running Position & Trip Close */}
