@@ -130,7 +130,16 @@ router.post('/advance-milestone', async (req, res) => {
   }
 });
 
-// POST Update Documentation (Shipping Bill, Party Invoice, BL, Telex)
+// Documentation Update (Shipping Bill, Party Invoice, BL, Telex)
+router.get('/update-docs', async (req, res) => {
+  try {
+    const data = await getLifecycleRows();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/update-docs', async (req, res) => {
   try {
     const { jobId, sbNo, sbDate, partyInvoiceNo, partyInvoiceDate, blNo, telexReleased } = req.body;
@@ -164,7 +173,80 @@ router.post('/update-docs', async (req, res) => {
 });
 
 
+// Helper to fetch lifecycle container list with joined job orders
+async function getLifecycleRows(extraWhere = '1=1') {
+  const query = `
+    SELECT 
+      c.id, c.job_id, c.container_number, c.size_type, c.tare_weight, c.gross_weight,
+      c.cargo_weight, c.seal_number, c.gr_number, c.gr_date, c.truck_number,
+      c.driver_name, c.driver_mobile, c.current_status,
+      c.current_location, c.running_status, c.pod_received_by, c.trip_close_date,
+      c.edi_sb_status, c.edi_filing_date, c.train_no, c.wagon_no, c.rake_out_date,
+      c.feeder_vessel, c.cut_off_date, c.berthing_date, c.sob_date, c.bl_stage,
+      c.telex_released, c.telex_release_date, c.tr_no, c.tr_status, c.tr_date,
+      c.handover_status, c.handover_date, c.egm_no, c.egm_date, c.discharge_date,
+      c.delivered_to_consignee_date, c.empty_returned_depot_date,
+      j.job_number, j.booking_no, j.customer_name, j.shipping_line_name,
+      j.origin_port_name, j.pod_port_name, j.vessel_name, j.commodity
+    FROM job_containers c
+    JOIN job_orders j ON c.job_id = j.id
+    WHERE ${extraWhere}
+    ORDER BY c.created_at DESC;
+  `;
+  const { rows } = await db.query(query);
+  return rows.map(r => ({
+    id: r.id,
+    containerNo: r.container_number,
+    sizeType: r.size_type,
+    tareWeight: Number(r.tare_weight) || 0,
+    grossWeight: Number(r.gross_weight) || 0,
+    cargoWeight: Number(r.cargo_weight) || 0,
+    jobNo: r.job_number,
+    bookingNo: r.booking_no,
+    shipper: r.customer_name,
+    customer: r.customer_name,
+    shippingLine: r.shipping_line_name,
+    origin: r.origin_port_name,
+    destination: r.pod_port_name,
+    vessel: r.vessel_name,
+    commodity: r.commodity,
+    truckNo: r.truck_number || '',
+    driverName: r.driver_name || '',
+    driverMobile: r.driver_mobile || '',
+    currentLocation: r.current_location || 'En-Route ICD to Gateway Port',
+    runningStatus: r.running_status || 'IN_TRANSIT',
+    podReceivedBy: r.pod_received_by || '',
+    tripCloseDate: r.trip_close_date || null,
+    ediSbStatus: r.edi_sb_status || 'LEO_GENERATED',
+    ediFilingDate: r.edi_filing_date || null,
+    trainNo: r.train_no || '',
+    wagonNo: r.wagon_no || '',
+    rakeOutDate: r.rake_out_date || null,
+    feederVessel: r.feeder_vessel || r.vessel_name || '',
+    cutOffDate: r.cut_off_date || null,
+    berthingDate: r.berthing_date || null,
+    sobDate: r.sob_date || null,
+    blStage: r.bl_stage || 'CHECKLIST_SENT',
+    telexReleased: r.telex_released || false,
+    trNo: r.tr_no || '',
+    trStatus: r.tr_status || 'APPROVED',
+    handoverStatus: r.handover_status || 'COMPLETED',
+    egmNo: r.egm_no || '',
+    dischargeDate: r.discharge_date || null,
+    status: r.current_status || 'ALLOTTED'
+  }));
+}
+
 // 5. VEHICLE RUNNING POSITION
+router.get('/running-position', async (req, res) => {
+  try {
+    const data = await getLifecycleRows();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/running-position', async (req, res) => {
   try {
     const { containerId, currentLocation, runningStatus, gpsLat, gpsLng } = req.body;
@@ -185,6 +267,15 @@ router.post('/running-position', async (req, res) => {
 });
 
 // 6. TRIP CLOSE
+router.get('/trip-close', async (req, res) => {
+  try {
+    const data = await getLifecycleRows();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/trip-close', async (req, res) => {
   try {
     const { containerId, podReceivedBy } = req.body;
@@ -204,6 +295,15 @@ router.post('/trip-close', async (req, res) => {
 });
 
 // 7. EDI UPDATE
+router.get('/edi-update', async (req, res) => {
+  try {
+    const data = await getLifecycleRows();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/edi-update', async (req, res) => {
   try {
     const { containerId, ediSbStatus } = req.body;
@@ -222,6 +322,15 @@ router.post('/edi-update', async (req, res) => {
 });
 
 // 8. RAIL OUT STATUS
+router.get('/rail-out', async (req, res) => {
+  try {
+    const data = await getLifecycleRows();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/rail-out', async (req, res) => {
   try {
     const { containerId, trainNo, wagonNo, rakeOutDate } = req.body;
@@ -242,6 +351,15 @@ router.post('/rail-out', async (req, res) => {
 });
 
 // 9. VESSEL PLAN DETAILS
+router.get('/vessel-plan', async (req, res) => {
+  try {
+    const data = await getLifecycleRows();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/vessel-plan', async (req, res) => {
   try {
     const { containerId, feederVessel, cutOffDate, berthingDate } = req.body;
@@ -261,6 +379,15 @@ router.post('/vessel-plan', async (req, res) => {
 });
 
 // 10. SOB UPDATE
+router.get('/sob-update', async (req, res) => {
+  try {
+    const data = await getLifecycleRows();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/sob-update', async (req, res) => {
   try {
     const { containerId, sobDate } = req.body;
@@ -279,6 +406,15 @@ router.post('/sob-update', async (req, res) => {
 });
 
 // 11. BL STATUS UPDATE
+router.get('/bl-status', async (req, res) => {
+  try {
+    const data = await getLifecycleRows();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/bl-status', async (req, res) => {
   try {
     const { containerId, blStage } = req.body;
@@ -296,6 +432,15 @@ router.post('/bl-status', async (req, res) => {
 });
 
 // 12. TELEX STATUS UPDATE
+router.get('/telex-update', async (req, res) => {
+  try {
+    const data = await getLifecycleRows();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/telex-update', async (req, res) => {
   try {
     const { containerId, telexReleased } = req.body;
@@ -314,6 +459,15 @@ router.post('/telex-update', async (req, res) => {
 });
 
 // 13. TR UPDATE (Transshipment Permit)
+router.get('/tr-update', async (req, res) => {
+  try {
+    const data = await getLifecycleRows();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/tr-update', async (req, res) => {
   try {
     const { containerId, trNo, trStatus } = req.body;
@@ -333,6 +487,15 @@ router.post('/tr-update', async (req, res) => {
 });
 
 // 14. HANDOVER UPDATE
+router.get('/handover-update', async (req, res) => {
+  try {
+    const data = await getLifecycleRows();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/handover-update', async (req, res) => {
   try {
     const { containerId, handoverStatus } = req.body;
@@ -351,6 +514,15 @@ router.post('/handover-update', async (req, res) => {
 });
 
 // 15. EGM UPDATE
+router.get('/egm-update', async (req, res) => {
+  try {
+    const data = await getLifecycleRows();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/egm-update', async (req, res) => {
   try {
     const { containerId, egmNo } = req.body;
@@ -369,6 +541,15 @@ router.post('/egm-update', async (req, res) => {
 });
 
 // 16. SHIPMENT DISCHARGE STATUS
+router.get('/discharge-status', async (req, res) => {
+  try {
+    const data = await getLifecycleRows();
+    res.json({ success: true, count: data.length, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/discharge-status', async (req, res) => {
   try {
     const { containerId, dischargeDate, deliveredDate, emptyReturnedDate } = req.body;
