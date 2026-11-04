@@ -1281,7 +1281,7 @@ export default function JobOrderWizardView({
                   onChange={(e) => setForm({ ...form, chaName: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.chaName)}`}
                 >
-                  <option value="">-- Select (Nahi toh blank rehne do) --</option>
+                  <option value="">-- Optional / Direct Shipper --</option>
                   {chaList.map((cha, i) => (
                     <option key={i} value={cha}>{cha}</option>
                   ))}
@@ -1297,7 +1297,7 @@ export default function JobOrderWizardView({
                   onChange={(e) => setForm({ ...form, onAccount: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.onAccount)}`}
                 >
-                  <option value="">-- Select (Nahi toh blank rehne do) --</option>
+                  <option value="">-- Optional / Direct Shipper --</option>
                   {shippersList.map((name, i) => (
                     <option key={i} value={name}>
                       {name}
@@ -1337,7 +1337,7 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Line Booking No</label>
                 <input
                   type="text"
-                  placeholder="Nahi toh blank rehne do (Optional)"
+                  placeholder="Optional / Leave Blank"
                   value={form.lineBookingNo}
                   onChange={(e) => setForm({ ...form, lineBookingNo: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('lineBookingNo', false, form.lineBookingNo)}`}
@@ -1691,8 +1691,8 @@ export default function JobOrderWizardView({
                         value={c.sealNo}
                         onChange={(e) => handleContainerRowChange(idx, 'sealNo', e.target.value.toUpperCase())}
                         className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.sealNo)}`}
-                        placeholder="Nahi toh blank rehne do"
-                        title="Shipping Line Seal (Stuffing stage par bharega)"
+                        placeholder="Optional (At Stuffing)"
+                        title="Shipping Line Seal (Entered during stuffing/gate-in)"
                       />
                     </td>
 
@@ -1702,8 +1702,8 @@ export default function JobOrderWizardView({
                         value={c.agentSeal || ''}
                         onChange={(e) => handleContainerRowChange(idx, 'agentSeal', e.target.value.toUpperCase())}
                         className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.agentSeal)}`}
-                        placeholder="Nahi toh blank rehne do"
-                        title="Customs / Shipper Bottle Seal (Stuffing stage par bharega)"
+                        placeholder="Optional (At Stuffing)"
+                        title="Customs / Shipper Bottle Seal (Entered during stuffing/docs)"
                       />
                     </td>
                   </tr>
