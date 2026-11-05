@@ -196,3 +196,5 @@ export const api = {
       body: JSON.stringify(data)
     })
 };
+
+export default api;

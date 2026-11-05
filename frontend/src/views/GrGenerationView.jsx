@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Truck,
   CreditCard,
@@ -11,6 +11,7 @@ import {
   Search,
   Clock
 } from 'lucide-react';
+import api from '../services/api.js';
 
 export default function GrGenerationView({
   jobs = [],
@@ -193,6 +194,40 @@ export default function GrGenerationView({
     { name: 'Mohd. Irfan', phone: '9955443322', license: '2029-01-20' }
   ];
 
+  // Dynamic fleet lists fetched from DB API with fallback presets
+  const [liveDrivers, setLiveDrivers] = useState(driverPresets);
+  const [liveVehicles, setLiveVehicles] = useState(vehicleBadges);
+
+  useEffect(() => {
+    let isMounted = true;
+    api.getDrivers()
+      .then((res) => {
+        if (isMounted && res?.data && res.data.length > 0) {
+          setLiveDrivers(
+            res.data.map((d) => ({
+              name: d.name,
+              phone: d.mobile || '',
+              license: d.validity || ''
+            }))
+          );
+        }
+      })
+      .catch((err) => console.warn('Could not fetch drivers from API:', err));
+
+    api.getVehicles()
+      .then((res) => {
+        if (isMounted && res?.data && res.data.length > 0) {
+          const list = res.data.map((v) => v.truck_no).filter(Boolean);
+          if (list.length > 0) setLiveVehicles(list);
+        }
+      })
+      .catch((err) => console.warn('Could not fetch vehicles from API:', err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const transporterPresets = [
     'AJINKYA TRANSPORT',
     'SPJ Fleet Logistics',
@@ -286,7 +321,7 @@ export default function GrGenerationView({
 
   // Driver change auto-fills contact and license
   const handleDriverChange = (driverName) => {
-    const matchedDriver = driverPresets.find(
+    const matchedDriver = liveDrivers.find(
       (d) => d.name.toLowerCase() === driverName.toLowerCase()
     );
     if (matchedDriver) {
@@ -751,11 +786,11 @@ export default function GrGenerationView({
                 onChange={(e) => setForm({ ...form, vehicleNo: e.target.value })}
                 className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold uppercase outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
               >
-                <option value="">-- Select Vehicle No --</option>
-                {vehicleBadges.map((v) => (
+                <option value="">-- Select Vehicle ({liveVehicles.length} Fleet Trucks) --</option>
+                {liveVehicles.map((v) => (
                   <option key={v} value={v}>{v}</option>
                 ))}
-                {form.vehicleNo && !vehicleBadges.includes(form.vehicleNo) && (
+                {form.vehicleNo && !liveVehicles.includes(form.vehicleNo) && (
                   <option value={form.vehicleNo}>{form.vehicleNo}</option>
                 )}
               </select>
@@ -764,18 +799,18 @@ export default function GrGenerationView({
             {/* Driver (Dropdown Selector with Auto-Fill Contact & License, Required *) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Driver <span className="text-rose-500 font-bold">*</span>
+                Driver <span className="text-rose-500 font-bold">*</span> ({liveDrivers.length} Drivers)
               </label>
               <select
                 value={form.driver}
                 onChange={(e) => handleDriverChange(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
               >
-                <option value="">-- Select Driver --</option>
-                {driverPresets.map((d) => (
-                  <option key={d.name} value={d.name}>{d.name} ({d.phone})</option>
+                <option value="">-- Select Driver ({liveDrivers.length} In Fleet) --</option>
+                {liveDrivers.map((d) => (
+                  <option key={d.name} value={d.name}>{d.name} {d.phone ? `(${d.phone})` : ''}</option>
                 ))}
-                {form.driver && !driverPresets.some(d => d.name === form.driver) && (
+                {form.driver && !liveDrivers.some(d => d.name === form.driver) && (
                   <option value={form.driver}>{form.driver}</option>
                 )}
               </select>

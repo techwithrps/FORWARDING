@@ -109,7 +109,27 @@ router.delete('/customers/:id', async (req, res) => {
 // 2. DRIVER MASTER (AFTO/OCPL)
 router.get('/drivers', async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT * FROM drivers ORDER BY created_at DESC');
+    const { rows } = await db.query(`
+      SELECT DISTINCT ON (UPPER(TRIM(name)))
+        id, name, vehicle, dl_no, validity, mobile, transporter, status
+      FROM (
+        SELECT 
+          'DRV-' || "DRIVER_ID" AS id,
+          TRIM("DRIVER_NAME") AS name,
+          COALESCE("VEHICLE_NO", '') AS vehicle,
+          COALESCE("DL_NO", '') AS dl_no,
+          "DL_RENEWABLE_DATE"::date::text AS validity,
+          COALESCE("MOBILE_NO", "CONTACT_NO", '') AS mobile,
+          'Dadri Express Logistics' AS transporter,
+          'ACTIVE' AS status
+        FROM spjlive."FLEET_DRIVER_MASTER"
+        WHERE "DRIVER_NAME" IS NOT NULL AND TRIM("DRIVER_NAME") != ''
+        UNION ALL
+        SELECT id, name, vehicle, dl_no, validity::text, mobile, transporter, status
+        FROM public.drivers
+      ) all_drv
+      ORDER BY UPPER(TRIM(name)) ASC
+    `);
     res.json({ success: true, count: rows.length, data: rows });
   } catch (err) {
     console.error('Error fetching drivers:', err);
@@ -193,7 +213,25 @@ router.delete('/drivers/:id', async (req, res) => {
 // 3. VEHICLE MASTER
 router.get('/vehicles', async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT * FROM vehicles ORDER BY created_at DESC');
+    const { rows } = await db.query(`
+      SELECT DISTINCT ON (UPPER(TRIM(truck_no)))
+        id, truck_no, type, model, transporter, status
+      FROM (
+        SELECT 
+          'VEH-' || "EQUIPMENT_ID" AS id,
+          UPPER(TRIM("EQUIPMENT_NO")) AS truck_no,
+          COALESCE("EQUIPMENT_TYPE", 'T40') AS type,
+          COALESCE("MODEL", 'Trailer') AS model,
+          'Dadri Express Logistics' AS transporter,
+          'ACTIVE' AS status
+        FROM spjlive."FLEET_EQUIPMENT_MASTER"
+        WHERE "EQUIPMENT_NO" IS NOT NULL AND TRIM("EQUIPMENT_NO") != ''
+        UNION ALL
+        SELECT id, truck_no, type, model, transporter, status
+        FROM public.vehicles
+      ) all_veh
+      ORDER BY UPPER(TRIM(truck_no)) ASC
+    `);
     res.json({ success: true, count: rows.length, data: rows });
   } catch (err) {
     console.error('Error fetching vehicles:', err);
