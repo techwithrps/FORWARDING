@@ -1,0 +1,163 @@
+import React, { useId } from 'react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+
+/**
+ * HelloEffect
+ * 
+ * Signature Apple-inspired cursive handwriting animation component.
+ * Strokes draw smoothly using SVG pathLength stroke-dashoffset animation.
+ * 
+ * @param {number} speed - Multiplier for animation speed (e.g. speed={2} draws at 2x speed)
+ * @param {string} className - Additional CSS classes
+ * @param {string} word - Optional custom cursive word to draw (defaults to iconic Apple 'hello')
+ * @param {boolean} useGradient - Whether to use the signature iridescent blue-indigo-purple gradient (default true)
+ * @param {function} onAnimationComplete - Callback when the handwriting stroke finishes
+ */
+export function HelloEffect({
+  speed = 1,
+  className,
+  word,
+  useGradient = true,
+  onAnimationComplete,
+  ...props
+}) {
+  const rawId = useId();
+  const gradientId = `hello-grad-${rawId.replace(/:/g, '')}`;
+  const safeSpeed = Math.max(0.1, Number(speed) || 1);
+  const calc = (seconds) => seconds / safeSpeed;
+
+  const isCustomWord = Boolean(word && word.trim().toLowerCase() !== 'hello');
+
+  // If a custom word is passed (e.g. 'goods receipt'), animate cursive SVG text
+  if (isCustomWord) {
+    const displayWord = word.trim().toLowerCase();
+    // Estimate viewBox width based on character count so it never gets clipped
+    const charCount = displayWord.length;
+    const vbWidth = Math.max(480, Math.min(850, charCount * 46 + 100));
+    const vbHeight = 150;
+
+    return (
+      <div className={cn('relative inline-flex items-center justify-center', className)}>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox={`0 0 ${vbWidth} ${vbHeight}`}
+          className="w-full h-full overflow-visible select-none"
+          {...props}
+        >
+          <defs>
+            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#2563eb" />
+              <stop offset="30%" stopColor="#3b82f6" />
+              <stop offset="60%" stopColor="#6366f1" />
+              <stop offset="85%" stopColor="#7c3aed" />
+              <stop offset="100%" stopColor="#1e293b" />
+            </linearGradient>
+            <style>{`
+              @keyframes helloStrokeDraw {
+                0% {
+                  stroke-dashoffset: 1200;
+                  fill-opacity: 0;
+                  opacity: 0.2;
+                }
+                60% {
+                  stroke-dashoffset: 0;
+                  fill-opacity: 0.25;
+                  opacity: 1;
+                }
+                100% {
+                  stroke-dashoffset: 0;
+                  fill-opacity: 1;
+                  opacity: 1;
+                }
+              }
+            `}</style>
+          </defs>
+
+          <text
+            x="50%"
+            y="56%"
+            textAnchor="middle"
+            dominantBaseline="central"
+            className="font-apple-script font-bold tracking-wide"
+            style={{
+              fontSize: charCount > 16 ? '58px' : '72px',
+              fill: useGradient ? `url(#${gradientId})` : 'currentColor',
+              stroke: useGradient ? `url(#${gradientId})` : 'currentColor',
+              strokeWidth: '1.4px',
+              strokeLinecap: 'round',
+              strokeLinejoin: 'round',
+              strokeDasharray: 1200,
+              strokeDashoffset: 1200,
+              animation: `helloStrokeDraw ${calc(1.8)}s cubic-bezier(0.16, 1, 0.3, 1) forwards`,
+            }}
+            onAnimationEnd={onAnimationComplete}
+          >
+            {displayWord}
+          </text>
+        </svg>
+      </div>
+    );
+  }
+
+  // Default: Iconic Apple "hello" SVG handcrafted vector strokes
+  const strokeColor = useGradient ? `url(#${gradientId})` : 'currentColor';
+
+  return (
+    <motion.svg
+      className={cn('h-14 sm:h-16 w-auto max-w-full overflow-visible select-none', className)}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 638 200"
+      fill="none"
+      stroke={strokeColor}
+      strokeWidth="15"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: calc(0.3) }}
+      aria-label="hello"
+      role="img"
+      {...props}
+    >
+      <title>hello</title>
+      <defs>
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#2563eb" />
+          <stop offset="30%" stopColor="#3b82f6" />
+          <stop offset="60%" stopColor="#6366f1" />
+          <stop offset="85%" stopColor="#7c3aed" />
+          <stop offset="100%" stopColor="#1e293b" />
+        </linearGradient>
+      </defs>
+
+      {/* Stroke 1: 'h' ascending stem & loop */}
+      <motion.path
+        d="M8.69214 166.553C36.2393 151.239 61.3409 131.548 89.8191 98.0295C109.203 75.1488 119.625 49.0228 120.122 31.0026C120.37 17.6036 113.836 7.43883 101.759 7.43883C88.3598 7.43883 79.9231 17.6036 74.7122 40.9363C69.005 66.5793 64.7866 96.0036 54.1166 190.356"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{
+          duration: calc(0.75),
+          ease: 'easeInOut',
+          opacity: { duration: calc(0.3) },
+        }}
+      />
+
+      {/* Stroke 2: 'h' arch connecting into 'e', 'l', 'l', 'o' and final flourish */}
+      <motion.path
+        d="M55.1624 181.135C60.6251 133.114 81.4118 98.0479 107.963 98.0479C123.844 98.0479 133.937 110.703 131.071 128.817C129.457 139.487 127.587 150.405 125.408 163.06C122.869 178.941 130.128 191.348 152.122 191.348C184.197 191.348 219.189 173.523 237.097 145.915C243.198 136.509 245.68 128.073 245.928 119.884C246.176 104.996 237.739 93.8296 222.851 93.8296C203.992 93.8296 189.6 115.17 189.6 142.465C189.6 171.745 205.481 192.341 239.208 192.341C285.066 192.341 335.86 137.292 359.199 75.8585C365.788 58.513 368.26 42.4065 368.26 31.1512C368.26 17.8057 364.042 7.55823 352.131 7.55823C340.469 7.55823 332.777 16.6141 325.829 30.9129C317.688 47.4967 311.667 71.4162 309.203 98.4549C303 166.301 316.896 191.348 349.936 191.348C390 191.348 434.542 135.534 457.286 75.6686C463.803 58.513 466.275 42.4065 466.275 31.1512C466.275 17.8057 462.057 7.55823 450.146 7.55823C438.484 7.55823 430.792 16.6141 423.844 30.9129C415.703 47.4967 409.682 71.4162 407.218 98.4549C401.015 166.301 414.911 191.348 444.416 191.348C473.874 191.348 489.877 165.67 499.471 138.402C508.955 111.447 520.618 94.8221 544.935 94.8221C565.035 94.8221 580.916 109.71 580.916 137.75C580.916 168.768 560.792 192.093 535.362 192.341C512.984 192.589 498.285 174.475 499.774 147.179C501.511 116.907 519.873 94.8221 543.943 94.8221C557.839 94.8221 569.51 100.999 578.682 107.725C603.549 125.866 622.709 114.656 630.047 96.7186"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{
+          duration: calc(2.4),
+          ease: 'easeInOut',
+          delay: calc(0.55),
+          opacity: { duration: calc(0.5), delay: calc(0.55) },
+        }}
+        onAnimationComplete={onAnimationComplete}
+      />
+    </motion.svg>
+  );
+}
+
+export default HelloEffect;

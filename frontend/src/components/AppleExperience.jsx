@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { HelloEffect } from '@/components/ui/hello-effect';
 import {
   LayoutDashboard,
   PlusCircle,
@@ -377,31 +378,31 @@ export function AppleHelloPageTransition({ activeView }) {
 
     const timer = setTimeout(() => {
       setVisible(false);
-    }, 1300);
+    }, 1600);
 
     return () => clearTimeout(timer);
   }, [activeView]);
 
   if (!visible || !meta) return null;
 
-  const Icon = meta.icon || LayoutDashboard;
-
   return (
     <div
       onClick={() => setVisible(false)}
       className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-slate-950/20 backdrop-blur-xl transition-all cursor-pointer select-none"
-      title="Click to skip animation"
+      title="Click anywhere to skip animation"
     >
-      <div className="apple-hello-card apple-glass px-8 py-7 sm:px-12 sm:py-9 rounded-3xl text-center space-y-3.5 max-w-lg shadow-[0_25px_70px_rgba(0,0,0,0.18)] border border-white/80 overflow-hidden relative">
-        {/* Subtle iridescent glow orb */}
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-48 h-48 bg-gradient-to-tr from-blue-500/20 via-indigo-500/20 to-violet-500/20 rounded-full blur-2xl pointer-events-none" />
+      <div className="apple-hello-card apple-glass px-8 py-7 sm:px-12 sm:py-8 rounded-3xl text-center space-y-3 max-w-lg shadow-[0_25px_70px_rgba(0,0,0,0.18)] border border-white/80 overflow-hidden relative flex flex-col items-center">
+        {/* Subtle iridescent glow orb matching the blue/purple theme */}
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-56 h-56 bg-gradient-to-tr from-blue-500/20 via-indigo-500/20 to-purple-500/20 rounded-full blur-2xl pointer-events-none" />
 
-        {/* The Iconic Apple "hello" Style Cursive Script */}
-        <div className="relative z-10 space-y-1">
-          <h1 className="font-apple-script text-5xl sm:text-6xl md:text-7xl font-bold apple-shimmer-text tracking-wide drop-shadow-xs lowercase">
-            {meta.helloText}
-          </h1>
-          <div className="text-xs sm:text-sm font-black text-slate-800 tracking-tight font-sans">
+        {/* HelloEffect Animated Stroke Handwriting */}
+        <div className="relative z-10 w-full flex flex-col items-center justify-center">
+          <HelloEffect
+            word={meta.helloText}
+            speed={2}
+            className="h-14 sm:h-16 max-w-full drop-shadow-xs"
+          />
+          <div className="text-xs sm:text-sm font-extrabold text-slate-800 tracking-tight font-sans mt-1">
             {meta.label}
           </div>
         </div>
@@ -453,11 +454,12 @@ export function AppleWelcomeModal({ isOpen, onClose }) {
           />
         </div>
 
-        <div className="space-y-1.5 relative z-10">
-          {/* The iconic Apple cursive "hello" text */}
-          <div className="font-apple-script text-5xl sm:text-6xl font-bold apple-shimmer-text tracking-wide lowercase">
-            hello
-          </div>
+        <div className="space-y-1.5 relative z-10 flex flex-col items-center">
+          {/* The iconic Apple cursive "hello" text animated with stroke effect */}
+          <HelloEffect
+            speed={2}
+            className="h-16 sm:h-20 max-w-full drop-shadow-xs"
+          />
 
           <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
             Welcome to Version 2.O
