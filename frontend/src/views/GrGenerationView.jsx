@@ -917,13 +917,12 @@ export default function GrGenerationView({
                 onChange={(e) => handleVehicleChange(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold uppercase outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
               >
-                <option value="">-- Select Vehicle ({liveVehicles.length} Fleet Trucks) --</option>
+                <option value="">-- SELECT VEHICLE NO --</option>
                 {liveVehicles.map((v) => {
                   const tNo = typeof v === 'object' ? v.truckNo : v;
-                  const dLabel = typeof v === 'object' && v.driverName ? ` (Driver: ${v.driverName})` : '';
                   return (
                     <option key={tNo} value={tNo}>
-                      {tNo}{dLabel}
+                      {tNo}
                     </option>
                   );
                 })}
@@ -936,17 +935,17 @@ export default function GrGenerationView({
             {/* Driver (Dropdown Selector with Auto-Fill Contact & License, Required *) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Driver <span className="text-rose-500 font-bold">*</span> ({liveDrivers.length} Drivers)
+                Driver <span className="text-rose-500 font-bold">*</span>
               </label>
               <select
                 value={form.driver}
                 onChange={(e) => handleDriverChange(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
               >
-                <option value="">-- Select Driver ({liveDrivers.length} In Fleet) --</option>
+                <option value="">-- Select Driver --</option>
                 {liveDrivers.map((d) => (
                   <option key={d.name} value={d.name}>
-                    {d.name} {d.phone ? `(${d.phone})` : ''} {d.vehicle ? `[Truck: ${d.vehicle}]` : ''}
+                    {d.name}
                   </option>
                 ))}
                 {form.driver && !liveDrivers.some(d => d.name === form.driver) && (
