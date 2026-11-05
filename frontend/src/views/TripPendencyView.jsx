@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import {
   Clock,
   Search,
@@ -12,7 +13,8 @@ import {
   Zap,
   X,
   Building2,
-  ArrowRight
+  ArrowRight,
+  RefreshCw
 } from 'lucide-react';
 
 export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNewBookingClick }) {
@@ -24,29 +26,81 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
   const [allotmentData, setAllotmentData] = useState({});
   const [selectedItems, setSelectedItems] = useState([]);
   const [batchNotice, setBatchNotice] = useState('');
+  const [livePendency, setLivePendency] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Find all containers where GR is NOT generated
+  // Fetch live trip pendency directly from PostgreSQL backend
+  const loadLivePendency = async () => {
+    try {
+      setIsLoading(true);
+      const res = await api.getTripPendency();
+      if (res?.data && Array.isArray(res.data)) {
+        setLivePendency(res.data);
+      }
+    } catch (err) {
+      console.warn('Could not load live trip pendency from API:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLivePendency();
+  }, []);
+
+  // Build complete list of pending containers: combining live DB records + any local in-memory jobs
+  const seenContainers = new Set();
   const pendingContainers = [];
+
+  // 1. First add live database records (source of truth)
+  livePendency.forEach((r, idx) => {
+    const cno = (r.containerNo || '').trim();
+    if (cno) seenContainers.add(cno.toUpperCase());
+    pendingContainers.push({
+      jobId: r.jobNo || r.id,
+      joNo: r.jobNo || r.id,
+      contIndex: idx,
+      contNo: cno || 'TBA',
+      size: r.sizeType || '40HC',
+      customer: r.shipper || 'Consignor',
+      consignee: 'Consignee',
+      line: r.shippingLine || 'Shipping Line',
+      origin: r.origin || 'Dadri ICD',
+      pod: r.destination || 'Port',
+      bookingNo: r.bookingNo || '-',
+      sealNo: '',
+      cargoWeight: 24000,
+      vehicleNo: r.truckNo || '',
+      driverName: r.driverName || '',
+      driverPhone: r.driverMobile || '',
+      transporter: 'Dadri Express Logistics'
+    });
+  });
+
+  // 2. Then merge in-memory/localStorage jobs where GR is pending (if not already seen)
   jobs.forEach((job) => {
     (job.containers || []).forEach((c, idx) => {
+      const cno = (c.no || c.containerNo || '').trim();
       const hasGr = c.gr && c.gr !== 'PENDING' && c.gr.trim() !== '';
-      if (!hasGr) {
+      if (!hasGr && cno && !seenContainers.has(cno.toUpperCase())) {
+        seenContainers.add(cno.toUpperCase());
         pendingContainers.push({
           jobId: job.id,
+          joNo: job.joNo || job.id,
           contIndex: idx,
-          contNo: c.no || 'TBA',
-          size: c.size || '40HC',
-          customer: job.customer || 'Consignor',
+          contNo: cno || 'TBA',
+          size: c.size || c.sizeType || '40HC',
+          customer: job.customer || job.customerName || job.consignor || 'Consignor',
           consignee: job.consignee || 'Consignee',
-          line: job.line || 'Shipping Line',
-          origin: job.origin || 'Dadri ICD',
-          pod: job.pod || 'Port',
+          line: job.line || job.shippingLineName || job.shippingLine || 'Shipping Line',
+          origin: job.origin || job.fromLocation || 'Dadri ICD',
+          pod: job.pod || job.toLocation || 'Port',
           bookingNo: job.bookingNo || '-',
-          sealNo: c.seal || '',
-          cargoWeight: c.cargoWeight || 24000,
-          vehicleNo: c.truck && c.truck !== 'TBA' ? c.truck : '',
-          driverName: '',
-          driverPhone: '',
+          sealNo: c.seal || c.sealNo || '',
+          cargoWeight: c.cargoWeight || c.cargo || 24000,
+          vehicleNo: c.truck && c.truck !== 'TBA' ? c.truck : (c.truckNo || ''),
+          driverName: c.driverName || '',
+          driverPhone: c.driverMobile || '',
           transporter: 'Dadri Express Logistics'
         });
       }
@@ -102,11 +156,14 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
       onUpdateContainerGR(item.jobId, item.contNo, vehicle, driver, phone);
     }
 
+    // Immediately remove from livePendency state so row disappears in real time
+    setLivePendency(prev => prev.filter(p => (p.containerNo || '').trim().toUpperCase() !== (item.contNo || '').trim().toUpperCase()));
+
     // Open Printable GR slip modal
     setActiveGrModal({
       grNo: newGrNo,
       date: new Date().toLocaleDateString('en-GB'),
-      jobId: item.jobId,
+      jobId: item.joNo || item.jobId,
       customer: item.customer,
       consignee: item.consignee,
       contNo: item.contNo,
@@ -125,13 +182,26 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
   const filtered = pendingContainers.filter((item) => {
     if (customerFilter !== 'ALL' && item.customer !== customerFilter) return false;
     if (!searchTerm.trim()) return true;
-    const q = searchTerm.toLowerCase();
+    const q = searchTerm.toLowerCase().trim();
     const jid = String(item.jobId || '').toLowerCase();
+    const jno = String(item.joNo || '').toLowerCase();
     const cno = String(item.contNo || '').toLowerCase();
     const cst = String(item.customer || '').toLowerCase();
     const ln = String(item.line || '').toLowerCase();
-    return jid.includes(q) || cno.includes(q) || cst.includes(q) || ln.includes(q);
+    const bno = String(item.bookingNo || '').toLowerCase();
+    return (
+      jid.includes(q) ||
+      jno.includes(q) ||
+      cno.includes(q) ||
+      cst.includes(q) ||
+      ln.includes(q) ||
+      bno.includes(q)
+    );
   });
+
+  const uniqueCustomers = Array.from(
+    new Set(pendingContainers.map((i) => i.customer).filter(Boolean))
+  ).sort();
 
   return (
     <div className="space-y-6 w-full">
@@ -145,6 +215,15 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
             <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200">
               {pendingContainers.length} Containers Awaiting GR
             </span>
+            <button
+              type="button"
+              onClick={loadLivePendency}
+              disabled={isLoading}
+              className="p-1 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-blue-600 transition shadow-2xs"
+              title="Refresh Live Pending Containers"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
+            </button>
           </div>
           <p className="text-xs text-slate-500 font-sans mt-0.5">
             Containers booked in Container Booking pending Truck &bull; Driver &bull; GR Generation
@@ -177,7 +256,7 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
               placeholder="Search JO No, Cont No, Customer, Line..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-[rgb(25,40,57)] focus:outline-none focus:border-blue-500"
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-[rgb(25,40,57)] focus:outline-none focus:border-blue-500 font-medium"
             />
           </div>
 
@@ -185,12 +264,12 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
             <select
               value={customerFilter}
               onChange={(e) => setCustomerFilter(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-[rgb(25,40,57)] focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-[rgb(25,40,57)] focus:outline-none focus:border-blue-500 font-medium"
             >
-              <option value="ALL">All Customers (Consignors)</option>
-              <option value="Fair Exports (India) Pvt Ltd">Fair Exports (India) Pvt Ltd</option>
-              <option value="Marhaba Frozen Foods">Marhaba Frozen Foods</option>
-              <option value="Allanasons Private Limited">Allanasons Private Limited</option>
+              <option value="ALL">All Customers (Consignors) ({uniqueCustomers.length})</option>
+              {uniqueCustomers.map(cust => (
+                <option key={cust} value={cust}>{cust}</option>
+              ))}
             </select>
           </div>
 
@@ -273,7 +352,7 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
                         />
                       </td>
                       <td className="p-2 text-center text-slate-500 font-mono">{idx + 1}</td>
-                      <td className="p-2 font-mono font-bold text-blue-700">{item.jobId}</td>
+                      <td className="p-2 font-mono font-bold text-blue-700">{item.joNo || item.jobId}</td>
                       <td className="p-2 font-mono font-bold text-[rgb(25,40,57)]">{item.contNo}</td>
                       <td className="p-2 font-mono text-slate-600">{item.size}</td>
                       <td className="p-2 font-medium text-[rgb(25,40,57)]">{item.customer}</td>

@@ -485,15 +485,15 @@ export default function App() {
               grossWeight: Number(c.grossWeight || c.gross || 28320),
               seal: c.sealNo || c.seal || `ML-IN-${Math.floor(100000 + Math.random() * 900000)}`,
               sealNo: c.sealNo || c.seal || `ML-IN-${Math.floor(100000 + Math.random() * 900000)}`,
-              truck: c.truckNo || c.vehicleNo || c.truck || 'HR55AN2094',
-              truckNo: c.truckNo || c.vehicleNo || c.truck || 'HR55AN2094',
-              gr: c.grNo || c.grNumber || c.gr || `GR-2026-084${idx + 1}`,
-              grNo: c.grNo || c.grNumber || c.gr || `GR-2026-084${idx + 1}`,
-              grNumber: c.grNo || c.grNumber || c.gr || `GR-2026-084${idx + 1}`,
-              grDate: c.grDate || new Date().toISOString().split('T')[0],
-              driverName: c.driverName || 'Ramesh Singh',
-              driverMobile: c.driverMobile || '+91 98112 34567',
-              status: c.status || 'SEALED & DISPATCHED'
+              truck: c.truckNo || c.vehicleNo || c.truck || '',
+              truckNo: c.truckNo || c.vehicleNo || c.truck || '',
+              gr: c.grNo || c.grNumber || c.gr || '',
+              grNo: c.grNo || c.grNumber || c.gr || '',
+              grNumber: c.grNo || c.grNumber || c.gr || '',
+              grDate: c.grDate || null,
+              driverName: c.driverName || '',
+              driverMobile: c.driverMobile || '',
+              status: c.status || 'ALLOTTED'
             }))
           : Array.from({ length: Number(formData.containersCount || 1) }, (_, idx) => ({
               id: `C${idx + 1}`,
@@ -511,15 +511,15 @@ export default function App() {
               cargoWeight: 24500,
               seal: `ML-IN-${Math.floor(100000 + Math.random() * 900000)}`,
               sealNo: `ML-IN-${Math.floor(100000 + Math.random() * 900000)}`,
-              truck: 'HR55AN2094',
-              truckNo: 'HR55AN2094',
-              gr: `GR-2026-084${idx + 1}`,
-              grNo: `GR-2026-084${idx + 1}`,
-              grNumber: `GR-2026-084${idx + 1}`,
-              grDate: new Date().toISOString().split('T')[0],
-              driverName: 'Ramesh Singh',
-              driverMobile: '+91 98112 34567',
-              status: 'SEALED & DISPATCHED'
+              truck: '',
+              truckNo: '',
+              gr: '',
+              grNo: '',
+              grNumber: '',
+              grDate: null,
+              driverName: '',
+              driverMobile: '',
+              status: 'ALLOTTED'
             }))
       };
 
@@ -534,9 +534,51 @@ export default function App() {
 
       setSelectedJobId(payload.id);
 
-      // Attempt async backend push to PostgreSQL
+      // Attempt async backend push to PostgreSQL & refresh live jobs
       try {
         await api.createBooking(payload);
+        const refreshedBookings = await api.getBookings();
+        if (refreshedBookings?.data) {
+          setJobs(refreshedBookings.data.map(j => ({
+            id: j.id,
+            joNo: j.joNo,
+            bookingNo: j.bookingNo,
+            customer: j.customerName || j.consignor,
+            consignor: j.consignor,
+            line: j.shippingLineName || j.shippingLine,
+            shippingLine: j.shippingLine,
+            vessel: j.vessel,
+            voyage: j.voyage,
+            origin: j.fromLocation,
+            fromLocation: j.fromLocation,
+            pod: j.toLocation,
+            toLocation: j.toLocation,
+            status: j.status,
+            sellFreight: j.sellFreight,
+            buyFreight: j.buyFreight,
+            containersCount: j.containersCount,
+            containers: (j.containers || []).map(c => ({
+              id: c.id,
+              no: c.containerNo,
+              containerNo: c.containerNo,
+              size: c.sizeType,
+              sizeType: c.sizeType,
+              tare: c.tareWeight,
+              gross: c.grossWeight,
+              cargo: c.cargoWeight,
+              seal: c.sealNo,
+              sealNo: c.sealNo,
+              gr: c.grNumber || '',
+              grNumber: c.grNumber || '',
+              grDate: c.grDate,
+              truck: c.truckNo || '',
+              truckNo: c.truckNo || '',
+              driverName: c.driverName || '',
+              driverMobile: c.driverMobile || '',
+              status: c.status || 'ALLOTTED'
+            }))
+          })));
+        }
       } catch (apiErr) {
         console.warn('[PostgreSQL Sync] Running in offline/Vercel state, saved to browser persistence:', apiErr);
       }
