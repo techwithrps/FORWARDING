@@ -378,7 +378,7 @@ export function AppleHelloPageTransition({ activeView }) {
 
     const timer = setTimeout(() => {
       setVisible(false);
-    }, 1400);
+    }, 1300);
 
     return () => clearTimeout(timer);
   }, [activeView]);
@@ -388,28 +388,21 @@ export function AppleHelloPageTransition({ activeView }) {
   return (
     <div
       onClick={() => setVisible(false)}
-      className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-slate-950/25 backdrop-blur-md transition-all cursor-pointer select-none"
-      title="Click anywhere to skip animation"
+      className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-slate-950/20 backdrop-blur-xl transition-all cursor-pointer select-none"
+      title="Click to skip animation"
     >
-      <div className="apple-hello-card apple-glass px-8 py-7 sm:px-12 sm:py-8 rounded-3xl text-center space-y-3 max-w-lg shadow-[0_25px_70px_rgba(0,0,0,0.18)] border border-white/80 overflow-hidden relative flex flex-col items-center transform-gpu">
-        {/* Subtle iridescent glow orb matching the blue/purple theme */}
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-56 h-56 bg-gradient-to-tr from-blue-500/20 via-indigo-500/20 to-purple-500/20 rounded-full blur-2xl pointer-events-none" />
+      <div className="apple-hello-card apple-glass px-8 py-7 sm:px-12 sm:py-9 rounded-3xl text-center space-y-3.5 max-w-lg shadow-[0_25px_70px_rgba(0,0,0,0.18)] border border-white/80 overflow-hidden relative">
+        {/* Subtle iridescent glow orb */}
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-48 h-48 bg-gradient-to-tr from-blue-500/20 via-indigo-500/20 to-violet-500/20 rounded-full blur-2xl pointer-events-none" />
 
-        {/* Apple Handwriting Cursive Page Name Animation */}
-        <div className="relative z-10 w-full flex flex-col items-center justify-center space-y-1">
-          <HelloEffect
-            word={meta.helloText}
-            speed={2}
-            className="w-full"
-          />
-          <div className="text-sm sm:text-base font-extrabold text-slate-800 tracking-tight font-sans mt-1">
+        {/* The Iconic Apple "hello" Style Cursive Script with Page Name */}
+        <div className="relative z-10 space-y-1">
+          <h1 className="font-apple-script text-5xl sm:text-6xl md:text-7xl font-bold apple-shimmer-text tracking-wide drop-shadow-xs lowercase">
+            {meta.helloText}
+          </h1>
+          <div className="text-xs sm:text-sm font-black text-slate-800 tracking-tight font-sans">
             {meta.label}
           </div>
-          {meta.subtitle && (
-            <div className="text-xs text-slate-500 font-medium">
-              {meta.subtitle}
-            </div>
-          )}
         </div>
 
         {/* Apple Subtitle Pill */}
