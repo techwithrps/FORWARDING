@@ -26,23 +26,24 @@ export default function GrGenerationView({
     const list = [];
     (jobs || []).forEach((job) => {
       (job.containers || []).forEach((c) => {
-        const cNo = c.no || c.contNo;
+        const cNo = c.no || c.contNo || c.containerNo || c.container_number;
         if (cNo && cNo !== 'TBA') {
           list.push({
             contNo: cNo,
             size: c.size || (c.sizeType?.includes('20') ? '20' : '40') || '40',
             type: c.type || (c.sizeType?.includes('GP') ? 'GP' : 'HC') || 'HC',
-            weight: String(c.cargoWeight || c.weight || '24500'),
-            joNo: job.id || job.joNo || '',
-            joDate: job.date || job.joDate || '',
-            consignor: job.customer || job.consignor || '',
-            consignee: job.consignee || '',
-            fromLocation: job.fromLocation || job.origin || '',
-            toLocation: job.toLocation || job.pod || '',
-            transporter: job.transporter || 'Dadri Express Logistics',
-            vehicleNo: c.truck && c.truck !== 'TBA' ? c.truck : '',
-            commodity: job.commodity || 'Frozen Buffalo Meat',
-            handoverLocation: job.handoverLocation || 'Dadri ICD CFS Complex'
+            weight: String(c.cargoWeight || c.weight || c.cargo_weight || '24500'),
+            joNo: job.id || job.joNo || job.jobNumber || job.job_number || '',
+            joDate: job.date || job.joDate || (job.createdAt ? job.createdAt.split('T')[0] : '') || todayDateStr,
+            consignor: job.customer || job.consignor || job.customerName || job.customer_name || '',
+            consignee: job.consignee || job.consigneeName || job.consignee_name || '',
+            fromLocation: job.fromLocation || job.origin || job.origin_port_name || '',
+            toLocation: job.toLocation || job.pod || job.pod_port_name || '',
+            transporter: job.transporter || 'AJINKYA TRANSPORT',
+            vehicleNo: (c.truck && c.truck !== 'TBA' ? c.truck : '') || c.vehicleNo || c.truck_number || '',
+            commodity: job.commodity || 'FROZEN BUFFALO BONELSS MEAT',
+            handoverLocation: job.handoverLocation || 'ADANI-PATLI',
+            grNo: c.gr || c.grNo || c.gr_number || ''
           });
         }
       });
@@ -51,20 +52,38 @@ export default function GrGenerationView({
     if (list.length === 0) {
       return [
         {
+          contNo: 'TTNU8163002',
+          size: '40',
+          type: 'HC',
+          weight: '24500',
+          joNo: 'JO-94164',
+          joDate: todayDateStr,
+          consignor: 'Fair Exports (India) Pvt Ltd',
+          consignee: 'ASIAN PERAL MYANMAR CO. LTD.',
+          fromLocation: 'TRANSWORLD-DADRI',
+          toLocation: 'ADANI-PATLI',
+          transporter: 'AJINKYA TRANSPORT',
+          vehicleNo: 'UP16BT1628',
+          commodity: 'FROZEN BUFFALO BONELSS MEAT',
+          handoverLocation: 'ADANI-PATLI',
+          grNo: 'GR-2026-0002'
+        },
+        {
           contNo: 'MSKU9821043',
           size: '40',
           type: 'HC',
           weight: '24500',
           joNo: 'JO-2026-0041',
-          joDate: '',
+          joDate: todayDateStr,
           consignor: 'Fair Exports (India) Pvt Ltd',
           consignee: 'Al Maya Trading LLC (Dubai, UAE)',
-          fromLocation: 'Fair Exports Processing Plant, Dadri',
+          fromLocation: 'TRANSWORLD-DADRI',
           toLocation: 'Nhava Sheva-NSFT (INNSA1)',
-          transporter: 'Dadri Express Logistics',
+          transporter: 'AJINKYA TRANSPORT',
           vehicleNo: 'HR55AN2094',
           commodity: 'Frozen Buffalo Meat',
-          handoverLocation: 'Dadri ICD CFS Complex'
+          handoverLocation: 'ADANI-PATLI',
+          grNo: 'GR-2026-0041'
         },
         {
           contNo: 'MEDU7845120',
@@ -72,15 +91,16 @@ export default function GrGenerationView({
           type: 'HC',
           weight: '26000',
           joNo: 'JO-2026-0042',
-          joDate: '',
+          joDate: todayDateStr,
           consignor: 'Marhaba Frozen Foods',
           consignee: 'EuroMeat B.V. (Rotterdam, Netherlands)',
-          fromLocation: 'Marhaba Cold Chain Facility, Piyala',
+          fromLocation: 'Piyala ICD Depot',
           toLocation: 'Mundra Port-MDCC (INMUN1)',
           transporter: 'SPJ Fleet Logistics',
           vehicleNo: 'UP16BT4820',
           commodity: 'Basmati Rice',
-          handoverLocation: 'Piyala ICD CFS Complex'
+          handoverLocation: 'Piyala ICD CFS Complex',
+          grNo: 'GR-2026-0042'
         },
         {
           contNo: 'CMAU6521904',
@@ -88,15 +108,16 @@ export default function GrGenerationView({
           type: 'GP',
           weight: '21500',
           joNo: 'JO-2026-0043',
-          joDate: '',
+          joDate: todayDateStr,
           consignor: 'Allanasons Private Limited',
           consignee: 'Al-Shaikh Trading Co. (Jeddah, KSA)',
-          fromLocation: 'Aligarh Processing Complex',
+          fromLocation: 'TRANSWORLD-DADRI',
           toLocation: 'Nhava Sheva-BMCT (INNSA1)',
           transporter: 'Dadri Express Logistics',
           vehicleNo: 'NL01AD8941',
           commodity: 'Frozen Fish & Seafood',
-          handoverLocation: 'Dadri ICD Buffer Yard'
+          handoverLocation: 'ADANI-PATLI',
+          grNo: 'GR-2026-0043'
         }
       ];
     }
@@ -148,17 +169,80 @@ export default function GrGenerationView({
   const [successMessage, setSuccessMessage] = useState('');
 
   // Dropdown presets for inputs with dropdown
-  const vehicleBadges = ['HR55AN2094', 'UP16BT4820', 'NL01AD8941', 'MH46AR7712', 'DL1AA3901'];
+  const vehicleBadges = [
+    'HR55AN2094',
+    'UP16BT4820',
+    'NL01AD8941',
+    'MH46AR7712',
+    'DL1AA3901',
+    'HR47A8502',
+    'HR38AA2750',
+    'RJ19GB4367',
+    'UP16BT1628'
+  ];
   const workshopPresets = ['EICHER', 'TATA MOTORS', 'ASHOK LEYLAND', 'BHARATBENZ', 'MAHINDRA', 'SPJ IN-HOUSE YARD (DADRI)'];
   const joForPresets = ['Shifting', 'Factory Stuffing', 'Port Delivery / Gate-in', 'Empty Pickup / Return', 'Breakdown-ICD / Repair'];
   const vehicleTypePresets = ['T40', 'T20', '40ft Multi-Axle Trailer', '20ft Skeletal Trailer', 'Heavy Duty Low-Bed'];
+  
   const driverPresets = [
-    { name: 'Ramesh Kumar', phone: '9876543210' },
-    { name: 'Suresh Yadav', phone: '9811223344' },
-    { name: 'Balwant Singh', phone: '9711882233' },
-    { name: 'Mohd. Irfan', phone: '9955443322' }
+    { name: 'Ramesh Kumar', phone: '9876543210', license: '2028-04-15' },
+    { name: 'Suresh Yadav', phone: '9811223344', license: '2027-09-30' },
+    { name: 'Balwant Singh', phone: '9711882233', license: '2026-12-31' },
+    { name: 'Mohd. Irfan', phone: '9955443322', license: '2029-01-20' },
+    { name: 'AAFTAB', phone: '8800710980', license: '2026-12-31' }
   ];
+
+  const transporterPresets = [
+    'AJINKYA TRANSPORT',
+    'SPJ Fleet Logistics',
+    'Dadri Express Logistics',
+    'Transworld Logistics',
+    'CONCOR Multimodal Logistics',
+    'Adani Logistics',
+    'Navkar Corporation Ltd'
+  ];
+
+  const locationPresets = [
+    'TRANSWORLD-DADRI',
+    'ADANI-PATLI',
+    'Dadri ICD Depot (CONCOR)',
+    'Dadri ICD CFS Complex',
+    'Piyala ICD Depot',
+    'Piyala ICD CFS Complex',
+    'ACTL Faridabad Yard',
+    'Garhi Harsaru (GRH) Depot',
+    'TKD Tughlakabad Depot',
+    'Nhava Sheva - JNPT (INNSA1)',
+    'Nhava Sheva-NSFT (INNSA1)',
+    'Nhava Sheva-BMCT (INNSA1)',
+    'Nhava Sheva Buffer Yard',
+    'Mundra Port Empty Depot',
+    'Mundra CFS Complex',
+    'Pipavav Port-APMT (INPAV1)',
+    'Hazira Port (INHZR1)',
+    'Chennai Port (INMAA1)'
+  ];
+
+  const consignorPresets = [
+    'Fair Exports (India) Pvt Ltd',
+    'Marhaba Frozen Foods',
+    'Allanasons Private Limited',
+    'Al Sameer Exports Pvt Ltd',
+    'Deepmala Foods',
+    'Deccan Edibles Pvt Ltd',
+    'SPJ CARGO PVT LTD.'
+  ];
+
+  const consigneePresets = [
+    'ASIAN PERAL MYANMAR CO. LTD.',
+    'Al Maya Trading LLC (Dubai, UAE)',
+    'EuroMeat B.V. (Rotterdam, Netherlands)',
+    'Al-Shaikh Trading Co. (Jeddah, KSA)',
+    'Gulf Import Corp (Dammam, KSA)'
+  ];
+
   const commodityList = [
+    'FROZEN BUFFALO BONELSS MEAT',
     'Frozen Buffalo Meat',
     'Basmati Rice',
     'Frozen Fish & Seafood',
@@ -183,7 +267,8 @@ export default function GrGenerationView({
         type: matched.type || prev.type,
         weight: matched.weight || prev.weight,
         joNo: matched.joNo || prev.joNo,
-        joDate: matched.joDate || prev.joDate,
+        joDate: matched.joDate || prev.joDate || todayDateStr,
+        grNo: matched.grNo || prev.grNo || `GR-2026-${String(Math.floor(1000 + Math.random() * 9000))}`,
         consignor: matched.consignor || prev.consignor,
         consignee: matched.consignee || prev.consignee,
         fromLocation: matched.fromLocation || prev.fromLocation,
@@ -195,6 +280,23 @@ export default function GrGenerationView({
       }));
     } else {
       setForm((prev) => ({ ...prev, contNo: selectedContNo }));
+    }
+  };
+
+  // Driver change auto-fills contact and license
+  const handleDriverChange = (driverName) => {
+    const matchedDriver = driverPresets.find(
+      (d) => d.name.toLowerCase() === driverName.toLowerCase()
+    );
+    if (matchedDriver) {
+      setForm((prev) => ({
+        ...prev,
+        driver: matchedDriver.name,
+        driverContactNo: matchedDriver.phone || prev.driverContactNo,
+        licenseValidity: matchedDriver.license || prev.licenseValidity
+      }));
+    } else {
+      setForm((prev) => ({ ...prev, driver: driverName }));
     }
   };
 
@@ -504,13 +606,19 @@ export default function GrGenerationView({
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Consignor
               </label>
-              <input
-                type="text"
-                placeholder="Consignor / Shipper Name"
+              <select
                 value={form.consignor}
                 onChange={(e) => setForm({ ...form, consignor: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
-              />
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
+              >
+                <option value="">-- Select Consignor --</option>
+                {consignorPresets.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+                {form.consignor && !consignorPresets.includes(form.consignor) && (
+                  <option value={form.consignor}>{form.consignor}</option>
+                )}
+              </select>
             </div>
 
             {/* Consignee */}
@@ -518,13 +626,19 @@ export default function GrGenerationView({
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Consignee
               </label>
-              <input
-                type="text"
-                placeholder="Consignee / Receiver Name"
+              <select
                 value={form.consignee}
                 onChange={(e) => setForm({ ...form, consignee: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
-              />
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
+              >
+                <option value="">-- Select Consignee --</option>
+                {consigneePresets.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+                {form.consignee && !consigneePresets.includes(form.consignee) && (
+                  <option value={form.consignee}>{form.consignee}</option>
+                )}
+              </select>
             </div>
 
             {/* Transporter */}
@@ -532,13 +646,19 @@ export default function GrGenerationView({
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Transporter
               </label>
-              <input
-                type="text"
-                placeholder="Transporter Name"
+              <select
                 value={form.transporter}
                 onChange={(e) => setForm({ ...form, transporter: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
-              />
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
+              >
+                <option value="">-- Select Transporter --</option>
+                {transporterPresets.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+                {form.transporter && !transporterPresets.includes(form.transporter) && (
+                  <option value={form.transporter}>{form.transporter}</option>
+                )}
+              </select>
             </div>
           </div>
 
@@ -548,13 +668,19 @@ export default function GrGenerationView({
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 From Location
               </label>
-              <input
-                type="text"
-                placeholder="Origin / Stuffing Location"
+              <select
                 value={form.fromLocation}
                 onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
-              />
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
+              >
+                <option value="">-- Select From Location --</option>
+                {locationPresets.map((loc) => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+                {form.fromLocation && !locationPresets.includes(form.fromLocation) && (
+                  <option value={form.fromLocation}>{form.fromLocation}</option>
+                )}
+              </select>
             </div>
 
             {/* To Location */}
@@ -562,13 +688,19 @@ export default function GrGenerationView({
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 To Location
               </label>
-              <input
-                type="text"
-                placeholder="Destination / Port Terminal"
+              <select
                 value={form.toLocation}
                 onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
-              />
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
+              >
+                <option value="">-- Select To Location --</option>
+                {locationPresets.map((loc) => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+                {form.toLocation && !locationPresets.includes(form.toLocation) && (
+                  <option value={form.toLocation}>{form.toLocation}</option>
+                )}
+              </select>
             </div>
 
             {/* Handover Location */}
@@ -576,13 +708,19 @@ export default function GrGenerationView({
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Handover Location
               </label>
-              <textarea
-                rows={2}
-                placeholder="Handover Location / ICD / CFS Complex"
+              <select
                 value={form.handoverLocation}
                 onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all resize-none"
-              />
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
+              >
+                <option value="">-- Select Handover Location --</option>
+                {locationPresets.map((loc) => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+                {form.handoverLocation && !locationPresets.includes(form.handoverLocation) && (
+                  <option value={form.handoverLocation}>{form.handoverLocation}</option>
+                )}
+              </select>
             </div>
           </div>
         </div>
@@ -632,7 +770,7 @@ export default function GrGenerationView({
                 list="driver-presets"
                 placeholder="Driver Full Name"
                 value={form.driver}
-                onChange={(e) => setForm({ ...form, driver: e.target.value })}
+                onChange={(e) => handleDriverChange(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
               />
               <datalist id="driver-presets">
