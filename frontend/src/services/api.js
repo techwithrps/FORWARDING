@@ -51,6 +51,13 @@ export const api = {
   // Operations
   getTripPendency: () => request('/operations/trip-pendency'),
   getPendingGrContainers: () => request('/operations/pending-gr-containers'),
+  searchGR: (params = {}) => {
+    const cleanParams = {};
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') cleanParams[k] = v;
+    });
+    return request('/operations/search-gr?' + new URLSearchParams(cleanParams).toString());
+  },
   generateGR: (payload) =>
     request('/operations/generate-gr', {
       method: 'POST',

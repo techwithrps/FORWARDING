@@ -132,6 +132,139 @@ router.get('/pending-gr-containers', async (req, res) => {
   }
 });
 
+// GET Search GR records (aligned with SPJ 2 LogiPark FleetVehicleSearch)
+router.get('/search-gr', async (req, res) => {
+  try {
+    const { fromDate, toDate, vehicleNo } = req.query;
+
+    let conditions = ['GM."CANCEL_STATUS" IS NULL', 'GM."GR_NO" IS NOT NULL'];
+    let params = [];
+    let paramIndex = 1;
+
+    if (fromDate) {
+      conditions.push(`GM."GR_DATE"::date >= $${paramIndex}::date`);
+      params.push(fromDate);
+      paramIndex++;
+    }
+
+    if (toDate) {
+      conditions.push(`GM."GR_DATE"::date <= $${paramIndex}::date`);
+      params.push(toDate);
+      paramIndex++;
+    }
+
+    if (vehicleNo && vehicleNo.trim()) {
+      conditions.push(`UPPER(TRIM(GM."VEHICLE_NO")) LIKE '%' || UPPER(TRIM($${paramIndex})) || '%'`);
+      params.push(vehicleNo.trim());
+      paramIndex++;
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const spjQuery = `
+      SELECT 
+        GM."GR_ID"::text as gr_id,
+        GM."CONT_JO_ID"::text as cont_jo_id,
+        TRIM(GM."VEHICLE_NO") as vehicle_no,
+        COALESCE(EM."EQUIPMENT_TYPE", 'T40') as vh_type,
+        COALESCE(GM."CONT_SIZE", '40') as vh_size,
+        GM."GR_NO"::text as gr_no,
+        TO_CHAR(GM."GR_DATE", 'YYYY-MM-DD') as gr_date_iso,
+        TO_CHAR(GM."GR_DATE", 'DD/MM/YYYY') as gr_date,
+        TRIM(GM."CONT_NO") as cont_no,
+        COALESCE(GM."CONT_SIZE", '40') as cont_size,
+        COALESCE(TRIM(GM."FROM_LOCATION"), '') as from_location,
+        COALESCE(TRIM(GM."TO_LOCATION"), '') as to_location,
+        COALESCE(TRIM(GM."FACTORY_LOCATION"), '') as factory_location,
+        COALESCE(TRIM(CUST."CUSTOMER_NAME"), 'Fair Exports (India) Pvt Ltd') as customer,
+        TO_CHAR(GM."CLOSE_DATE", 'DD/MM/YYYY') as close_date,
+        COALESCE(GM."ADVANCE"::text, '0') as advance,
+        COALESCE(GM."OIL_ADVANCE"::text, '0') as oil_advance
+      FROM spjlive."FLEET_GR_MAPPING" GM
+      LEFT JOIN spjlive."FLEET_EQUIPMENT_MASTER" EM 
+        ON UPPER(TRIM(EM."EQUIPMENT_NO")) = UPPER(TRIM(GM."VEHICLE_NO"))
+      LEFT JOIN spjlive."CUSTOMER_MASTER" CUST 
+        ON CUST."CUSTOMER_ID" = GM."CUSTOMER_ID"
+      ${whereClause}
+      ORDER BY GM."GR_ID" DESC
+      LIMIT 500;
+    `;
+
+    const { rows: spjRows } = await db.query(spjQuery, params);
+
+    let localRows = [];
+    try {
+      let localCond = ["c.gr_number IS NOT NULL AND c.gr_number != ''"];
+      let lParams = [];
+      let lIdx = 1;
+      if (fromDate) {
+        localCond.push(`COALESCE(c.gr_date, c.created_at::date) >= $${lIdx}::date`);
+        lParams.push(fromDate);
+        lIdx++;
+      }
+      if (toDate) {
+        localCond.push(`COALESCE(c.gr_date, c.created_at::date) <= $${lIdx}::date`);
+        lParams.push(toDate);
+        lIdx++;
+      }
+      if (vehicleNo && vehicleNo.trim()) {
+        localCond.push(`UPPER(TRIM(c.truck_number)) LIKE '%' || UPPER(TRIM($${lIdx})) || '%'`);
+        lParams.push(vehicleNo.trim());
+        lIdx++;
+      }
+      const localQuery = `
+        SELECT 
+          c.id::text as gr_id,
+          c.job_id::text as cont_jo_id,
+          COALESCE(TRIM(c.truck_number), 'HR55AN2094') as vehicle_no,
+          'T40' as vh_type,
+          CASE WHEN c.size_type LIKE '%20%' THEN '20' ELSE '40' END as vh_size,
+          c.gr_number as gr_no,
+          TO_CHAR(COALESCE(c.gr_date, c.created_at::date), 'YYYY-MM-DD') as gr_date_iso,
+          TO_CHAR(COALESCE(c.gr_date, c.created_at::date), 'DD/MM/YYYY') as gr_date,
+          c.container_number as cont_no,
+          CASE WHEN c.size_type LIKE '%20%' THEN '20' ELSE '40' END as cont_size,
+          COALESCE(j.origin_port_name, 'TRANSWORLD-DADRI') as from_location,
+          COALESCE(j.pod_port_name, 'ADANI-PATLI') as to_location,
+          'ADANI-PATLI' as factory_location,
+          COALESCE(j.customer_name, 'Fair Exports (India) Pvt Ltd') as customer,
+          TO_CHAR(c.trip_close_date, 'DD/MM/YYYY') as close_date,
+          '0' as advance,
+          '0' as oil_advance
+        FROM job_containers c
+        LEFT JOIN job_orders j ON j.id = c.job_id
+        WHERE ${localCond.join(' AND ')}
+        ORDER BY c.created_at DESC
+        LIMIT 50;
+      `;
+      const lRes = await db.query(localQuery, lParams);
+      localRows = lRes.rows;
+    } catch (e) {
+      // Ignore
+    }
+
+    const seen = new Set();
+    const combined = [];
+    for (const r of [...localRows, ...spjRows]) {
+      const key = `${r.gr_no}-${r.cont_no}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        combined.push(r);
+      }
+    }
+
+    res.json({
+      success: true,
+      reportDate: new Date().toLocaleString('en-GB'),
+      count: combined.length,
+      data: combined
+    });
+  } catch (err) {
+    console.error('Error in search-gr:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // POST Generate GR for a pending container
 router.post('/generate-gr', async (req, res) => {
   try {
