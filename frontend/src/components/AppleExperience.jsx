@@ -395,13 +395,14 @@ export function AppleHelloPageTransition({ activeView }) {
         {/* Subtle iridescent glow orb matching the blue/purple theme */}
         <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-56 h-56 bg-gradient-to-tr from-blue-500/20 via-indigo-500/20 to-purple-500/20 rounded-full blur-2xl pointer-events-none" />
 
-        {/* Apple Iconic "hello" Handwriting Stroke Animation */}
+        {/* Apple Handwriting Cursive Page Name Animation */}
         <div className="relative z-10 w-full flex flex-col items-center justify-center space-y-1">
           <HelloEffect
+            word={meta.helloText}
             speed={2}
-            className="h-16 sm:h-20 w-auto max-w-[280px] sm:max-w-[320px] drop-shadow-xs"
+            className="w-full"
           />
-          <div className="text-sm sm:text-base font-extrabold text-slate-800 tracking-tight font-sans mt-2">
+          <div className="text-sm sm:text-base font-extrabold text-slate-800 tracking-tight font-sans mt-1">
             {meta.label}
           </div>
           {meta.subtitle && (
