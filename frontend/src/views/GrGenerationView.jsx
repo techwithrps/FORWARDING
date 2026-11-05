@@ -108,7 +108,7 @@ export default function GrGenerationView({
     driver: '',
     driverContactNo: '',
     licenseValidity: '',
-    workshop: 'EICHER',
+    workshop: '',
     joFor: 'Shifting',
     surveyBy: '',
     vehicleType: 'T40',
@@ -151,10 +151,10 @@ export default function GrGenerationView({
   ];
 
   const oilVendorPresets = [
+    'RAGHUNANDAN PRASAD AND SONS',
     'BP PUMP PADGHA',
     'GANGA SHREE PETROLEUM',
-    'HINDUSTAN DOCKYARD PVT. LTD.',
-    'RAGHUNANDAN PRASAD AND SONS'
+    'HINDUSTAN DOCKYARD PVT. LTD.'
   ];
 
   // Default location presets aligned with SPJ operational data
@@ -485,17 +485,13 @@ export default function GrGenerationView({
     setFormError('');
     setSuccessMessage('');
 
-    // Validations: Cont No, Driver, Oil Vendor, Commodity
+    // Validations: Cont No, Driver, Commodity (Oil Vendor is optional)
     if (!form.contNo) {
       setFormError('Please select or specify Cont No (Required).');
       return;
     }
     if (!form.driver.trim()) {
       setFormError('Please provide Driver Name (Required).');
-      return;
-    }
-    if (!form.oilVendor) {
-      setFormError('Please select an Oil Vendor (Required).');
       return;
     }
     if (!form.commodity.trim()) {
@@ -999,6 +995,9 @@ export default function GrGenerationView({
                   const val = typeof w === 'object' ? w.name : w;
                   return <option key={val} value={val}>{val}</option>;
                 })}
+                {form.workshop && !liveWorkshops.map(w => typeof w === 'object' ? w.name : w).includes(form.workshop) && (
+                  <option value={form.workshop}>{form.workshop}</option>
+                )}
               </select>
             </div>
 
@@ -1052,10 +1051,10 @@ export default function GrGenerationView({
 
           {/* Row 3: Oil Vendor, Slip No, Remarks */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1.5 border-t border-slate-100">
-            {/* Oil Vendor (Required *) */}
+            {/* Oil Vendor (Optional) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Oil Vendor <span className="text-rose-500 font-bold">*</span>
+                Oil Vendor
               </label>
               <select
                 value={form.oilVendor}
@@ -1067,6 +1066,9 @@ export default function GrGenerationView({
                   const val = typeof ov === 'object' ? ov.name : ov;
                   return <option key={val} value={val}>{val}</option>;
                 })}
+                {form.oilVendor && !liveOilVendors.map(ov => typeof ov === 'object' ? ov.name : ov).includes(form.oilVendor) && (
+                  <option value={form.oilVendor}>{form.oilVendor}</option>
+                )}
               </select>
             </div>
 
