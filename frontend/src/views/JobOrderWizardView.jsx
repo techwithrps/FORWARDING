@@ -1604,8 +1604,8 @@ export default function JobOrderWizardView({
                     Cargo (kg) <span className="text-rose-500 font-bold">*</span>
                   </th>
                   <th className="py-2 px-2.5 min-w-[95px]">Gross (Auto)</th>
-                  <th className="py-2 px-2.5 min-w-[125px]">Line Seal (Optional)</th>
-                  <th className="py-2 px-2.5 min-w-[125px]">Customs Seal (Optional)</th>
+                  <th className="py-2 px-2.5 min-w-[130px]">Vehicle No (Optional)</th>
+                  <th className="py-2 px-2.5 min-w-[130px]">GR No (Optional)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white font-mono text-xs">
@@ -1660,22 +1660,22 @@ export default function JobOrderWizardView({
                     <td className="py-1.5 px-2.5">
                       <input
                         type="text"
-                        value={c.sealNo}
-                        onChange={(e) => handleContainerRowChange(idx, 'sealNo', e.target.value.toUpperCase())}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.sealNo)}`}
-                        placeholder="Optional (At Stuffing)"
-                        title="Shipping Line Seal (Entered during stuffing/gate-in)"
+                        value={c.vehicleNo || ''}
+                        onChange={(e) => handleContainerRowChange(idx, 'vehicleNo', e.target.value.toUpperCase())}
+                        className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold uppercase outline-none ${getFieldClass(c.vehicleNo)}`}
+                        placeholder="e.g. HR55AN2094"
+                        title="Vehicle / Truck No (Optional)"
                       />
                     </td>
 
                     <td className="py-1.5 px-2.5">
                       <input
                         type="text"
-                        value={c.agentSeal || ''}
-                        onChange={(e) => handleContainerRowChange(idx, 'agentSeal', e.target.value.toUpperCase())}
-                        className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none ${getFieldClass(c.agentSeal)}`}
-                        placeholder="Optional (At Stuffing)"
-                        title="Customs / Shipper Bottle Seal (Entered during stuffing/docs)"
+                        value={c.grNo || ''}
+                        onChange={(e) => handleContainerRowChange(idx, 'grNo', e.target.value.toUpperCase())}
+                        className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold uppercase text-emerald-700 outline-none ${getFieldClass(c.grNo)}`}
+                        placeholder="e.g. GR-2026-084"
+                        title="GR / Consignment Note No (Optional)"
                       />
                     </td>
                   </tr>
