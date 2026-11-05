@@ -5,19 +5,17 @@ import { cn } from '@/lib/utils';
 /**
  * HelloEffect
  * 
- * Signature Apple-inspired cursive handwriting animation component.
+ * Signature Apple-inspired cursive "hello" handwriting SVG stroke animation.
  * Strokes draw smoothly using SVG pathLength stroke-dashoffset animation.
  * 
  * @param {number} speed - Multiplier for animation speed (e.g. speed={2} draws at 2x speed)
  * @param {string} className - Additional CSS classes
- * @param {string} word - Optional custom cursive word to draw (defaults to iconic Apple 'hello')
  * @param {boolean} useGradient - Whether to use the signature iridescent blue-indigo-purple gradient (default true)
  * @param {function} onAnimationComplete - Callback when the handwriting stroke finishes
  */
 export function HelloEffect({
   speed = 1,
   className,
-  word,
   useGradient = true,
   onAnimationComplete,
   ...props
@@ -27,85 +25,11 @@ export function HelloEffect({
   const safeSpeed = Math.max(0.1, Number(speed) || 1);
   const calc = (seconds) => seconds / safeSpeed;
 
-  const isCustomWord = Boolean(word && word.trim().toLowerCase() !== 'hello');
-
-  // If a custom word is passed (e.g. 'goods receipt'), animate cursive SVG text
-  if (isCustomWord) {
-    const displayWord = word.trim().toLowerCase();
-    // Estimate viewBox width based on character count so it never gets clipped
-    const charCount = displayWord.length;
-    const vbWidth = Math.max(480, Math.min(850, charCount * 46 + 100));
-    const vbHeight = 150;
-
-    return (
-      <div className={cn('relative inline-flex items-center justify-center', className)}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox={`0 0 ${vbWidth} ${vbHeight}`}
-          className="w-full h-full overflow-visible select-none"
-          {...props}
-        >
-          <defs>
-            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#2563eb" />
-              <stop offset="30%" stopColor="#3b82f6" />
-              <stop offset="60%" stopColor="#6366f1" />
-              <stop offset="85%" stopColor="#7c3aed" />
-              <stop offset="100%" stopColor="#1e293b" />
-            </linearGradient>
-            <style>{`
-              @keyframes helloStrokeDraw {
-                0% {
-                  stroke-dashoffset: 1200;
-                  fill-opacity: 0;
-                  opacity: 0.2;
-                }
-                60% {
-                  stroke-dashoffset: 0;
-                  fill-opacity: 0.25;
-                  opacity: 1;
-                }
-                100% {
-                  stroke-dashoffset: 0;
-                  fill-opacity: 1;
-                  opacity: 1;
-                }
-              }
-            `}</style>
-          </defs>
-
-          <text
-            x="50%"
-            y="56%"
-            textAnchor="middle"
-            dominantBaseline="central"
-            className="font-apple-script font-bold tracking-wide"
-            style={{
-              fontSize: charCount > 16 ? '58px' : '72px',
-              fill: useGradient ? `url(#${gradientId})` : 'currentColor',
-              stroke: useGradient ? `url(#${gradientId})` : 'currentColor',
-              strokeWidth: '1.4px',
-              strokeLinecap: 'round',
-              strokeLinejoin: 'round',
-              strokeDasharray: 1200,
-              strokeDashoffset: 1200,
-              animation: `helloStrokeDraw ${calc(1.8)}s cubic-bezier(0.16, 1, 0.3, 1) forwards`,
-            }}
-            onAnimationEnd={onAnimationComplete}
-          >
-            {displayWord}
-          </text>
-        </svg>
-      </div>
-    );
-  }
-
-  // Default: Iconic Apple "hello" SVG handcrafted vector strokes
   const strokeColor = useGradient ? `url(#${gradientId})` : 'currentColor';
 
   return (
     <motion.svg
-      className={cn('h-14 sm:h-16 w-auto max-w-full overflow-visible select-none', className)}
+      className={cn('h-16 sm:h-20 w-auto max-w-full overflow-visible select-none', className)}
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 638 200"
       fill="none"
