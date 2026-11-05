@@ -127,6 +127,45 @@
   animation: appleShimmer 3.5s linear infinite;
 }
 
+/* HelloEffect Handwriting & Iridescent Gradient Animation */
+@keyframes helloStrokeWrite {
+  0% {
+    clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+    filter: blur(6px);
+  }
+  20% {
+    opacity: 1;
+    filter: blur(2px);
+  }
+  85% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
+  100% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+.hello-effect-gradient {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 30%, #6366f1 60%, #7c3aed 82%, #1e293b 100%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.hello-effect-text {
+  animation: helloStrokeWrite var(--hello-duration, 0.75s) cubic-bezier(0.16, 1, 0.3, 1) forwards,
+             appleShimmer 3.5s linear infinite;
+}
+
 /* Apple "Hello" Signature Script Animation & Cursive Style */
 .font-apple-script {
   font-family: 'Caveat', 'Dancing Script', cursive, -apple-system, BlinkMacSystemFont, sans-serif;

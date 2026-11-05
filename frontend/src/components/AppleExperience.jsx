@@ -395,17 +395,18 @@ export function AppleHelloPageTransition({ activeView }) {
         {/* Subtle iridescent glow orb matching the blue/purple theme */}
         <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-56 h-56 bg-gradient-to-tr from-blue-500/20 via-indigo-500/20 to-purple-500/20 rounded-full blur-2xl pointer-events-none" />
 
-        {/* The Authentic Apple "hello" Handwriting Stroke Animation */}
+        {/* Handwriting Stroke Page Name Effect */}
         <div className="relative z-10 w-full flex flex-col items-center justify-center">
           <HelloEffect
+            word={meta.helloText}
             speed={2}
-            className="h-16 sm:h-20 w-auto max-w-[280px] sm:max-w-[320px] drop-shadow-xs"
+            className="w-full"
           />
-          <div className="text-base sm:text-lg font-black text-slate-800 tracking-tight font-sans mt-2">
+          <div className="text-xs sm:text-sm font-extrabold text-slate-800 tracking-tight font-sans mt-1">
             {meta.label}
           </div>
           {meta.subtitle && (
-            <div className="text-xs text-slate-500 font-medium">
+            <div className="text-[11px] text-slate-500 font-medium">
               {meta.subtitle}
             </div>
           )}
@@ -461,8 +462,9 @@ export function AppleWelcomeModal({ isOpen, onClose }) {
         <div className="space-y-1.5 relative z-10 flex flex-col items-center">
           {/* The iconic Apple cursive "hello" text animated with stroke effect */}
           <HelloEffect
+            word="hello"
             speed={2}
-            className="h-16 sm:h-20 max-w-full drop-shadow-xs"
+            className="w-full"
           />
 
           <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
