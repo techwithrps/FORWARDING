@@ -22,15 +22,48 @@ export default function GrGenerationView({
 }) {
   const todayDateStr = new Date().toISOString().split('T')[0];
 
-  // Extract containers from jobs with fallback mock list
+  const [liveContainers, setLiveContainers] = useState([]);
+
+  // Extract containers from DB pending list + jobs with fallback presets
   const containerOptions = React.useMemo(() => {
     const list = [];
+    const seen = new Set();
+
+    // 1. First add real containers fetched from DB
+    (liveContainers || []).forEach((c) => {
+      const cNo = c.cont_no || c.contNo;
+      if (cNo && !seen.has(cNo.toUpperCase())) {
+        seen.add(cNo.toUpperCase());
+        list.push({
+          contNo: cNo,
+          displayLabel: c.display_label || `${cNo} - ${c.jo_no || 'JO'}`,
+          size: String(c.size || '40'),
+          type: String(c.type || 'HC'),
+          weight: String(c.weight || '24500'),
+          joNo: String(c.jo_no || ''),
+          joDate: c.jo_date || todayDateStr,
+          consignor: c.consignor || 'Fair Exports (India) Pvt Ltd',
+          consignee: c.consignee || 'ASIAN PERAL MYANMAR CO. LTD.',
+          fromLocation: c.from_location || 'TRANSWORLD-DADRI',
+          toLocation: c.to_location || 'ADANI-PATLI',
+          transporter: c.transporter || 'AJINKYA TRANSPORT',
+          vehicleNo: c.vehicle_no || '',
+          commodity: c.commodity || 'FROZEN BUFFALO BONELESS MEAT',
+          handoverLocation: c.handover_location || 'ADANI-PATLI',
+          grNo: c.gr_no || ''
+        });
+      }
+    });
+
+    // 2. Add containers from parent jobs prop if not already listed
     (jobs || []).forEach((job) => {
       (job.containers || []).forEach((c) => {
         const cNo = c.no || c.contNo || c.containerNo || c.container_number;
-        if (cNo && cNo !== 'TBA') {
+        if (cNo && cNo !== 'TBA' && !seen.has(cNo.toUpperCase())) {
+          seen.add(cNo.toUpperCase());
           list.push({
             contNo: cNo,
+            displayLabel: `${cNo} - ${job.id || job.joNo || job.jobNumber || ''}`,
             size: c.size || (c.sizeType?.includes('20') ? '20' : '40') || '40',
             type: c.type || (c.sizeType?.includes('GP') ? 'GP' : 'HC') || 'HC',
             weight: String(c.cargoWeight || c.weight || c.cargo_weight || '24500'),
@@ -42,7 +75,7 @@ export default function GrGenerationView({
             toLocation: job.toLocation || job.pod || job.pod_port_name || '',
             transporter: job.transporter || 'AJINKYA TRANSPORT',
             vehicleNo: (c.truck && c.truck !== 'TBA' ? c.truck : '') || c.vehicleNo || c.truck_number || '',
-            commodity: job.commodity || 'FROZEN BUFFALO BONELSS MEAT',
+            commodity: job.commodity || 'FROZEN BUFFALO BONELESS MEAT',
             handoverLocation: job.handoverLocation || 'ADANI-PATLI',
             grNo: c.gr || c.grNo || c.gr_number || ''
           });
@@ -50,80 +83,8 @@ export default function GrGenerationView({
       });
     });
 
-    if (list.length === 0) {
-      return [
-        {
-          contNo: 'TTNU8163002',
-          size: '40',
-          type: 'HC',
-          weight: '24500',
-          joNo: 'JO-94164',
-          joDate: todayDateStr,
-          consignor: 'Fair Exports (India) Pvt Ltd',
-          consignee: 'ASIAN PERAL MYANMAR CO. LTD.',
-          fromLocation: 'TRANSWORLD-DADRI',
-          toLocation: 'ADANI-PATLI',
-          transporter: 'AJINKYA TRANSPORT',
-          vehicleNo: 'UP16BT1628',
-          commodity: 'FROZEN BUFFALO BONELSS MEAT',
-          handoverLocation: 'ADANI-PATLI',
-          grNo: 'GR-2026-0002'
-        },
-        {
-          contNo: 'MSKU9821043',
-          size: '40',
-          type: 'HC',
-          weight: '24500',
-          joNo: 'JO-2026-0041',
-          joDate: todayDateStr,
-          consignor: 'Fair Exports (India) Pvt Ltd',
-          consignee: 'Al Maya Trading LLC (Dubai, UAE)',
-          fromLocation: 'TRANSWORLD-DADRI',
-          toLocation: 'Nhava Sheva-NSFT (INNSA1)',
-          transporter: 'AJINKYA TRANSPORT',
-          vehicleNo: 'HR55AN2094',
-          commodity: 'Frozen Buffalo Meat',
-          handoverLocation: 'ADANI-PATLI',
-          grNo: 'GR-2026-0041'
-        },
-        {
-          contNo: 'MEDU7845120',
-          size: '40',
-          type: 'HC',
-          weight: '26000',
-          joNo: 'JO-2026-0042',
-          joDate: todayDateStr,
-          consignor: 'Marhaba Frozen Foods',
-          consignee: 'EuroMeat B.V. (Rotterdam, Netherlands)',
-          fromLocation: 'Piyala ICD Depot',
-          toLocation: 'Mundra Port-MDCC (INMUN1)',
-          transporter: 'SPJ Fleet Logistics',
-          vehicleNo: 'UP16BT4820',
-          commodity: 'Basmati Rice',
-          handoverLocation: 'Piyala ICD CFS Complex',
-          grNo: 'GR-2026-0042'
-        },
-        {
-          contNo: 'CMAU6521904',
-          size: '20',
-          type: 'GP',
-          weight: '21500',
-          joNo: 'JO-2026-0043',
-          joDate: todayDateStr,
-          consignor: 'Allanasons Private Limited',
-          consignee: 'Al-Shaikh Trading Co. (Jeddah, KSA)',
-          fromLocation: 'TRANSWORLD-DADRI',
-          toLocation: 'Nhava Sheva-BMCT (INNSA1)',
-          transporter: 'Dadri Express Logistics',
-          vehicleNo: 'NL01AD8941',
-          commodity: 'Frozen Fish & Seafood',
-          handoverLocation: 'ADANI-PATLI',
-          grNo: 'GR-2026-0043'
-        }
-      ];
-    }
     return list;
-  }, [jobs]);
+  }, [liveContainers, jobs, todayDateStr]);
 
   // Initial Form State
   const initialFormState = {
@@ -171,35 +132,52 @@ export default function GrGenerationView({
 
   // Dropdown presets for inputs with dropdown
   const vehicleBadges = [
-    'HR47D5200',
-    'HR55AN2094',
-    'UP16BT4820',
-    'NL01AD8941',
-    'MH46AR7712',
-    'DL1AA3901',
-    'HR47A8502',
-    'HR38AA2750',
-    'RJ19GB4367',
-    'UP16BT1628'
+    { truckNo: 'HR47D5200', driverName: 'AAFTAB', driverMobile: '8800710980', licenseValidity: '2026-12-31', type: 'T40' },
+    { truckNo: 'HR55AN2094', driverName: 'Ramesh Kumar', driverMobile: '9876543210', licenseValidity: '2028-04-15', type: 'T40' },
+    { truckNo: 'UP16BT4820', driverName: 'Suresh Yadav', driverMobile: '9811223344', licenseValidity: '2027-09-30', type: 'T40' },
+    { truckNo: 'NL01AD8941', driverName: 'Balwant Singh', driverMobile: '9711882233', licenseValidity: '2026-12-31', type: 'T20' },
+    { truckNo: 'MH46AR7712', driverName: 'Mohd. Irfan', driverMobile: '9955443322', licenseValidity: '2029-01-20', type: 'T40' }
   ];
-  const workshopPresets = ['EICHER', 'TATA MOTORS', 'ASHOK LEYLAND', 'BHARATBENZ', 'MAHINDRA', 'SPJ IN-HOUSE YARD (DADRI)'];
-  const joForPresets = ['Shifting', 'Factory Stuffing', 'Port Delivery / Gate-in', 'Empty Pickup / Return', 'Breakdown-ICD / Repair'];
+  const workshopPresets = ['EICHER', 'ASHOK LEYLAND', 'MAHINDRA', 'PVT', 'TATA MOTORS', 'SPJ IN-HOUSE YARD (DADRI)'];
+  const joForPresets = ['Shifting', 'Factory Stuffing', 'Port Delivery / Gate-in', 'Empty Pickup / Return', 'Maintenance', 'Repair', 'Recall'];
   const vehicleTypePresets = ['T40', 'T20', '40ft Multi-Axle Trailer', '20ft Skeletal Trailer', 'Heavy Duty Low-Bed'];
   
   const driverPresets = [
-    { name: 'AAFTAB', phone: '8800710980', license: '2026-12-31' },
-    { name: 'Ramesh Kumar', phone: '9876543210', license: '2028-04-15' },
-    { name: 'Suresh Yadav', phone: '9811223344', license: '2027-09-30' },
-    { name: 'Balwant Singh', phone: '9711882233', license: '2026-12-31' },
-    { name: 'Mohd. Irfan', phone: '9955443322', license: '2029-01-20' }
+    { name: 'AAFTAB', phone: '8800710980', license: '2026-12-31', vehicle: 'HR47D5200' },
+    { name: 'Ramesh Kumar', phone: '9876543210', license: '2028-04-15', vehicle: 'HR55AN2094' },
+    { name: 'Suresh Yadav', phone: '9811223344', license: '2027-09-30', vehicle: 'UP16BT4820' },
+    { name: 'Balwant Singh', phone: '9711882233', license: '2026-12-31', vehicle: 'NL01AD8941' },
+    { name: 'Mohd. Irfan', phone: '9955443322', license: '2029-01-20', vehicle: 'MH46AR7712' }
+  ];
+
+  const oilVendorPresets = [
+    'BP PUMP PADGHA',
+    'GANGA SHREE PETROLEUM',
+    'HINDUSTAN DOCKYARD PVT. LTD.',
+    'RAGHUNANDAN PRASAD AND SONS'
   ];
 
   // Dynamic fleet lists fetched from DB API with fallback presets
   const [liveDrivers, setLiveDrivers] = useState(driverPresets);
   const [liveVehicles, setLiveVehicles] = useState(vehicleBadges);
+  const [liveOilVendors, setLiveOilVendors] = useState(oilVendorPresets);
+  const [liveWorkshops, setLiveWorkshops] = useState(workshopPresets);
 
   useEffect(() => {
     let isMounted = true;
+
+    // 1. Pending Containers from DB
+    if (api.getPendingGrContainers) {
+      api.getPendingGrContainers()
+        .then((res) => {
+          if (isMounted && res?.data && res.data.length > 0) {
+            setLiveContainers(res.data);
+          }
+        })
+        .catch((err) => console.warn('Could not fetch pending GR containers from API:', err));
+    }
+
+    // 2. Drivers from DB
     api.getDrivers()
       .then((res) => {
         if (isMounted && res?.data && res.data.length > 0) {
@@ -207,21 +185,52 @@ export default function GrGenerationView({
             res.data.map((d) => ({
               name: d.name,
               phone: d.mobile || '',
-              license: d.validity || ''
+              license: d.validity || '',
+              vehicle: d.vehicle || ''
             }))
           );
         }
       })
       .catch((err) => console.warn('Could not fetch drivers from API:', err));
 
+    // 3. Vehicles from DB
     api.getVehicles()
       .then((res) => {
         if (isMounted && res?.data && res.data.length > 0) {
-          const list = res.data.map((v) => v.truck_no).filter(Boolean);
+          const list = res.data.map((v) => ({
+            truckNo: v.truck_no,
+            driverName: v.driver_name || '',
+            driverMobile: v.driver_mobile || '',
+            licenseValidity: v.license_validity || '',
+            type: v.type || 'T40',
+            model: v.model || 'Trailer'
+          })).filter((v) => Boolean(v.truckNo));
           if (list.length > 0) setLiveVehicles(list);
         }
       })
       .catch((err) => console.warn('Could not fetch vehicles from API:', err));
+
+    // 4. Oil Vendors from DB
+    if (api.getOilVendors) {
+      api.getOilVendors()
+        .then((res) => {
+          if (isMounted && res?.data && res.data.length > 0) {
+            setLiveOilVendors(res.data.map((v) => v.name || v));
+          }
+        })
+        .catch((err) => console.warn('Could not fetch oil vendors:', err));
+    }
+
+    // 5. Workshops from DB
+    if (api.getWorkshops) {
+      api.getWorkshops()
+        .then((res) => {
+          if (isMounted && res?.data && res.data.length > 0) {
+            setLiveWorkshops(res.data.map((w) => w.name || w));
+          }
+        })
+        .catch((err) => console.warn('Could not fetch workshops:', err));
+    }
 
     return () => {
       isMounted = false;
@@ -294,7 +303,9 @@ export default function GrGenerationView({
   // Auto-fill when container is selected
   const handleContNoChange = (selectedContNo) => {
     setFormError('');
-    const matched = containerOptions.find((c) => c.contNo === selectedContNo);
+    const matched = containerOptions.find(
+      (c) => c.contNo?.toUpperCase() === selectedContNo?.toUpperCase()
+    );
     if (matched) {
       setForm((prev) => ({
         ...prev,
@@ -304,7 +315,7 @@ export default function GrGenerationView({
         weight: matched.weight || prev.weight,
         joNo: matched.joNo || prev.joNo,
         joDate: matched.joDate || prev.joDate || todayDateStr,
-        grNo: matched.grNo || prev.grNo || `GR-2026-${String(Math.floor(1000 + Math.random() * 9000))}`,
+        grNo: matched.grNo || prev.grNo || `GR-2026-${String(matched.contNo ? matched.contNo.slice(-4) : Math.floor(1000 + Math.random() * 9000))}`,
         consignor: matched.consignor || prev.consignor,
         consignee: matched.consignee || prev.consignee,
         fromLocation: matched.fromLocation || prev.fromLocation,
@@ -319,9 +330,42 @@ export default function GrGenerationView({
     }
   };
 
-  // Driver change auto-fills contact and license
+  // Vehicle change auto-fills driver, contact, license validity, and vehicle type (aligned with SPJ 2 LogiPark)
+  const handleVehicleChange = (truckNo) => {
+    setFormError('');
+    setForm((prev) => {
+      const updated = { ...prev, vehicleNo: truckNo };
+      const v = (liveVehicles || []).find(
+        (item) => (item.truckNo || item) === truckNo
+      );
+      if (v && typeof v === 'object') {
+        if (v.driverName) {
+          updated.driver = v.driverName;
+          updated.driverContactNo = v.driverMobile || '';
+          updated.licenseValidity = v.licenseValidity || '';
+        } else {
+          // Check if any driver has this vehicle assigned
+          const matchedDriver = (liveDrivers || []).find(
+            (d) => d.vehicle && d.vehicle.toUpperCase() === truckNo.toUpperCase()
+          );
+          if (matchedDriver) {
+            updated.driver = matchedDriver.name;
+            updated.driverContactNo = matchedDriver.phone || '';
+            updated.licenseValidity = matchedDriver.license || '';
+          }
+        }
+        if (v.type) {
+          updated.vehicleType = v.type;
+        }
+      }
+      return updated;
+    });
+  };
+
+  // Driver change auto-fills contact, license validity, and vehicle if mapped (aligned with SPJ 2 LogiPark)
   const handleDriverChange = (driverName) => {
-    const matchedDriver = liveDrivers.find(
+    setFormError('');
+    const matchedDriver = (liveDrivers || []).find(
       (d) => d.name.toLowerCase() === driverName.toLowerCase()
     );
     if (matchedDriver) {
@@ -329,7 +373,8 @@ export default function GrGenerationView({
         ...prev,
         driver: matchedDriver.name,
         driverContactNo: matchedDriver.phone || prev.driverContactNo,
-        licenseValidity: matchedDriver.license || prev.licenseValidity
+        licenseValidity: matchedDriver.license || prev.licenseValidity,
+        vehicleNo: matchedDriver.vehicle || prev.vehicleNo
       }));
     } else {
       setForm((prev) => ({ ...prev, driver: driverName }));
@@ -479,14 +524,17 @@ export default function GrGenerationView({
               <select
                 value={form.contNo}
                 onChange={(e) => handleContNoChange(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
               >
-                <option value="">-- Select Container --</option>
+                <option value="">-- Select Container ({containerOptions.length} Pending) --</option>
                 {containerOptions.map((c) => (
                   <option key={c.contNo} value={c.contNo}>
-                    {c.contNo} {c.size ? `(${c.size}${c.type || ''})` : ''}
+                    {c.displayLabel || `${c.contNo} - ${c.joNo || 'JO'}`} ({c.size}{c.type || ''} • {c.consignor ? c.consignor.slice(0, 20) : 'Standard'})
                   </option>
                 ))}
+                {form.contNo && !containerOptions.some(c => c.contNo === form.contNo) && (
+                  <option value={form.contNo}>{form.contNo}</option>
+                )}
               </select>
             </div>
 
@@ -776,21 +824,27 @@ export default function GrGenerationView({
 
           {/* Row 1: Vehicle No, Driver, Driver Contact No, License Validity */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-            {/* Vehicle No (Dropdown Selector) */}
+            {/* Vehicle No (Dropdown Selector with Auto-Fill Driver, Contact & License) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Vehicle No
               </label>
               <select
                 value={form.vehicleNo}
-                onChange={(e) => setForm({ ...form, vehicleNo: e.target.value })}
+                onChange={(e) => handleVehicleChange(e.target.value)}
                 className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold uppercase outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
               >
                 <option value="">-- Select Vehicle ({liveVehicles.length} Fleet Trucks) --</option>
-                {liveVehicles.map((v) => (
-                  <option key={v} value={v}>{v}</option>
-                ))}
-                {form.vehicleNo && !liveVehicles.includes(form.vehicleNo) && (
+                {liveVehicles.map((v) => {
+                  const tNo = typeof v === 'object' ? v.truckNo : v;
+                  const dLabel = typeof v === 'object' && v.driverName ? ` (Driver: ${v.driverName})` : '';
+                  return (
+                    <option key={tNo} value={tNo}>
+                      {tNo}{dLabel}
+                    </option>
+                  );
+                })}
+                {form.vehicleNo && !liveVehicles.some(v => (v.truckNo || v) === form.vehicleNo) && (
                   <option value={form.vehicleNo}>{form.vehicleNo}</option>
                 )}
               </select>
@@ -808,7 +862,9 @@ export default function GrGenerationView({
               >
                 <option value="">-- Select Driver ({liveDrivers.length} In Fleet) --</option>
                 {liveDrivers.map((d) => (
-                  <option key={d.name} value={d.name}>{d.name} {d.phone ? `(${d.phone})` : ''}</option>
+                  <option key={d.name} value={d.name}>
+                    {d.name} {d.phone ? `(${d.phone})` : ''} {d.vehicle ? `[Truck: ${d.vehicle}]` : ''}
+                  </option>
                 ))}
                 {form.driver && !liveDrivers.some(d => d.name === form.driver) && (
                   <option value={form.driver}>{form.driver}</option>
@@ -846,7 +902,7 @@ export default function GrGenerationView({
 
           {/* Row 2: Workshop, Jo For, Survey By, Vehicle Type */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1.5 border-t border-slate-100">
-            {/* Workshop (Dropdown with presets) */}
+            {/* Workshop (Dropdown with live DB list) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Workshop
@@ -857,9 +913,10 @@ export default function GrGenerationView({
                 className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
               >
                 <option value="">---Select Workshop---</option>
-                {workshopPresets.map((w) => (
-                  <option key={w} value={w}>{w}</option>
-                ))}
+                {liveWorkshops.map((w) => {
+                  const val = typeof w === 'object' ? w.name : w;
+                  return <option key={val} value={val}>{val}</option>;
+                })}
               </select>
             </div>
 
@@ -923,13 +980,11 @@ export default function GrGenerationView({
                 onChange={(e) => setForm({ ...form, oilVendor: e.target.value })}
                 className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
               >
-                <option value="">---Select---</option>
-                <option value="Indian Oil Corporation (IOCL)">Indian Oil Corporation (IOCL)</option>
-                <option value="Bharat Petroleum (BPCL)">Bharat Petroleum (BPCL)</option>
-                <option value="Hindustan Petroleum (HPCL)">Hindustan Petroleum (HPCL)</option>
-                <option value="Reliance Petroleum">Reliance Petroleum</option>
-                <option value="Shell India">Shell India</option>
-                <option value="Nayara Energy">Nayara Energy</option>
+                <option value="">---Select Oil Vendor---</option>
+                {liveOilVendors.map((ov) => {
+                  const val = typeof ov === 'object' ? ov.name : ov;
+                  return <option key={val} value={val}>{val}</option>;
+                })}
               </select>
             </div>
 

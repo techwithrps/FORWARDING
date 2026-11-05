@@ -42,6 +42,96 @@ router.get('/trip-pendency', async (req, res) => {
   }
 });
 
+// GET Pending GR Containers for GR Generation dropdown (aligned with SPJ 2 LogiPark)
+router.get('/pending-gr-containers', async (req, res) => {
+  try {
+    const spjContainersQuery = `
+      SELECT 
+        FCJD."MTY_CONT_ID"::text as mty_cont_id,
+        (TRIM(FCJD."CONT_NO"::text) || ' - ' || FCJ."CONT_JO_NO"::text) AS display_label,
+        TRIM(FCJD."CONT_NO"::text) AS cont_no,
+        COALESCE(FCJD."CONT_SIZE"::text, '40') AS size,
+        COALESCE(TRIM(FCJD."CONT_TYPE"::text), 'HC') AS type,
+        COALESCE(NULLIF(FCJD."WEIGHT"::text, '0'), '24500') AS weight,
+        FCJ."CONT_JO_NO"::text AS jo_no,
+        TO_CHAR(FCJ."CREATED_ON", 'YYYY-MM-DD') AS jo_date,
+        COALESCE(TRIM(CUST."CUSTOMER_NAME"::text), 'Fair Exports (India) Pvt Ltd') AS consignor,
+        COALESCE(TRIM(CONS."CUSTOMER_NAME"::text), 'ASIAN PERAL MYANMAR CO. LTD.') AS consignee,
+        CASE 
+          WHEN FCJ."TRANSPORTER_ID" = 0 OR FCJ."TRANSPORTER_ID" IS NULL THEN 'Self' 
+          ELSE COALESCE(TRIM(VEND."VENDOR_NAME"::text), 'AJINKYA TRANSPORT') 
+        END AS transporter,
+        COALESCE(TRIM(TERM_FROM."TERMINAL_NAME"::text), TRIM(LOC_FROM."LOCATION_NAME"::text), 'TRANSWORLD-DADRI') AS from_location,
+        COALESCE(TRIM(LOC_TO."LOCATION_NAME"::text), TRIM(TERM_TO."TERMINAL_NAME"::text), 'ADANI-PATLI') AS to_location,
+        COALESCE(TRIM(TERM_HANDOVER."TERMINAL_NAME"::text), TRIM(FCJ."HAND_LOCATION"::text), 'ADANI-PATLI') AS handover_location,
+        COALESCE(TRIM(FCJ."COMMODITY"::text), 'FROZEN BUFFALO BONELESS MEAT') AS commodity
+      FROM spjlive."FLEET_CONT_JO_DTLS" FCJD
+      JOIN spjlive."FLEET_CONT_JO" FCJ ON FCJ."CONT_JO_ID" = FCJD."CONT_JO_ID"
+      LEFT JOIN spjlive."CUSTOMER_MASTER" CUST ON CUST."CUSTOMER_ID" = FCJ."CUSTOMER_ID"
+      LEFT JOIN spjlive."CUSTOMER_MASTER" CONS ON CONS."CUSTOMER_ID" = FCJ."CONSIGNEE_ID"
+      LEFT JOIN spjlive."VENDOR_MASTER" VEND ON VEND."VENDOR_ID" = FCJ."TRANSPORTER_ID"
+      LEFT JOIN spjlive."TERMINAL_MASTER" TERM_FROM ON TERM_FROM."TERMINAL_ID" = FCJ."MTY_PICKUP"
+      LEFT JOIN spjlive."TERMINAL_LOCATION_MASTER" LOC_FROM ON LOC_FROM."LOCATION_ID" = FCJ."FROM_LOCATION"
+      LEFT JOIN spjlive."TERMINAL_LOCATION_MASTER" LOC_TO ON LOC_TO."LOCATION_ID" = FCJ."FROM_LOCATION"
+      LEFT JOIN spjlive."TERMINAL_MASTER" TERM_TO ON TERM_TO."TERMINAL_ID" = FCJ."TO_LOCATION_ID"
+      LEFT JOIN spjlive."TERMINAL_MASTER" TERM_HANDOVER ON TERM_HANDOVER."TERMINAL_ID" = FCJ."TO_LOCATION_ID"
+      WHERE COALESCE(FCJD."GR_ID", 0) = 0
+        AND FCJD."CANCEL_STATUS" IS NULL
+        AND FCJD."CONT_NO" IS NOT NULL
+        AND TRIM(FCJD."CONT_NO"::text) != ''
+      ORDER BY FCJ."CONT_JO_ID" DESC
+      LIMIT 250;
+    `;
+    const { rows: spjRows } = await db.query(spjContainersQuery);
+
+    let localRows = [];
+    try {
+      const localQuery = `
+        SELECT 
+          c.id::text as mty_cont_id,
+          (c.container_number || ' - ' || j.job_number) AS display_label,
+          c.container_number AS cont_no,
+          CASE WHEN c.size_type LIKE '%20%' THEN '20' ELSE '40' END AS size,
+          CASE WHEN c.size_type LIKE '%GP%' THEN 'GP' ELSE 'HC' END AS type,
+          COALESCE(c.cargo_weight::text, '24500') AS weight,
+          j.job_number AS jo_no,
+          TO_CHAR(j.created_at, 'YYYY-MM-DD') AS jo_date,
+          COALESCE(j.customer_name, 'Fair Exports (India) Pvt Ltd') AS consignor,
+          COALESCE(j.consignee_name, 'ASIAN PERAL MYANMAR CO. LTD.') AS consignee,
+          'AJINKYA TRANSPORT' AS transporter,
+          COALESCE(j.origin_port_name, 'TRANSWORLD-DADRI') AS from_location,
+          COALESCE(j.pod_port_name, 'ADANI-PATLI') AS to_location,
+          'ADANI-PATLI' AS handover_location,
+          COALESCE(j.commodity, 'FROZEN BUFFALO BONELESS MEAT') AS commodity
+        FROM job_containers c
+        JOIN job_orders j ON c.job_id = j.id
+        WHERE (c.gr_number IS NULL OR c.gr_number = '')
+        ORDER BY c.created_at DESC
+        LIMIT 50;
+      `;
+      const resLocal = await db.query(localQuery);
+      localRows = resLocal.rows;
+    } catch (e) {
+      // Ignore if local table is empty
+    }
+
+    const seen = new Set();
+    const combined = [];
+    for (const r of [...localRows, ...spjRows]) {
+      const key = (r.cont_no || '').trim().toUpperCase();
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        combined.push(r);
+      }
+    }
+
+    res.json({ success: true, count: combined.length, data: combined });
+  } catch (err) {
+    console.error('Error fetching pending containers:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // POST Generate GR for a pending container
 router.post('/generate-gr', async (req, res) => {
   try {

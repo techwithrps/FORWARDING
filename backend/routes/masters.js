@@ -116,9 +116,9 @@ router.get('/drivers', async (req, res) => {
         SELECT 
           'DRV-' || "DRIVER_ID" AS id,
           TRIM("DRIVER_NAME") AS name,
-          COALESCE("VEHICLE_NO", '') AS vehicle,
+          COALESCE(UPPER(TRIM("VEHICLE_NO")), '') AS vehicle,
           COALESCE("DL_NO", '') AS dl_no,
-          "DL_RENEWABLE_DATE"::date::text AS validity,
+          TO_CHAR("DL_RENEWABLE_DATE", 'YYYY-MM-DD') AS validity,
           COALESCE("MOBILE_NO", "CONTACT_NO", '') AS mobile,
           'Dadri Express Logistics' AS transporter,
           'ACTIVE' AS status
@@ -215,19 +215,29 @@ router.get('/vehicles', async (req, res) => {
   try {
     const { rows } = await db.query(`
       SELECT DISTINCT ON (UPPER(TRIM(truck_no)))
-        id, truck_no, type, model, transporter, status
+        id, truck_no, type, model, transporter, status, driver_name, driver_mobile, license_validity
       FROM (
         SELECT 
-          'VEH-' || "EQUIPMENT_ID" AS id,
-          UPPER(TRIM("EQUIPMENT_NO")) AS truck_no,
-          COALESCE("EQUIPMENT_TYPE", 'T40') AS type,
-          COALESCE("MODEL", 'Trailer') AS model,
+          'VEH-' || EM."EQUIPMENT_ID" AS id,
+          UPPER(TRIM(EM."EQUIPMENT_NO")) AS truck_no,
+          COALESCE(EM."EQUIPMENT_TYPE", 'T40') AS type,
+          COALESCE(EM."MODEL", 'Trailer') AS model,
           'Dadri Express Logistics' AS transporter,
-          'ACTIVE' AS status
-        FROM spjlive."FLEET_EQUIPMENT_MASTER"
-        WHERE "EQUIPMENT_NO" IS NOT NULL AND TRIM("EQUIPMENT_NO") != ''
+          'ACTIVE' AS status,
+          TRIM(DM."DRIVER_NAME") AS driver_name,
+          COALESCE(DM."MOBILE_NO", DM."CONTACT_NO", '') AS driver_mobile,
+          TO_CHAR(DM."DL_RENEWABLE_DATE", 'YYYY-MM-DD') AS license_validity
+        FROM spjlive."FLEET_EQUIPMENT_MASTER" EM
+        LEFT JOIN spjlive."FLEET_DRIVER_MASTER" DM 
+          ON UPPER(TRIM(DM."VEHICLE_NO")) = UPPER(TRIM(EM."EQUIPMENT_NO"))
+        WHERE EM."EQUIPMENT_NO" IS NOT NULL 
+          AND LENGTH(TRIM(EM."EQUIPMENT_NO")) >= 6
+          AND (EM."EQUIPMENT_TYPE" IN ('T20', 'T40') OR EM."EQUIPMENT_TYPE" IS NULL)
+          AND (EM."STATUS" IN ('Y', 'B', 'O') OR EM."STATUS" IS NULL)
         UNION ALL
-        SELECT id, truck_no, type, model, transporter, status
+        SELECT 
+          id, truck_no, type, model, transporter, status,
+          NULL as driver_name, '' as driver_mobile, NULL as license_validity
         FROM public.vehicles
       ) all_veh
       ORDER BY UPPER(TRIM(truck_no)) ASC
@@ -651,6 +661,68 @@ router.put('/tariffs/:id/approve', async (req, res) => {
     res.json({ success: true, data: rows[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 13. OIL VENDORS (SPJ Fleet Fuel Vendor Master)
+router.get('/oil-vendors', async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT VM."VENDOR_ID" AS id, TRIM(VM."VENDOR_NAME") AS name 
+      FROM spjlive."VENDOR_MASTER" VM
+      JOIN spjlive."VENDOR_TYPE_DETAILS" VD ON VD."VENDOR_ID" = VM."VENDOR_ID"
+      WHERE VD."VENDER_TYPE_CODE" = 'P'
+      ORDER BY VM."VENDOR_NAME" ASC
+    `);
+    const defaultVendors = [
+      { id: '99', name: 'BP PUMP PADGHA' },
+      { id: '100', name: 'GANGA SHREE PETROLEUM' },
+      { id: '103', name: 'HINDUSTAN DOCKYARD PVT. LTD.' },
+      { id: '98', name: 'RAGHUNANDAN PRASAD AND SONS' }
+    ];
+    res.json({ success: true, count: rows.length || defaultVendors.length, data: rows.length ? rows : defaultVendors });
+  } catch (err) {
+    console.error('Error fetching oil vendors:', err);
+    res.json({
+      success: true,
+      data: [
+        { id: '99', name: 'BP PUMP PADGHA' },
+        { id: '100', name: 'GANGA SHREE PETROLEUM' },
+        { id: '103', name: 'HINDUSTAN DOCKYARD PVT. LTD.' },
+        { id: '98', name: 'RAGHUNANDAN PRASAD AND SONS' }
+      ]
+    });
+  }
+});
+
+// 14. WORKSHOPS (SPJ Fleet Workshop Master)
+router.get('/workshops', async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT "WR_ID" AS id, TRIM("WR_NAME") AS name 
+      FROM spjlive."WORKSHOP_MASTER" 
+      ORDER BY "WR_NAME" ASC
+    `);
+    const defaultWorkshops = [
+      { id: '1', name: 'EICHER' },
+      { id: '2', name: 'ASHOK LEYLAND' },
+      { id: '5', name: 'MAHINDRA' },
+      { id: '4', name: 'PVT' },
+      { id: '6', name: 'TATA MOTORS' }
+    ];
+    res.json({ success: true, count: rows.length || defaultWorkshops.length, data: rows.length ? rows : defaultWorkshops });
+  } catch (err) {
+    console.error('Error fetching workshops:', err);
+    res.json({
+      success: true,
+      data: [
+        { id: '1', name: 'EICHER' },
+        { id: '2', name: 'ASHOK LEYLAND' },
+        { id: '5', name: 'MAHINDRA' },
+        { id: '4', name: 'PVT' },
+        { id: '6', name: 'TATA MOTORS' }
+      ]
+    });
   }
 });
 

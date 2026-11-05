@@ -3,10 +3,10 @@ const API_BASE = import.meta.env.VITE_API_URL ||
     ? 'http://localhost:5001/api/v1'
     : '/api/v1');
 
-// Helper for fetch with fast timeout and error handling
+// Helper for fetch with reasonable timeout and error handling
 async function request(endpoint, options = {}) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 2500);
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   try {
     const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -50,6 +50,7 @@ export const api = {
 
   // Operations
   getTripPendency: () => request('/operations/trip-pendency'),
+  getPendingGrContainers: () => request('/operations/pending-gr-containers'),
   generateGR: (payload) =>
     request('/operations/generate-gr', {
       method: 'POST',
@@ -68,6 +69,8 @@ export const api = {
 
   // Masters
   getCustomers: () => request('/masters/customers'),
+  getOilVendors: () => request('/masters/oil-vendors'),
+  getWorkshops: () => request('/masters/workshops'),
   createCustomer: (data) =>
     request('/masters/customers', {
       method: 'POST',
