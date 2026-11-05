@@ -170,6 +170,7 @@ export default function GrGenerationView({
 
   // Dropdown presets for inputs with dropdown
   const vehicleBadges = [
+    'HR47D5200',
     'HR55AN2094',
     'UP16BT4820',
     'NL01AD8941',
@@ -185,11 +186,11 @@ export default function GrGenerationView({
   const vehicleTypePresets = ['T40', 'T20', '40ft Multi-Axle Trailer', '20ft Skeletal Trailer', 'Heavy Duty Low-Bed'];
   
   const driverPresets = [
+    { name: 'AAFTAB', phone: '8800710980', license: '2026-12-31' },
     { name: 'Ramesh Kumar', phone: '9876543210', license: '2028-04-15' },
     { name: 'Suresh Yadav', phone: '9811223344', license: '2027-09-30' },
     { name: 'Balwant Singh', phone: '9711882233', license: '2026-12-31' },
-    { name: 'Mohd. Irfan', phone: '9955443322', license: '2029-01-20' },
-    { name: 'AAFTAB', phone: '8800710980', license: '2026-12-31' }
+    { name: 'Mohd. Irfan', phone: '9955443322', license: '2029-01-20' }
   ];
 
   const transporterPresets = [
@@ -740,70 +741,70 @@ export default function GrGenerationView({
 
           {/* Row 1: Vehicle No, Driver, Driver Contact No, License Validity */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-            {/* Vehicle No (Text Input with Dropdown) */}
+            {/* Vehicle No (Dropdown Selector) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Vehicle No
               </label>
-              <input
-                type="text"
-                list="vehicle-presets"
-                placeholder="e.g. HR55AN2094"
+              <select
                 value={form.vehicleNo}
-                onChange={(e) => setForm({ ...form, vehicleNo: e.target.value.toUpperCase() })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold uppercase outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
-              />
-              <datalist id="vehicle-presets">
+                onChange={(e) => setForm({ ...form, vehicleNo: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold uppercase outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
+              >
+                <option value="">-- Select Vehicle No --</option>
                 {vehicleBadges.map((v) => (
-                  <option key={v} value={v} />
+                  <option key={v} value={v}>{v}</option>
                 ))}
-              </datalist>
+                {form.vehicleNo && !vehicleBadges.includes(form.vehicleNo) && (
+                  <option value={form.vehicleNo}>{form.vehicleNo}</option>
+                )}
+              </select>
             </div>
 
-            {/* Driver (Text Input with Dropdown, Required *) */}
+            {/* Driver (Dropdown Selector with Auto-Fill Contact & License, Required *) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Driver <span className="text-rose-500 font-bold">*</span>
               </label>
-              <input
-                type="text"
-                list="driver-presets"
-                placeholder="Driver Full Name"
+              <select
                 value={form.driver}
                 onChange={(e) => handleDriverChange(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
-              />
-              <datalist id="driver-presets">
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
+              >
+                <option value="">-- Select Driver --</option>
                 {driverPresets.map((d) => (
-                  <option key={d.name} value={d.name} />
+                  <option key={d.name} value={d.name}>{d.name} ({d.phone})</option>
                 ))}
-              </datalist>
+                {form.driver && !driverPresets.some(d => d.name === form.driver) && (
+                  <option value={form.driver}>{form.driver}</option>
+                )}
+              </select>
             </div>
 
             {/* Driver Contact No */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Driver Contact No
+                Driver Contact No {form.driver && form.driverContactNo && <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>}
               </label>
               <input
                 type="text"
                 placeholder="10-digit Mobile No"
                 value={form.driverContactNo}
                 onChange={(e) => setForm({ ...form, driverContactNo: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
               />
             </div>
 
             {/* License Validity */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                License Validity
+                License Validity {form.driver && form.licenseValidity && <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>}
               </label>
               <input
                 type="date"
                 value={form.licenseValidity}
                 onChange={(e) => setForm({ ...form, licenseValidity: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
               />
             </div>
           </div>
