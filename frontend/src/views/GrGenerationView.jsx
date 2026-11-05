@@ -344,6 +344,36 @@ export default function GrGenerationView({
     'TUTUCORIN'
   ];
 
+  const locationPresets = defaultHandoverLocations;
+
+  const transporterPresets = [
+    'AJINKYA TRANSPORT',
+    'SPJ Fleet Logistics',
+    'Dadri Express Logistics',
+    'Transworld Logistics',
+    'CONCOR Multimodal Logistics',
+    'Adani Logistics',
+    'Navkar Corporation Ltd'
+  ];
+
+  const consignorPresets = [
+    'Fair Exports (India) Pvt Ltd',
+    'Marhaba Frozen Foods',
+    'Allanasons Private Limited',
+    'Al Sameer Exports Pvt Ltd',
+    'Deepmala Foods',
+    'Deccan Edibles Pvt Ltd',
+    'SPJ CARGO PVT LTD.'
+  ];
+
+  const consigneePresets = [
+    'ASIAN PERAL MYANMAR CO. LTD.',
+    'Al Maya Trading LLC (Dubai, UAE)',
+    'EuroMeat B.V. (Rotterdam, Netherlands)',
+    'Al-Shaikh Trading Co. (Jeddah, KSA)',
+    'Gulf Import Corp (Dammam, KSA)'
+  ];
+
   // Dynamic fleet lists fetched from DB API with fallback presets
   const [liveDrivers, setLiveDrivers] = useState(driverPresets);
   const [liveVehicles, setLiveVehicles] = useState(vehicleBadges);
@@ -481,36 +511,6 @@ export default function GrGenerationView({
       isMounted = false;
     };
   }, []);
-
-  const transporterPresets = [
-    'AJINKYA TRANSPORT',
-    'SPJ Fleet Logistics',
-    'Dadri Express Logistics',
-    'Transworld Logistics',
-    'CONCOR Multimodal Logistics',
-    'Adani Logistics',
-    'Navkar Corporation Ltd'
-  ];
-
-  const locationPresets = defaultHandoverLocations;
-
-  const consignorPresets = [
-    'Fair Exports (India) Pvt Ltd',
-    'Marhaba Frozen Foods',
-    'Allanasons Private Limited',
-    'Al Sameer Exports Pvt Ltd',
-    'Deepmala Foods',
-    'Deccan Edibles Pvt Ltd',
-    'SPJ CARGO PVT LTD.'
-  ];
-
-  const consigneePresets = [
-    'ASIAN PERAL MYANMAR CO. LTD.',
-    'Al Maya Trading LLC (Dubai, UAE)',
-    'EuroMeat B.V. (Rotterdam, Netherlands)',
-    'Al-Shaikh Trading Co. (Jeddah, KSA)',
-    'Gulf Import Corp (Dammam, KSA)'
-  ];
 
   const commodityList = [
     'FROZEN BUFFALO BONELSS MEAT',
