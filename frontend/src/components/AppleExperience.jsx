@@ -403,6 +403,11 @@ export function AppleHelloPageTransition({ activeView }) {
           <div className="text-xs sm:text-sm font-black text-slate-800 tracking-tight font-sans">
             {meta.label}
           </div>
+          {meta.subtitle && (
+            <div className="text-[11px] sm:text-xs text-slate-500 font-medium tracking-normal font-sans">
+              {meta.subtitle}
+            </div>
+          )}
         </div>
 
         {/* Apple Subtitle Pill */}
