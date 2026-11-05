@@ -157,11 +157,94 @@ export default function GrGenerationView({
     'RAGHUNANDAN PRASAD AND SONS'
   ];
 
+  // Default location presets aligned with SPJ operational data
+  const defaultFromLocations = [
+    'TRANSWORLD-DADRI',
+    'ALBATROSS',
+    'ADANI-PATLI',
+    'DADRI-CONCOR',
+    'DADRI-ALLCARGO',
+    'DADRI-CMA-CGM',
+    'KANPUR-JRY',
+    'KANPUR-PANKI',
+    'NHAVA SHEVA',
+    'NHAVA SHEVA-DELHI',
+    'NHAVA SHEVA MH',
+    'ICD PALWAL',
+    'ICD KHURJA',
+    'ICD TUGHLAKABAD',
+    'PIPAVAV',
+    'MUNDRA',
+    'HAZIRA',
+    'KOLKATA',
+    'SONIPAT',
+    'SILIGURI',
+    'CHENNAI',
+    'TUTUCORIN'
+  ];
+
+  const defaultToLocations = [
+    'DASNA',
+    'UNNAO',
+    'BAREILLY',
+    'DERABASSI',
+    'ALIGARH',
+    'AGRA',
+    'NUH',
+    'BIHAR',
+    'BIHAR (ARARIA)',
+    'SAHIBABAD',
+    'SAMBHAL',
+    'CONCOR',
+    'TALOJA',
+    'KHURJA',
+    'VASHI',
+    'SAHARANPUR',
+    'MEERUT',
+    'HAPUR',
+    'KAIRANA',
+    'GOA',
+    'RAMPUR',
+    'JHANSI',
+    'PALWAL',
+    'SASNI',
+    'KASHIPUR',
+    'KOLKATA',
+    'MUMBAI',
+    'LUDHIANA',
+    'AMRITSAR'
+  ];
+
+  const defaultHandoverLocations = [
+    'ADANI-PATLI',
+    'TRANSWORLD-DADRI',
+    'ALBATROSS',
+    'DADRI-CONCOR',
+    'DADRI-ALLCARGO',
+    'DADRI-CMA-CGM',
+    'NHAVA SHEVA',
+    'NHAVA SHEVA-DELHI',
+    'KANPUR-JRY',
+    'KANPUR-PANKI',
+    'ICD PALWAL',
+    'ICD KHURJA',
+    'ICD TUGHLAKABAD',
+    'PIPAVAV',
+    'MUNDRA',
+    'HAZIRA',
+    'KOLKATA',
+    'CHENNAI',
+    'TUTUCORIN'
+  ];
+
   // Dynamic fleet lists fetched from DB API with fallback presets
   const [liveDrivers, setLiveDrivers] = useState(driverPresets);
   const [liveVehicles, setLiveVehicles] = useState(vehicleBadges);
   const [liveOilVendors, setLiveOilVendors] = useState(oilVendorPresets);
   const [liveWorkshops, setLiveWorkshops] = useState(workshopPresets);
+  const [fromLocationList, setFromLocationList] = useState(defaultFromLocations);
+  const [toLocationList, setToLocationList] = useState(defaultToLocations);
+  const [handoverLocationList, setHandoverLocationList] = useState(defaultHandoverLocations);
 
   useEffect(() => {
     let isMounted = true;
@@ -232,6 +315,25 @@ export default function GrGenerationView({
         .catch((err) => console.warn('Could not fetch workshops:', err));
     }
 
+    // 6. Categorized Locations from DB (FLEET_GR_MAPPING & TERMINAL_MASTER)
+    if (api.getLocations) {
+      api.getLocations()
+        .then((res) => {
+          if (isMounted && res?.data) {
+            if (res.data.fromLocations && res.data.fromLocations.length > 0) {
+              setFromLocationList(res.data.fromLocations);
+            }
+            if (res.data.toLocations && res.data.toLocations.length > 0) {
+              setToLocationList(res.data.toLocations);
+            }
+            if (res.data.handoverLocations && res.data.handoverLocations.length > 0) {
+              setHandoverLocationList(res.data.handoverLocations);
+            }
+          }
+        })
+        .catch((err) => console.warn('Could not fetch locations from API:', err));
+    }
+
     return () => {
       isMounted = false;
     };
@@ -247,26 +349,7 @@ export default function GrGenerationView({
     'Navkar Corporation Ltd'
   ];
 
-  const locationPresets = [
-    'TRANSWORLD-DADRI',
-    'ADANI-PATLI',
-    'Dadri ICD Depot (CONCOR)',
-    'Dadri ICD CFS Complex',
-    'Piyala ICD Depot',
-    'Piyala ICD CFS Complex',
-    'ACTL Faridabad Yard',
-    'Garhi Harsaru (GRH) Depot',
-    'TKD Tughlakabad Depot',
-    'Nhava Sheva - JNPT (INNSA1)',
-    'Nhava Sheva-NSFT (INNSA1)',
-    'Nhava Sheva-BMCT (INNSA1)',
-    'Nhava Sheva Buffer Yard',
-    'Mundra Port Empty Depot',
-    'Mundra CFS Complex',
-    'Pipavav Port-APMT (INPAV1)',
-    'Hazira Port (INHZR1)',
-    'Chennai Port (INMAA1)'
-  ];
+  const locationPresets = defaultHandoverLocations;
 
   const consignorPresets = [
     'Fair Exports (India) Pvt Ltd',
@@ -758,10 +841,10 @@ export default function GrGenerationView({
                 className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
               >
                 <option value="">-- Select From Location --</option>
-                {locationPresets.map((loc) => (
+                {fromLocationList.map((loc) => (
                   <option key={loc} value={loc}>{loc}</option>
                 ))}
-                {form.fromLocation && !locationPresets.includes(form.fromLocation) && (
+                {form.fromLocation && !fromLocationList.includes(form.fromLocation) && (
                   <option value={form.fromLocation}>{form.fromLocation}</option>
                 )}
               </select>
@@ -778,10 +861,10 @@ export default function GrGenerationView({
                 className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
               >
                 <option value="">-- Select To Location --</option>
-                {locationPresets.map((loc) => (
+                {toLocationList.map((loc) => (
                   <option key={loc} value={loc}>{loc}</option>
                 ))}
-                {form.toLocation && !locationPresets.includes(form.toLocation) && (
+                {form.toLocation && !toLocationList.includes(form.toLocation) && (
                   <option value={form.toLocation}>{form.toLocation}</option>
                 )}
               </select>
@@ -798,10 +881,10 @@ export default function GrGenerationView({
                 className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
               >
                 <option value="">-- Select Handover Location --</option>
-                {locationPresets.map((loc) => (
+                {handoverLocationList.map((loc) => (
                   <option key={loc} value={loc}>{loc}</option>
                 ))}
-                {form.handoverLocation && !locationPresets.includes(form.handoverLocation) && (
+                {form.handoverLocation && !handoverLocationList.includes(form.handoverLocation) && (
                   <option value={form.handoverLocation}>{form.handoverLocation}</option>
                 )}
               </select>

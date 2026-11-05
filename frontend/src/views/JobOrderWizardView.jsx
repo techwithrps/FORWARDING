@@ -99,24 +99,114 @@ export default function JobOrderWizardView({
     ];
   }, [parties]);
 
-  const locationList = [
+  const defaultFromLocations = [
     'TRANSWORLD-DADRI',
+    'ALBATROSS',
     'ADANI-PATLI',
-    'Dadri ICD Depot (CONCOR)',
-    'Dadri ICD CFS Complex',
-    'Piyala ICD Depot',
-    'Piyala ICD CFS Complex',
-    'ACTL Faridabad Yard',
-    'Garhi Harsaru (GRH) Depot',
-    'TKD Tughlakabad Depot',
-    'Nhava Sheva - JNPT (INNSA1)',
-    'Nhava Sheva Buffer Yard',
-    'Mundra Port Empty Depot',
-    'Mundra CFS Complex',
-    'Pipavav Port-APMT (INPAV1)',
-    'Hazira Port (INHZR1)',
-    'Chennai Port (INMAA1)'
+    'DADRI-CONCOR',
+    'DADRI-ALLCARGO',
+    'DADRI-CMA-CGM',
+    'KANPUR-JRY',
+    'KANPUR-PANKI',
+    'NHAVA SHEVA',
+    'NHAVA SHEVA-DELHI',
+    'NHAVA SHEVA MH',
+    'ICD PALWAL',
+    'ICD KHURJA',
+    'ICD TUGHLAKABAD',
+    'PIPAVAV',
+    'MUNDRA',
+    'HAZIRA',
+    'KOLKATA',
+    'SONIPAT',
+    'SILIGURI',
+    'CHENNAI',
+    'TUTUCORIN'
   ];
+
+  const defaultToLocations = [
+    'DASNA',
+    'UNNAO',
+    'BAREILLY',
+    'DERABASSI',
+    'ALIGARH',
+    'AGRA',
+    'NUH',
+    'BIHAR',
+    'BIHAR (ARARIA)',
+    'SAHIBABAD',
+    'SAMBHAL',
+    'CONCOR',
+    'TALOJA',
+    'KHURJA',
+    'VASHI',
+    'SAHARANPUR',
+    'MEERUT',
+    'HAPUR',
+    'KAIRANA',
+    'GOA',
+    'RAMPUR',
+    'JHANSI',
+    'PALWAL',
+    'SASNI',
+    'KASHIPUR',
+    'KOLKATA',
+    'MUMBAI',
+    'LUDHIANA',
+    'AMRITSAR'
+  ];
+
+  const defaultHandoverLocations = [
+    'ADANI-PATLI',
+    'TRANSWORLD-DADRI',
+    'ALBATROSS',
+    'DADRI-CONCOR',
+    'DADRI-ALLCARGO',
+    'DADRI-CMA-CGM',
+    'NHAVA SHEVA',
+    'NHAVA SHEVA-DELHI',
+    'KANPUR-JRY',
+    'KANPUR-PANKI',
+    'ICD PALWAL',
+    'ICD KHURJA',
+    'ICD TUGHLAKABAD',
+    'PIPAVAV',
+    'MUNDRA',
+    'HAZIRA',
+    'KOLKATA',
+    'CHENNAI',
+    'TUTUCORIN'
+  ];
+
+  const [fromLocationList, setFromLocationList] = useState(defaultFromLocations);
+  const [toLocationList, setToLocationList] = useState(defaultToLocations);
+  const [handoverLocationList, setHandoverLocationList] = useState(defaultHandoverLocations);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (api.getLocations) {
+      api.getLocations()
+        .then((res) => {
+          if (isMounted && res?.data) {
+            if (res.data.fromLocations && res.data.fromLocations.length > 0) {
+              setFromLocationList(res.data.fromLocations);
+            }
+            if (res.data.toLocations && res.data.toLocations.length > 0) {
+              setToLocationList(res.data.toLocations);
+            }
+            if (res.data.handoverLocations && res.data.handoverLocations.length > 0) {
+              setHandoverLocationList(res.data.handoverLocations);
+            }
+          }
+        })
+        .catch((err) => console.warn('Could not fetch locations from API:', err));
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const locationList = Array.from(new Set([...fromLocationList, ...toLocationList, ...handoverLocationList]));
 
   const chaList = useMemo(() => {
     if (parties && parties.length > 0) {
@@ -1069,10 +1159,10 @@ export default function JobOrderWizardView({
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('fromLocation', false, form.fromLocation)}`}
               >
                 <option value="">-- Select From Location --</option>
-                {locationList.map((loc, i) => (
+                {fromLocationList.map((loc, i) => (
                   <option key={i} value={loc}>{loc}</option>
                 ))}
-                {form.fromLocation && !locationList.includes(form.fromLocation) && (
+                {form.fromLocation && !fromLocationList.includes(form.fromLocation) && (
                   <option value={form.fromLocation}>{form.fromLocation}</option>
                 )}
               </select>
@@ -1091,10 +1181,10 @@ export default function JobOrderWizardView({
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('toLocation', false, form.toLocation)}`}
               >
                 <option value="">-- Select To Location --</option>
-                {locationList.map((loc, i) => (
+                {toLocationList.map((loc, i) => (
                   <option key={i} value={loc}>{loc}</option>
                 ))}
-                {form.toLocation && !locationList.includes(form.toLocation) && (
+                {form.toLocation && !toLocationList.includes(form.toLocation) && (
                   <option value={form.toLocation}>{form.toLocation}</option>
                 )}
               </select>
@@ -1110,10 +1200,10 @@ export default function JobOrderWizardView({
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('handoverLocation', false, form.handoverLocation)}`}
               >
                 <option value="">-- Select Handover Location --</option>
-                {locationList.map((loc, i) => (
+                {handoverLocationList.map((loc, i) => (
                   <option key={i} value={loc}>{loc}</option>
                 ))}
-                {form.handoverLocation && !locationList.includes(form.handoverLocation) && (
+                {form.handoverLocation && !handoverLocationList.includes(form.handoverLocation) && (
                   <option value={form.handoverLocation}>{form.handoverLocation}</option>
                 )}
               </select>

@@ -726,5 +726,78 @@ router.get('/workshops', async (req, res) => {
   }
 });
 
+// 15. LOCATIONS MASTER (Categorized into From, To, Handover from SPJ Database)
+router.get('/locations', async (req, res) => {
+  try {
+    // 1. FROM LOCATIONS (Depots / Yards / Inland Container Terminals)
+    const fromRes = await db.query(`
+      SELECT DISTINCT loc FROM (
+        SELECT TRIM("FROM_LOCATION") as loc FROM spjlive."FLEET_GR_MAPPING" 
+        WHERE "FROM_LOCATION" IS NOT NULL AND TRIM("FROM_LOCATION") != '' AND LENGTH(TRIM("FROM_LOCATION")) > 1
+        UNION
+        SELECT TRIM("TERMINAL_NAME") as loc FROM spjlive."TERMINAL_MASTER" 
+        WHERE "TERMINAL_NAME" IS NOT NULL AND TRIM("TERMINAL_NAME") != ''
+      ) u
+      WHERE loc NOT LIKE '%.%' 
+        AND loc NOT LIKE 'aTRANSWORLD%' 
+        AND loc NOT LIKE '%TO CONCOR%'
+        AND loc NOT LIKE 'TO %'
+        AND LENGTH(loc) >= 3
+      ORDER BY loc ASC
+    `);
+
+    // 2. TO LOCATIONS (Factory, Stuffing Plants, Destination Cities)
+    const toRes = await db.query(`
+      SELECT DISTINCT loc FROM (
+        SELECT TRIM("TO_LOCATION") as loc FROM spjlive."FLEET_GR_MAPPING" 
+        WHERE "TO_LOCATION" IS NOT NULL AND TRIM("TO_LOCATION") != '' AND LENGTH(TRIM("TO_LOCATION")) > 1
+        UNION
+        SELECT TRIM("LOCATION_NAME") as loc FROM spjlive."TERMINAL_LOCATION_MASTER" 
+        WHERE "LOCATION_NAME" IS NOT NULL AND TRIM("LOCATION_NAME") != '' 
+          AND "LOCATION_NAME" NOT LIKE '% TO %'
+          AND "LOCATION_NAME" NOT LIKE '%-%'
+      ) u
+      WHERE loc NOT LIKE '% TO %'
+        AND LENGTH(loc) >= 3
+        AND loc NOT LIKE '%.%'
+      ORDER BY loc ASC
+    `);
+
+    // 3. HANDOVER LOCATIONS (Port Terminals, ICD Gateways)
+    const handRes = await db.query(`
+      SELECT DISTINCT loc FROM (
+        SELECT TRIM("FACTORY_LOCATION") as loc FROM spjlive."FLEET_GR_MAPPING" 
+        WHERE "FACTORY_LOCATION" IS NOT NULL AND TRIM("FACTORY_LOCATION") != '' AND LENGTH(TRIM("FACTORY_LOCATION")) > 1
+        UNION
+        SELECT TRIM("TERMINAL_NAME") as loc FROM spjlive."TERMINAL_MASTER" 
+        WHERE "TERMINAL_NAME" IS NOT NULL AND TRIM("TERMINAL_NAME") != ''
+      ) u
+      WHERE loc NOT LIKE '%.%' 
+        AND loc NOT LIKE 'aTRANSWORLD%' 
+        AND loc NOT LIKE '%TO CONCOR%'
+        AND loc NOT LIKE 'TO %'
+        AND LENGTH(loc) >= 3
+      ORDER BY loc ASC
+    `);
+
+    const fromLocations = fromRes.rows.map(r => r.loc);
+    const toLocations = toRes.rows.map(r => r.loc);
+    const handoverLocations = handRes.rows.map(r => r.loc);
+
+    res.json({
+      success: true,
+      data: {
+        fromLocations,
+        toLocations,
+        handoverLocations,
+        allLocations: Array.from(new Set([...fromLocations, ...toLocations, ...handoverLocations]))
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching locations:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
 
