@@ -18,7 +18,7 @@ const animateProps = {
  * Signature Apple-inspired cursive handwriting animation component.
  * - For "hello": Runs official Apple handcrafted bezier vector stroke animation.
  * - For dynamic page titles (e.g. "container booking", "goods receipt"): Runs a buttery-smooth,
- *   zero-lag, high-resolution cursive ink-flow write animation with iridescent styling and pen-tip glide.
+ *   zero-lag, 60/120 FPS GPU-accelerated letter-stagger handwriting flow with iridescent shimmer.
  * 
  * @param {string} word - Page or greeting text to write (e.g. "goods receipt", "container booking", "gr searching", "hello")
  * @param {number} speed - Multiplier for animation speed (e.g. speed={2} writes at 2x speed)
@@ -40,7 +40,6 @@ export function HelloEffect({
   const safeSpeed = Math.max(0.1, Number(speed) || 1);
   const durationScale = safeSpeed > 1 ? 1 / safeSpeed : safeSpeed;
   const calc = (x) => x * durationScale;
-  const durationSec = (1.3 * durationScale).toFixed(2);
 
   const displayWord = String(word || 'hello').trim().toLowerCase();
   const isHello = displayWord === 'hello';
@@ -50,7 +49,7 @@ export function HelloEffect({
     const strokeColor = useGradient ? `url(#${gradientId})` : 'currentColor';
     return (
       <motion.svg
-        className={cn('h-16 sm:h-20 w-auto max-w-full overflow-visible select-none py-1', className)}
+        className={cn('h-16 sm:h-20 w-auto max-w-full overflow-visible select-none py-1 transform-gpu', className)}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 638 200"
         fill="none"
@@ -103,37 +102,67 @@ export function HelloEffect({
     );
   }
 
-  // 2. Buttery-Smooth, Ultra-Clean Dynamic Page Handwriting Ink Flow (0% Lag, Pure Flagship Aesthetics)
+  // 2. Dynamic Cursive Page Title Stagger Animation (60/120 FPS GPU Accelerated, Zero Glitch)
+  const letters = Array.from(displayWord);
+  const letterStagger = Math.min(0.04, Math.max(0.018, 0.4 / letters.length));
+
   return (
     <div
       className={cn('relative inline-flex items-center justify-center py-1 select-none w-full max-w-full overflow-hidden', className)}
       {...props}
     >
-      <div className="relative inline-block text-center">
-        {/* Animated Cursive Title with Flowing Ink-Pen Reveal & Iridescent Shimmer */}
-        <span
-          key={displayWord}
-          onAnimationEnd={onAnimationComplete}
-          className={cn(
-            'font-apple-script text-5xl sm:text-6xl md:text-7xl font-bold lowercase tracking-wide inline-block text-center leading-none drop-shadow-xs',
-            useGradient ? 'apple-handwriting-write hello-effect-gradient' : 'text-foreground'
-          )}
-          style={{
-            '--write-duration': `${durationSec}s`,
-          }}
-        >
-          {displayWord}
-        </span>
-
-        {/* Gliding Pen-Tip Light Glow */}
-        <span
-          key={`pen-${displayWord}`}
-          className="apple-pen-cursor pointer-events-none"
-          style={{
-            '--write-duration': `${durationSec}s`,
-          }}
-        />
-      </div>
+      <motion.div
+        key={displayWord}
+        className="inline-flex items-baseline justify-center text-center flex-wrap leading-tight font-apple-script text-5xl sm:text-6xl md:text-7xl font-bold lowercase tracking-wide hello-effect-gradient"
+        initial="hidden"
+        animate="visible"
+        onAnimationComplete={onAnimationComplete}
+        variants={{
+          hidden: { opacity: 0 },
+          visible: {
+            opacity: 1,
+            transition: {
+              staggerChildren: letterStagger * durationScale,
+              delayChildren: 0.03,
+            },
+          },
+        }}
+      >
+        {letters.map((char, index) => {
+          if (char === ' ') {
+            return (
+              <span key={`space-${index}`} className="inline-block w-3.5 sm:w-5">
+                &nbsp;
+              </span>
+            );
+          }
+          return (
+            <motion.span
+              key={`${displayWord}-${index}`}
+              className="inline-block transform-gpu"
+              variants={{
+                hidden: {
+                  opacity: 0,
+                  y: 10,
+                  scale: 0.88,
+                },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                  transition: {
+                    type: 'spring',
+                    damping: 18,
+                    stiffness: 260,
+                  },
+                },
+              }}
+            >
+              {char}
+            </motion.span>
+          );
+        })}
+      </motion.div>
     </div>
   );
 }

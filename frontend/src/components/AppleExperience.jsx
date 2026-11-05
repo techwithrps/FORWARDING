@@ -378,7 +378,7 @@ export function AppleHelloPageTransition({ activeView }) {
 
     const timer = setTimeout(() => {
       setVisible(false);
-    }, 1600);
+    }, 1400);
 
     return () => clearTimeout(timer);
   }, [activeView]);
@@ -388,10 +388,10 @@ export function AppleHelloPageTransition({ activeView }) {
   return (
     <div
       onClick={() => setVisible(false)}
-      className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-slate-950/20 backdrop-blur-xl transition-all cursor-pointer select-none"
+      className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-slate-950/25 backdrop-blur-md transition-all cursor-pointer select-none"
       title="Click anywhere to skip animation"
     >
-      <div className="apple-hello-card apple-glass px-8 py-7 sm:px-12 sm:py-8 rounded-3xl text-center space-y-3 max-w-lg shadow-[0_25px_70px_rgba(0,0,0,0.18)] border border-white/80 overflow-hidden relative flex flex-col items-center">
+      <div className="apple-hello-card apple-glass px-8 py-7 sm:px-12 sm:py-8 rounded-3xl text-center space-y-3 max-w-lg shadow-[0_25px_70px_rgba(0,0,0,0.18)] border border-white/80 overflow-hidden relative flex flex-col items-center transform-gpu">
         {/* Subtle iridescent glow orb matching the blue/purple theme */}
         <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-56 h-56 bg-gradient-to-tr from-blue-500/20 via-indigo-500/20 to-purple-500/20 rounded-full blur-2xl pointer-events-none" />
 

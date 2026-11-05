@@ -127,81 +127,6 @@
   animation: appleShimmer 3.5s linear infinite;
 }
 
-/* Apple Cursive Handwriting Ink-Flow & Pen-Tip Glow Animation */
-@keyframes appleInkFlow {
-  0% {
-    -webkit-mask-size: 0% 100%;
-    mask-size: 0% 100%;
-    opacity: 0.15;
-    transform: translateY(4px);
-  }
-  15% {
-    opacity: 1;
-  }
-  85% {
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    opacity: 1;
-    transform: translateY(0);
-  }
-  100% {
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes applePenCursor {
-  0% {
-    left: 0%;
-    opacity: 0;
-    transform: scale(0.6);
-  }
-  12% {
-    opacity: 1;
-    transform: scale(1.15);
-  }
-  80% {
-    left: 100%;
-    opacity: 1;
-    transform: scale(1);
-  }
-  95% {
-    left: 100%;
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  100% {
-    left: 100%;
-    opacity: 0;
-  }
-}
-
-.apple-handwriting-write {
-  -webkit-mask-image: linear-gradient(to right, black 0%, black 85%, transparent 100%);
-  mask-image: linear-gradient(to right, black 0%, black 85%, transparent 100%);
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: left;
-  mask-position: left;
-  animation: appleInkFlow var(--write-duration, 0.65s) cubic-bezier(0.16, 1, 0.3, 1) forwards,
-             appleShimmer 3.5s linear infinite;
-}
-
-.apple-pen-cursor {
-  position: absolute;
-  top: 50%;
-  width: 14px;
-  height: 14px;
-  margin-top: -7px;
-  margin-left: -7px;
-  border-radius: 9999px;
-  background: radial-gradient(circle, #60a5fa 25%, #3b82f6 55%, rgba(99, 102, 241, 0) 80%);
-  box-shadow: 0 0 12px #3b82f6, 0 0 24px #818cf8;
-  animation: applePenCursor var(--write-duration, 0.65s) cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
 .hello-effect-gradient {
   background: linear-gradient(135deg, #2563eb 0%, #3b82f6 30%, #6366f1 60%, #7c3aed 82%, #1e293b 100%);
   background-size: 200% auto;
@@ -215,29 +140,30 @@
   font-family: 'Caveat', 'Dancing Script', cursive, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+/* Ultra-Fast, 60/120 FPS GPU Accelerated Card Transition */
 @keyframes appleHelloFade {
   0% {
     opacity: 0;
-    transform: scale(0.92) translateY(16px);
-    filter: blur(8px);
+    transform: translate3d(0, 14px, 0) scale(0.96);
   }
-  20% {
+  16% {
     opacity: 1;
-    transform: scale(1) translateY(0);
-    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
   }
-  85% {
+  82% {
     opacity: 1;
-    transform: scale(1) translateY(0);
-    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
   }
   100% {
     opacity: 0;
-    transform: scale(1.02) translateY(-6px);
-    filter: blur(5px);
+    transform: translate3d(0, -8px, 0) scale(1.02);
   }
 }
 
 .apple-hello-card {
-  animation: appleHelloFade 1.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  animation: appleHelloFade 1.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
