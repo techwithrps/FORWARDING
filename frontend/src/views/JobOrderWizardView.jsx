@@ -73,12 +73,50 @@ export default function JobOrderWizardView({
       if (list.length > 0) return list;
     }
     return [
+      'ASIAN PERAL MYANMAR CO. LTD.',
       'Al Maya Trading LLC (Dubai, UAE)',
       'EuroMeat B.V. (Rotterdam, Netherlands)',
       'Al-Shaikh Trading Co. (Jeddah, KSA)',
       'Gulf Import Corp (Dammam, KSA)'
     ];
   }, [parties]);
+
+  const transportersList = useMemo(() => {
+    if (parties && parties.length > 0) {
+      const list = parties
+        .filter(p => !p.type || p.type === 'TRANSPORTER' || p.type === 'VENDOR' || p.type === 'FORWARDER')
+        .map(p => p.name);
+      if (list.length > 0) return list;
+    }
+    return [
+      'AJINKYA TRANSPORT',
+      'SPJ Fleet Logistics',
+      'Dadri Express Logistics',
+      'Transworld Logistics',
+      'CONCOR Multimodal Logistics',
+      'Adani Logistics',
+      'Navkar Corporation Ltd'
+    ];
+  }, [parties]);
+
+  const locationList = [
+    'TRANSWORLD-DADRI',
+    'ADANI-PATLI',
+    'Dadri ICD Depot (CONCOR)',
+    'Dadri ICD CFS Complex',
+    'Piyala ICD Depot',
+    'Piyala ICD CFS Complex',
+    'ACTL Faridabad Yard',
+    'Garhi Harsaru (GRH) Depot',
+    'TKD Tughlakabad Depot',
+    'Nhava Sheva - JNPT (INNSA1)',
+    'Nhava Sheva Buffer Yard',
+    'Mundra Port Empty Depot',
+    'Mundra CFS Complex',
+    'Pipavav Port-APMT (INPAV1)',
+    'Hazira Port (INHZR1)',
+    'Chennai Port (INMAA1)'
+  ];
 
   const chaList = useMemo(() => {
     if (parties && parties.length > 0) {
@@ -96,6 +134,7 @@ export default function JobOrderWizardView({
   }, [parties]);
 
   const linesList = [
+    'ABM AVIATION AND LOGISTICS LLP',
     'Maersk Line India Pvt Ltd',
     'Mediterranean Shipping Co (MSC)',
     'CMA CGM Agencies India',
@@ -159,12 +198,15 @@ export default function JobOrderWizardView({
   const [form, setForm] = useState({
     joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
     joDate: todayStr,
-    joType: '',
-    modeOfShipment: '',
+    joType: 'Export',
+    modeOfShipment: 'SEA Export',
     consignor: '',
     consignee: '',
     shippingLine: '',
     lineBookingNo: '',
+    bookingDate: todayStr,
+    bookingValidity: '',
+    bookingReValidity: '',
     emptyPickupLocation: '',
     fromLocation: '',
     toLocation: '',
@@ -176,7 +218,6 @@ export default function JobOrderWizardView({
     etaDate: '',
     siCutDate: '',
     portCutDate: '',
-    bookingValidity: '',
     temperature: '',
     transporter: '',
     handoverLocation: '',
@@ -505,15 +546,19 @@ export default function JobOrderWizardView({
   const handleAutoFillSample = () => {
     setForm(prev => ({
       ...prev,
-      joType: 'Export FCL',
-      modeOfShipment: 'Multimodal (Rail + Road)',
+      joType: 'Export',
+      modeOfShipment: 'SEA Export',
       consignor: shippersList[0] || 'Fair Exports (India) Pvt Ltd',
-      consignee: consigneesList[0] || 'Al Maya Trading LLC (Dubai, UAE)',
-      shippingLine: 'Maersk Line',
+      consignee: 'ASIAN PERAL MYANMAR CO. LTD.',
+      shippingLine: 'ABM AVIATION AND LOGISTICS LLP',
       lineBookingNo: 'BK-982104',
-      emptyPickupLocation: 'Dadri ICD Depot (CONCOR)',
-      fromLocation: 'Fair Exports Processing Plant, Dadri',
-      toLocation: 'Nhava Sheva-NSFT (INNSA1)',
+      bookingDate: todayStr,
+      bookingValidity: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
+      bookingReValidity: new Date(Date.now() + 10 * 86400000).toISOString().split('T')[0],
+      emptyPickupLocation: 'TRANSWORLD-DADRI',
+      fromLocation: 'TRANSWORLD-DADRI',
+      toLocation: 'ADANI-PATLI',
+      handoverLocation: 'ADANI-PATLI',
       pol: 'INNSA1',
       pod: 'AEJEA',
       vesselName: 'MAERSK COLOMBO',
@@ -522,10 +567,8 @@ export default function JobOrderWizardView({
       etaDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
       siCutDate: todayStr,
       portCutDate: todayStr,
-      bookingValidity: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
       temperature: '-18°C',
-      transporter: 'SPJ Fleet Logistics',
-      handoverLocation: 'Dadri ICD CFS Complex',
+      transporter: 'AJINKYA TRANSPORT',
       noOfCont: 1,
       size: '40',
       type: 'HC'
@@ -557,12 +600,15 @@ export default function JobOrderWizardView({
     setForm({
       joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
       joDate: todayStr,
-      joType: '',
-      modeOfShipment: '',
+      joType: 'Export',
+      modeOfShipment: 'SEA Export',
       consignor: '',
       consignee: '',
       shippingLine: '',
       lineBookingNo: '',
+      bookingDate: todayStr,
+      bookingValidity: '',
+      bookingReValidity: '',
       emptyPickupLocation: '',
       fromLocation: '',
       toLocation: '',
@@ -574,7 +620,6 @@ export default function JobOrderWizardView({
       etaDate: '',
       siCutDate: '',
       portCutDate: '',
-      bookingValidity: '',
       temperature: '',
       transporter: '',
       handoverLocation: '',
@@ -787,22 +832,27 @@ export default function JobOrderWizardView({
     const newJobPayload = {
       id: form.joNo,
       joNo: form.joNo,
+      joDate: form.joDate || todayStr,
       joType: form.joType,
       modeOfShipment: form.modeOfShipment,
+      transporter: form.transporter || 'AJINKYA TRANSPORT',
+      bookingDate: form.bookingDate || form.joDate || todayStr,
+      bookingValidity: form.bookingValidity,
+      bookingReValidity: form.bookingReValidity || form.bookingValidity || '',
       customer: form.consignor,
       customerName: form.consignor,
       consignor: form.consignor,
-      consignee: form.consignee || 'Al Maya Trading LLC, Jebel Ali Free Zone, Dubai',
+      consignee: form.consignee || 'ASIAN PERAL MYANMAR CO. LTD.',
       line: form.shippingLine,
       shippingLine: form.shippingLine,
       shippingLineName: form.shippingLine,
       bookingNo: form.lineBookingNo,
       lineBookingNo: form.lineBookingNo,
-      emptyPickupLocation: form.emptyPickupLocation || 'Dadri ICD Depot (CONCOR)',
-      fromLocation: form.fromLocation || 'Shipper Factory / Processing Plant',
-      origin: form.fromLocation || 'Shipper Factory / Processing Plant',
-      handoverLocation: form.handoverLocation || 'Dadri ICD CFS Complex',
-      toLocation: form.toLocation || 'Nhava Sheva-NSFT (INNSA1)',
+      emptyPickupLocation: form.emptyPickupLocation || 'TRANSWORLD-DADRI',
+      fromLocation: form.fromLocation || 'TRANSWORLD-DADRI',
+      origin: form.fromLocation || 'TRANSWORLD-DADRI',
+      handoverLocation: form.handoverLocation || 'ADANI-PATLI',
+      toLocation: form.toLocation || 'ADANI-PATLI',
       pol: form.pol || 'INNSA1',
       pod: form.pod,
       podCode: form.pod,
@@ -814,7 +864,6 @@ export default function JobOrderWizardView({
       etaDate: form.etaDate,
       portCutDate: form.portCutDate,
       siCutDate: form.siCutDate,
-      bookingValidity: form.bookingValidity,
       chaName: form.chaName || '',
       onAccount: form.onAccount || '',
       packageType: form.packageType || 'Cartons',
@@ -878,6 +927,15 @@ export default function JobOrderWizardView({
           <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-extrabold border border-blue-200 shadow-2xs">
             {form.joNo}
           </span>
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md">
+            <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">JO Date:</span>
+            <input
+              type="date"
+              value={form.joDate || todayStr}
+              onChange={(e) => setForm({ ...form, joDate: e.target.value })}
+              className="bg-transparent text-xs font-mono font-bold text-slate-800 outline-none cursor-pointer"
+            />
+          </div>
           <span className="hidden lg:inline-block text-[11px] font-medium text-slate-500 border-l border-slate-200 pl-2">
             Fast single-screen container booking &bull; Auto-calculates gross weight
           </span>
@@ -950,7 +1008,7 @@ export default function JobOrderWizardView({
             </div>
           </div>
 
-          {/* Row 1: Shipment Specs & Initial Movement (Job Type -> Mode of Transportation -> Empty Pickup -> Stuffing) */}
+          {/* Row 1: Shipment Specs & Initial Movement (Job Type -> Mode of Transportation -> Transporter -> From Location) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
@@ -962,6 +1020,8 @@ export default function JobOrderWizardView({
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('joType', true, form.joType)}`}
               >
                 <option value="">-- Select --</option>
+                <option value="Export">Export</option>
+                <option value="Import">Import</option>
                 <option value="Export FCL">Export FCL (Laden)</option>
                 <option value="Import FCL">Import FCL (Delivery)</option>
                 <option value="Domestic Movement">Domestic Movement</option>
@@ -982,83 +1042,91 @@ export default function JobOrderWizardView({
                 className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('modeOfShipment', true, form.modeOfShipment)}`}
               >
                 <option value="">-- Select --</option>
+                <option value="SEA Export">SEA Export</option>
+                <option value="SEA Import">SEA Import</option>
                 <option value="Multimodal (Rail + Road)">Multimodal (Rail + Road / Both)</option>
                 <option value="By Rail">By Rail (CONCOR Rake)</option>
                 <option value="By Road">By Road (Trailer / Direct)</option>
+                <option value="AIR">AIR Export</option>
               </select>
             </div>
 
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Empty Pickup Location
+                Transporter <span className="text-rose-500 font-bold">*</span>
               </label>
               <select
-                value={form.emptyPickupLocation}
-                onChange={(e) => setForm({ ...form, emptyPickupLocation: e.target.value })}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.emptyPickupLocation)}`}
+                value={form.transporter}
+                onChange={(e) => setForm({ ...form, transporter: e.target.value })}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('transporter', false, form.transporter)}`}
               >
-                <option value="">-- Select --</option>
-                <option value="Dadri ICD Depot (CONCOR)">Dadri ICD Depot (CONCOR)</option>
-                <option value="Piyala ICD Depot">Piyala ICD Depot</option>
-                <option value="ACTL Faridabad Yard">ACTL Faridabad Yard</option>
-                <option value="Garhi Harsaru (GRH) Depot">Garhi Harsaru (GRH) Depot</option>
-                <option value="TKD Tughlakabad Depot">TKD Tughlakabad Depot</option>
-                <option value="Nhava Sheva Empty Yard">Nhava Sheva Empty Yard</option>
-                <option value="Mundra Port Empty Depot">Mundra Port Empty Depot</option>
+                <option value="">-- Select Transporter --</option>
+                {transportersList.map((t, i) => (
+                  <option key={i} value={t}>{t}</option>
+                ))}
+                {form.transporter && !transportersList.includes(form.transporter) && (
+                  <option value={form.transporter}>{form.transporter}</option>
+                )}
               </select>
             </div>
 
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                To Pickup / Stuffing Location
+                From Location <span className="text-rose-500 font-bold">*</span>
               </label>
-              <input
-                type="text"
-                placeholder="e.g. Factory / Warehouse Gate"
+              <select
                 value={form.fromLocation}
                 onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.fromLocation)}`}
-              />
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('fromLocation', false, form.fromLocation)}`}
+              >
+                <option value="">-- Select From Location --</option>
+                {locationList.map((loc, i) => (
+                  <option key={i} value={loc}>{loc}</option>
+                ))}
+                {form.fromLocation && !locationList.includes(form.fromLocation) && (
+                  <option value={form.fromLocation}>{form.fromLocation}</option>
+                )}
+              </select>
             </div>
           </div>
 
-          {/* Row 2: Handover -> Gateway Terminal -> POL -> POD */}
+          {/* Row 2: To Location -> Handover Location -> POL -> POD */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1.5 border-t border-slate-100">
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Handover Location
-              </label>
-              <select
-                value={form.handoverLocation}
-                onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.handoverLocation)}`}
-              >
-                <option value="">-- Select --</option>
-                <option value="Dadri ICD CFS Complex">Dadri ICD CFS Complex</option>
-                <option value="Piyala ICD CFS Complex">Piyala ICD CFS Complex</option>
-                <option value="Nhava Sheva Buffer Yard">Nhava Sheva Buffer Yard</option>
-                <option value="Mundra CFS Complex">Mundra CFS Complex</option>
-                <option value="Gateway Port Terminal Gate">Gateway Port Terminal Gate</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Gateway Port Terminal
+                To Location <span className="text-rose-500 font-bold">*</span>
               </label>
               <select
                 value={form.toLocation}
                 onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass(form.toLocation)}`}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('toLocation', false, form.toLocation)}`}
               >
-                <option value="">-- Select --</option>
-                <option value="Nhava Sheva-NSFT (INNSA1)">Nhava Sheva-NSFT (INNSA1)</option>
-                <option value="Nhava Sheva-BMCT (INNSA1)">Nhava Sheva-BMCT (INNSA1)</option>
-                <option value="Nhava Sheva-GTI (INNSA1)">Nhava Sheva-GTI (INNSA1)</option>
-                <option value="Mundra Port-MDCC (INMUN1)">Mundra Port-MDCC (INMUN1)</option>
-                <option value="Pipavav Port-APMT (INPAV1)">Pipavav Port-APMT (INPAV1)</option>
-                <option value="Hazira Port (INHZR1)">Hazira Port (INHZR1)</option>
-                <option value="Chennai Port (INMAA1)">Chennai Port (INMAA1)</option>
+                <option value="">-- Select To Location --</option>
+                {locationList.map((loc, i) => (
+                  <option key={i} value={loc}>{loc}</option>
+                ))}
+                {form.toLocation && !locationList.includes(form.toLocation) && (
+                  <option value={form.toLocation}>{form.toLocation}</option>
+                )}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                Handover Location <span className="text-rose-500 font-bold">*</span>
+              </label>
+              <select
+                value={form.handoverLocation}
+                onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('handoverLocation', false, form.handoverLocation)}`}
+              >
+                <option value="">-- Select Handover Location --</option>
+                {locationList.map((loc, i) => (
+                  <option key={i} value={loc}>{loc}</option>
+                ))}
+                {form.handoverLocation && !locationList.includes(form.handoverLocation) && (
+                  <option value={form.handoverLocation}>{form.handoverLocation}</option>
+                )}
               </select>
             </div>
 
@@ -1074,7 +1142,7 @@ export default function JobOrderWizardView({
                   setRouteFilterOnly(true);
                   setSelectedCarrierFilter('ALL');
                 }}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass(form.pol)}`}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass('pol', true, form.pol)}`}
               >
                 <option value="">-- Select --</option>
                 {polList.map((p) => (
@@ -1237,7 +1305,7 @@ export default function JobOrderWizardView({
               </div>
             </div>
 
-            {/* Row 2: Shipping Line -> Line Booking No -> Booking Validity -> Vessel Name (4 Cols) */}
+            {/* Row 2: Shipping Line -> Line Booking No -> Booking Date -> Booking Re-Validity (4 Cols) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1.5 border-t border-slate-100">
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
@@ -1275,15 +1343,28 @@ export default function JobOrderWizardView({
               </div>
 
               <div>
-                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Booking Validity</label>
+                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Booking Date</label>
                 <input
                   type="date"
-                  value={form.bookingValidity || ''}
-                  onChange={(e) => setForm({ ...form, bookingValidity: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('bookingValidity', false, form.bookingValidity)}`}
+                  value={form.bookingDate || form.joDate || todayStr}
+                  onChange={(e) => setForm({ ...form, bookingDate: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('bookingDate', false, form.bookingDate)}`}
                 />
               </div>
 
+              <div>
+                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Booking Re-Validity</label>
+                <input
+                  type="date"
+                  value={form.bookingValidity || ''}
+                  onChange={(e) => setForm({ ...form, bookingValidity: e.target.value, bookingReValidity: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('bookingValidity', false, form.bookingValidity)}`}
+                />
+              </div>
+            </div>
+
+            {/* Row 3: Vessel Name -> Voyage -> ETD -> ETA -> Port Cut-off -> SI Cut-off (6 Cols Compact Line) */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-1.5 border-t border-slate-100 bg-slate-50/70 p-2 rounded-lg border border-slate-200/60">
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                   Vessel Name {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>}
@@ -1303,10 +1384,7 @@ export default function JobOrderWizardView({
                   title={isScheduleLocked ? "Auto-filled from verified ocean schedule (Locked)" : ""}
                 />
               </div>
-            </div>
 
-            {/* Row 3: Voyage -> ETD -> ETA -> Port Cut-off -> SI Cut-off (5 Cols Compact Line) */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1.5 border-t border-slate-100 bg-slate-50/70 p-2 rounded-lg border border-slate-200/60">
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                   Voyage {isScheduleLocked && <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>}
