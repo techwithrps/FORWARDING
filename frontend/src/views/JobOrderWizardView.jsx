@@ -949,17 +949,6 @@ export default function JobOrderWizardView({
             </span>
           )}
 
-          {/* ⚡ Auto-Fill Button */}
-          <button
-            type="button"
-            onClick={handleAutoFillSample}
-            className="px-2.5 py-1 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold text-[11px] shadow-2xs flex items-center gap-1 transition cursor-pointer select-none"
-            title="1-Click Auto-Fill Booking Form & Reveal Validation Colors"
-          >
-            <Zap className="w-3 h-3 text-amber-300" />
-            <span>Auto-Fill</span>
-          </button>
-
           <button
             type="button"
             onClick={handleClearForm}
@@ -1205,31 +1194,6 @@ export default function JobOrderWizardView({
               <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
                 Route: {polList.find(p => p.code === form.pol)?.name || form.pol} ➔ {form.pod ? (podList.find(p => p.code === form.pod)?.name || form.pod) : 'Select POD'}
               </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setRouteFilterOnly(true);
-                  setSelectedCarrierFilter('ALL');
-                  setShowSailingPicker(true);
-                }}
-                className="px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-[10px] border border-blue-200 flex items-center gap-1 cursor-pointer transition select-none"
-                title="Auto-fill Line, Vessel & Dates from Active Sailings"
-              >
-                <Ship className="w-3 h-3 text-blue-600" />
-                <span>Auto-Fill Sailings</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={onOpenQuickAddShipper}
-                className="text-[10px] text-blue-600 hover:text-blue-800 font-extrabold flex items-center gap-1 cursor-pointer"
-              >
-                <PlusCircle className="w-3.5 h-3.5" />
-                <span>+ Add Shipper</span>
-              </button>
             </div>
           </div>
 
