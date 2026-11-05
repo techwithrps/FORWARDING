@@ -15,6 +15,8 @@ import api from '../services/api.js';
 
 export default function GrGenerationView({
   jobs = [],
+  initialGrData = null,
+  onClearInitialGr,
   onUpdateContainerGR,
   onNavigateToTripPendency,
   onNavigateToGrSearching,
@@ -23,6 +25,7 @@ export default function GrGenerationView({
   const todayDateStr = new Date().toISOString().split('T')[0];
 
   const [liveContainers, setLiveContainers] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Extract containers from DB pending list + jobs with fallback presets
   const containerOptions = React.useMemo(() => {
@@ -129,6 +132,110 @@ export default function GrGenerationView({
   const [form, setForm] = useState(initialFormState);
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Sync form when opening an existing GR from GR Searching
+  useEffect(() => {
+    if (initialGrData && (initialGrData.gr_no || initialGrData.grNo)) {
+      setForm({
+        contNo: initialGrData.cont_no || initialGrData.contNo || '',
+        size: String(initialGrData.cont_size || initialGrData.size || '40'),
+        type: String(initialGrData.cont_type || initialGrData.type || 'HC'),
+        weight: String(initialGrData.weight || '24500'),
+        commodity: initialGrData.commodity || 'FROZEN BUFFALO BONELESS MEAT',
+        joNo: String(initialGrData.jo_no || initialGrData.joNo || ''),
+        joDate: initialGrData.jo_date || initialGrData.joDate || todayDateStr,
+        grNo: String(initialGrData.gr_no || initialGrData.grNo || ''),
+        grDate: initialGrData.gr_date_iso || initialGrData.gr_date || todayDateStr,
+        cGr: String(initialGrData.c_gr || initialGrData.cGr || ''),
+        consignor: initialGrData.customer || initialGrData.consignor || '',
+        consignee: initialGrData.consignee || 'ASIAN PERAL MYANMAR CO. LTD.',
+        transporter: initialGrData.transporter || 'AJINKYA TRANSPORT',
+        fromLocation: initialGrData.from_location || initialGrData.fromLocation || '',
+        toLocation: initialGrData.to_location || initialGrData.toLocation || '',
+        handoverLocation: initialGrData.factory_location || initialGrData.handoverLocation || '',
+        vehicleNo: initialGrData.vehicle_no || initialGrData.vehicleNo || '',
+        driver: initialGrData.driver_name || initialGrData.driver || '',
+        driverContactNo: initialGrData.driver_mobile || initialGrData.driverContactNo || '',
+        licenseValidity: initialGrData.license_validity || initialGrData.licenseValidity || '',
+        workshop: initialGrData.workshop || '',
+        joFor: initialGrData.jo_for || 'Shifting',
+        surveyBy: initialGrData.survey_by || '',
+        vehicleType: initialGrData.vh_type || initialGrData.vehicleType || 'T40',
+        oilVendor: initialGrData.oil_vendor || initialGrData.oilVendor || '',
+        slipNo: initialGrData.slip_no || initialGrData.slipNo || '',
+        remarks: initialGrData.remarks || initialGrData.gr_remark || '',
+        cash: String(initialGrData.advance || initialGrData.cash || '0'),
+        oil: String(initialGrData.oil_advance || initialGrData.oil || '0'),
+        others: String(initialGrData.other_advance || initialGrData.others || '0'),
+        balance: '0',
+        total: String((parseFloat(initialGrData.advance || initialGrData.cash) || 0) + (parseFloat(initialGrData.oil_advance || initialGrData.oil) || 0) + (parseFloat(initialGrData.other_advance || initialGrData.others) || 0)),
+        otherAdvance: '',
+        grId: String(initialGrData.gr_id || initialGrData.grId || '')
+      });
+      setIsEditing(true);
+      setSuccessMessage(`Viewing details for Goods Receipt #${initialGrData.gr_no || initialGrData.grNo}`);
+    }
+  }, [initialGrData, todayDateStr]);
+
+  const handleResetToNew = () => {
+    setForm(initialFormState);
+    setIsEditing(false);
+    setFormError('');
+    setSuccessMessage('');
+    if (onClearInitialGr) onClearInitialGr();
+  };
+
+  const handleCancelGR = async () => {
+    if (!form.grNo && !form.grId) {
+      setFormError('No Goods Receipt selected to cancel.');
+      return;
+    }
+    const confirmed = window.confirm(
+      `Are you sure you want to CANCEL Goods Receipt #${form.grNo || form.grId}?\n\nThis will mark the GR as cancelled and release Container ${form.contNo || ''} back to the Pending list.`
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await api.cancelGR({
+        grId: form.grId,
+        grNo: form.grNo,
+        contNo: form.contNo
+      });
+      if (res && res.success) {
+        setSuccessMessage(`✓ Goods Receipt #${form.grNo || form.grId} has been successfully CANCELLED.`);
+        setIsEditing(false);
+        if (api.getPendingGrContainers) {
+          api.getPendingGrContainers().then((r) => {
+            if (r?.data) setLiveContainers(r.data);
+          });
+        }
+      } else {
+        setFormError(res?.message || 'Failed to cancel Goods Receipt.');
+      }
+    } catch (err) {
+      setFormError(err.message || 'Error communicating with server.');
+    }
+  };
+
+  const handleUpdateGR = async () => {
+    setFormError('');
+    setSuccessMessage('');
+    if (!form.driver.trim()) {
+      setFormError('Please provide Driver Name (Required).');
+      return;
+    }
+
+    try {
+      const res = await api.updateGR(form);
+      if (res && res.success) {
+        setSuccessMessage(`✓ Goods Receipt #${form.grNo || form.grId} updated successfully!`);
+      } else {
+        setFormError(res?.message || 'Failed to update Goods Receipt.');
+      }
+    } catch (err) {
+      setFormError(err.message || 'Error updating GR.');
+    }
+  };
 
   // Dropdown presets for inputs with dropdown
   const vehicleBadges = [
@@ -575,6 +682,48 @@ export default function GrGenerationView({
         <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
           <AlertCircle className="w-3.5 h-3.5 shrink-0" />
           <span className="font-bold">{formError}</span>
+        </div>
+      )}
+
+      {/* Edit & Cancellation Mode Banner */}
+      {isEditing && (
+        <div className="p-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-2xs flex flex-wrap items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5">
+            <span className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-700 font-black text-xs flex items-center justify-center border border-amber-500/30 shrink-0">
+              GR
+            </span>
+            <div>
+              <div className="text-xs font-black text-slate-900 flex items-center gap-2 flex-wrap">
+                <span>Goods Receipt #{form.grNo || form.grId}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold border border-amber-300">
+                  Edit &amp; Cancellation Active
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-600 font-medium">
+                Truck: <strong className="font-mono text-slate-800">{form.vehicleNo || 'N/A'}</strong> &bull; Container: <strong className="font-mono text-slate-800">{form.contNo || 'N/A'}</strong> &bull; Driver: <strong className="text-slate-800">{form.driver || 'N/A'}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCancelGR}
+              className="px-3.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white font-black text-xs border border-rose-300 shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
+              title="Cancel this Goods Receipt and release container back to pending"
+            >
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>Cancel this GR</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResetToNew}
+              className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 active:scale-95 text-slate-700 font-bold text-xs border border-slate-300 shadow-2xs transition cursor-pointer"
+            >
+              + Create New GR
+            </button>
+          </div>
         </div>
       )}
 
@@ -1219,18 +1368,41 @@ export default function GrGenerationView({
         {/* FORM FOOTER / ACTION BUTTON */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t border-slate-200">
           <div className="text-[10px] text-slate-400 font-medium">
-            * Fields marked with red asterisk are mandatory for GR Generation
+            * Fields marked with red asterisk are mandatory
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-xs shadow-sm flex items-center gap-1.5 transition cursor-pointer"
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span>Generate GR</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            {isEditing ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleCancelGR}
+                  className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white font-black text-xs border border-rose-300 shadow-2xs flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span>Cancel GR</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleUpdateGR}
+                  className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-xs shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Update GR</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </>
+            ) : (
+              <button
+                type="submit"
+                className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-xs shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>Generate GR</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
       </form>

@@ -58,6 +58,16 @@ export const api = {
     });
     return request('/operations/search-gr?' + new URLSearchParams(cleanParams).toString());
   },
+  cancelGR: (data) =>
+    request('/operations/cancel-gr', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+  updateGR: (data) =>
+    request('/operations/update-gr', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
   generateGR: (payload) =>
     request('/operations/generate-gr', {
       method: 'POST',

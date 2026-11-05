@@ -176,13 +176,12 @@ export default function GrSearchingView({ onExit, onSelectGr }) {
         </div>
       )}
 
-      {/* 3. Search Form UI */}
-      <form onSubmit={handleDisplay} className="space-y-2.5">
-        <div className="p-3 sm:px-3.5 sm:py-3 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-3">
-          {/* Fields Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {/* 3. Search Form UI - Sleek single-line aligned layout */}
+      <form onSubmit={handleDisplay}>
+        <div className="p-3 sm:px-4 sm:py-3 rounded-xl bg-white border border-slate-200 shadow-2xs">
+          <div className="flex flex-wrap lg:flex-nowrap items-end gap-3">
             {/* From Date */}
-            <div>
+            <div className="w-full sm:w-44 shrink-0">
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 From Date <span className="text-rose-500 font-bold">*</span>
               </label>
@@ -191,12 +190,12 @@ export default function GrSearchingView({ onExit, onSelectGr }) {
                 required
                 value={formData.fromDate}
                 onChange={(e) => handleChange('fromDate', e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none bg-white border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all duration-150"
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all h-[34px]"
               />
             </div>
 
             {/* To Date */}
-            <div>
+            <div className="w-full sm:w-44 shrink-0">
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 To Date <span className="text-rose-500 font-bold">*</span>
               </label>
@@ -205,23 +204,23 @@ export default function GrSearchingView({ onExit, onSelectGr }) {
                 required
                 value={formData.toDate}
                 onChange={(e) => handleChange('toDate', e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none bg-white border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all duration-150"
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all h-[34px]"
               />
             </div>
 
             {/* Vehicle No */}
-            <div>
+            <div className="w-full sm:flex-1 min-w-[200px]">
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Vehicle No
+                Vehicle No <span className="text-slate-400 font-normal lowercase">(optional filter)</span>
               </label>
               <div className="relative">
                 <input
                   type="text"
                   list="vehicle-search-options"
-                  placeholder="e.g. HR55AN2094"
+                  placeholder="e.g. HR63D6879 or UP16"
                   value={formData.vehicleNo}
                   onChange={(e) => handleChange('vehicleNo', e.target.value.toUpperCase())}
-                  className="w-full px-2.5 py-1.5 rounded-lg text-xs uppercase font-mono outline-none bg-white border border-slate-200 text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all duration-150"
+                  className="w-full px-2.5 py-1.5 rounded-lg text-xs uppercase font-mono outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all h-[34px]"
                 />
                 <datalist id="vehicle-search-options">
                   {vehicleList.map((v) => (
@@ -230,19 +229,13 @@ export default function GrSearchingView({ onExit, onSelectGr }) {
                 </datalist>
               </div>
             </div>
-          </div>
 
-          {/* Action Buttons Bar */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-slate-100">
-            <div className="text-[10px] text-slate-400 font-medium">
-              * Mandatory fields marked with red asterisk are required
-            </div>
-
-            <div className="flex items-center gap-2">
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto pt-1 sm:pt-0">
               <button
                 type="submit"
                 disabled={loading}
-                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold text-xs shadow-2xs flex items-center gap-1.5 transition cursor-pointer select-none disabled:opacity-60"
+                className="flex-1 sm:flex-none px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold text-xs shadow-2xs flex items-center justify-center gap-1.5 transition cursor-pointer select-none disabled:opacity-60 h-[34px]"
               >
                 {loading ? (
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -256,7 +249,7 @@ export default function GrSearchingView({ onExit, onSelectGr }) {
                 type="button"
                 onClick={handleExcelDownload}
                 disabled={results.length === 0}
-                className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-extrabold text-xs border border-slate-300 shadow-2xs flex items-center gap-1.5 transition cursor-pointer select-none disabled:opacity-50"
+                className="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-bold text-xs border border-slate-300 shadow-2xs flex items-center justify-center gap-1.5 transition cursor-pointer select-none disabled:opacity-50 h-[34px]"
               >
                 <Download className="w-3.5 h-3.5 text-blue-600" />
                 <span>Excel Download</span>
@@ -305,25 +298,31 @@ export default function GrSearchingView({ onExit, onSelectGr }) {
                   <th className="px-3 py-2">Handover</th>
                   <th className="px-3 py-2">Customer</th>
                   <th className="px-3 py-2 text-center">Trip Close Date</th>
+                  <th className="px-3 py-2 text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
                 {results.map((r, idx) => (
                   <tr
                     key={r.gr_id || idx}
-                    className="hover:bg-blue-50/40 transition-colors"
+                    className="hover:bg-blue-50/50 transition-colors group"
                   >
                     {/* Sr */}
                     <td className="px-3 py-2 text-center text-slate-400 font-mono text-[11px]">
                       {idx + 1}
                     </td>
 
-                    {/* Vehicle No */}
+                    {/* Vehicle No (Clickable to open GR Generation page for Edit / Cancel / View) */}
                     <td className="px-3 py-2 font-mono font-bold text-blue-700 whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1">
-                        <Truck className="w-3 h-3 text-slate-400" />
-                        {r.vehicle_no}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => onSelectGr && onSelectGr(r)}
+                        className="inline-flex items-center gap-1.5 hover:text-blue-900 hover:underline cursor-pointer transition text-left"
+                        title="Click to open this GR in GR Generation (Edit / Cancel / View)"
+                      >
+                        <Truck className="w-3 h-3 text-blue-500" />
+                        <span className="font-extrabold">{r.vehicle_no}</span>
+                      </button>
                     </td>
 
                     {/* Type */}
@@ -338,11 +337,16 @@ export default function GrSearchingView({ onExit, onSelectGr }) {
                       {r.vh_size || '40'}
                     </td>
 
-                    {/* GR No */}
+                    {/* GR No (Clickable) */}
                     <td className="px-3 py-2 font-mono font-black text-slate-900 whitespace-nowrap">
-                      <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200/60">
+                      <button
+                        type="button"
+                        onClick={() => onSelectGr && onSelectGr(r)}
+                        className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200/60 hover:bg-blue-600 hover:text-white transition cursor-pointer"
+                        title="Click to open this GR in GR Generation (Edit / Cancel / View)"
+                      >
                         {r.gr_no}
-                      </span>
+                      </button>
                     </td>
 
                     {/* GR Date */}
@@ -389,6 +393,19 @@ export default function GrSearchingView({ onExit, onSelectGr }) {
                           Active / In Transit
                         </span>
                       )}
+                    </td>
+
+                    {/* Action: Open in GR Generation */}
+                    <td className="px-3 py-2 text-center whitespace-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => onSelectGr && onSelectGr(r)}
+                        className="px-2.5 py-1 rounded-md bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white font-bold text-[10px] border border-blue-200/80 transition-all flex items-center justify-center gap-1 shadow-2xs cursor-pointer mx-auto"
+                        title="Open in GR Generation to Edit or Cancel"
+                      >
+                        <FileText className="w-3 h-3" />
+                        <span>Edit / View</span>
+                      </button>
                     </td>
                   </tr>
                 ))}

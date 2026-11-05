@@ -79,6 +79,7 @@ export default function App() {
   };
 
   const [activeView, setActiveViewState] = useState(getInitialView);
+  const [selectedGrForEdit, setSelectedGrForEdit] = useState(null);
 
   const setActiveView = (view) => {
     if (!view) return;
@@ -741,6 +742,8 @@ export default function App() {
           {activeView === 'GrGeneration' && (
             <GrGenerationView
               jobs={jobs}
+              initialGrData={selectedGrForEdit}
+              onClearInitialGr={() => setSelectedGrForEdit(null)}
               onUpdateContainerGR={handleUpdateContainerGR}
               onNavigateToTripPendency={() => setActiveView('TripPendency')}
               onNavigateToGrSearching={() => setActiveView('GrSearching')}
@@ -749,7 +752,13 @@ export default function App() {
 
           {/* GR Searching */}
           {activeView === 'GrSearching' && (
-            <GrSearchingView onExit={() => setActiveView('GrGeneration')} />
+            <GrSearchingView
+              onExit={() => setActiveView('GrGeneration')}
+              onSelectGr={(gr) => {
+                setSelectedGrForEdit(gr);
+                setActiveView('GrGeneration');
+              }}
+            />
           )}
 
           {/* 22 & 23: Vehicle Running Position & Trip Close */}

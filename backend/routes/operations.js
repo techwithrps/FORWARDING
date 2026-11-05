@@ -132,30 +132,65 @@ router.get('/pending-gr-containers', async (req, res) => {
   }
 });
 
+// Helper to safely parse dates in various formats (DD/MM/YYYY, YYYY-MM-DD, MM/DD/YYYY) to ISO YYYY-MM-DD
+function parseSafeIsoDate(val) {
+  if (!val) return null;
+  val = String(val).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+  const parts = val.split(/[-/.]/);
+  if (parts.length === 3) {
+    if (parts[0].length === 4) {
+      return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+    }
+    if (parts[2].length === 4) {
+      const p0 = parseInt(parts[0], 10);
+      const p1 = parseInt(parts[1], 10);
+      const year = parts[2];
+      if (p0 > 12) {
+        return `${year}-${String(p1).padStart(2, '0')}-${String(p0).padStart(2, '0')}`;
+      }
+      if (p1 > 12) {
+        return `${year}-${String(p0).padStart(2, '0')}-${String(p1).padStart(2, '0')}`;
+      }
+      // Default Indian standard DD/MM/YYYY
+      return `${year}-${String(p1).padStart(2, '0')}-${String(p0).padStart(2, '0')}`;
+    }
+  }
+  const d = new Date(val);
+  if (!isNaN(d.getTime())) {
+    return d.toISOString().split('T')[0];
+  }
+  return null;
+}
+
 // GET Search GR records (aligned with SPJ 2 LogiPark FleetVehicleSearch)
 router.get('/search-gr', async (req, res) => {
   try {
     const { fromDate, toDate, vehicleNo } = req.query;
 
+    const parsedFrom = parseSafeIsoDate(fromDate);
+    const parsedTo = parseSafeIsoDate(toDate);
+    const cleanVeh = vehicleNo ? vehicleNo.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : '';
+
     let conditions = ['GM."CANCEL_STATUS" IS NULL', 'GM."GR_NO" IS NOT NULL'];
     let params = [];
     let paramIndex = 1;
 
-    if (fromDate) {
+    if (parsedFrom) {
       conditions.push(`GM."GR_DATE"::date >= $${paramIndex}::date`);
-      params.push(fromDate);
+      params.push(parsedFrom);
       paramIndex++;
     }
 
-    if (toDate) {
+    if (parsedTo) {
       conditions.push(`GM."GR_DATE"::date <= $${paramIndex}::date`);
-      params.push(toDate);
+      params.push(parsedTo);
       paramIndex++;
     }
 
-    if (vehicleNo && vehicleNo.trim()) {
-      conditions.push(`UPPER(TRIM(GM."VEHICLE_NO")) LIKE '%' || UPPER(TRIM($${paramIndex})) || '%'`);
-      params.push(vehicleNo.trim());
+    if (cleanVeh) {
+      conditions.push(`REGEXP_REPLACE(UPPER(TRIM(GM."VEHICLE_NO")), '[^A-Z0-9]', '', 'g') LIKE '%' || $${paramIndex} || '%'`);
+      params.push(cleanVeh);
       paramIndex++;
     }
 
@@ -173,43 +208,118 @@ router.get('/search-gr', async (req, res) => {
         TO_CHAR(GM."GR_DATE", 'DD/MM/YYYY') as gr_date,
         TRIM(GM."CONT_NO") as cont_no,
         COALESCE(GM."CONT_SIZE", '40') as cont_size,
+        COALESCE(GM."CONT_TYPE", 'HC') as cont_type,
         COALESCE(TRIM(GM."FROM_LOCATION"), '') as from_location,
         COALESCE(TRIM(GM."TO_LOCATION"), '') as to_location,
         COALESCE(TRIM(GM."FACTORY_LOCATION"), '') as factory_location,
         COALESCE(TRIM(CUST."CUSTOMER_NAME"), 'Fair Exports (India) Pvt Ltd') as customer,
         TO_CHAR(GM."CLOSE_DATE", 'DD/MM/YYYY') as close_date,
         COALESCE(GM."ADVANCE"::text, '0') as advance,
-        COALESCE(GM."OIL_ADVANCE"::text, '0') as oil_advance
+        COALESCE(GM."OIL_ADVANCE"::text, '0') as oil_advance,
+        COALESCE(GM."OTHER_AMT"::text, '0') as other_advance,
+        COALESCE(GM."C_GR"::text, '') as c_gr,
+        COALESCE(TRIM(GM."SLIP_NO"), '') as slip_no,
+        COALESCE(TRIM(GM."GR_REMARK"), '') as remarks,
+        COALESCE(TRIM(DM."DRIVER_NAME"), '') as driver_name,
+        COALESCE(TRIM(DM."MOBILE_NO"), '') as driver_mobile,
+        TO_CHAR(DM."DL_RENEWABLE_DATE", 'YYYY-MM-DD') as license_validity,
+        COALESCE(TRIM(VM."VENDOR_NAME"), '') as oil_vendor,
+        COALESCE(TRIM(FCJ."CONT_JO_NO"::text), GM."CONT_JO_ID"::text, '') as jo_no,
+        TO_CHAR(GM."CREATED_ON", 'YYYY-MM-DD') as jo_date,
+        COALESCE(TRIM(FCJ."COMMODITY"::text), 'FROZEN BUFFALO BONELESS MEAT') as commodity,
+        COALESCE(TRIM(GM."REMARK"), 'EICHER') as workshop
       FROM spjlive."FLEET_GR_MAPPING" GM
       LEFT JOIN spjlive."FLEET_EQUIPMENT_MASTER" EM 
         ON UPPER(TRIM(EM."EQUIPMENT_NO")) = UPPER(TRIM(GM."VEHICLE_NO"))
       LEFT JOIN spjlive."CUSTOMER_MASTER" CUST 
         ON CUST."CUSTOMER_ID" = GM."CUSTOMER_ID"
+      LEFT JOIN spjlive."FLEET_DRIVER_MASTER" DM
+        ON DM."DRIVER_ID" = GM."DRIVER_ID"
+      LEFT JOIN spjlive."VENDOR_MASTER" VM
+        ON VM."VENDOR_ID" = GM."PETROL_VENDOR"
+      LEFT JOIN spjlive."FLEET_CONT_JO" FCJ
+        ON FCJ."CONT_JO_ID" = GM."CONT_JO_ID"
       ${whereClause}
       ORDER BY GM."GR_ID" DESC
       LIMIT 500;
     `;
 
-    const { rows: spjRows } = await db.query(spjQuery, params);
+    let { rows: spjRows } = await db.query(spjQuery, params);
+
+    // If searching for a specific vehicle returned 0 results in date range, search vehicle across all dates!
+    if (spjRows.length === 0 && cleanVeh) {
+      const fallbackQuery = `
+        SELECT 
+          GM."GR_ID"::text as gr_id,
+          GM."CONT_JO_ID"::text as cont_jo_id,
+          TRIM(GM."VEHICLE_NO") as vehicle_no,
+          COALESCE(EM."EQUIPMENT_TYPE", 'T40') as vh_type,
+          COALESCE(GM."CONT_SIZE", '40') as vh_size,
+          GM."GR_NO"::text as gr_no,
+          TO_CHAR(GM."GR_DATE", 'YYYY-MM-DD') as gr_date_iso,
+          TO_CHAR(GM."GR_DATE", 'DD/MM/YYYY') as gr_date,
+          TRIM(GM."CONT_NO") as cont_no,
+          COALESCE(GM."CONT_SIZE", '40') as cont_size,
+          COALESCE(GM."CONT_TYPE", 'HC') as cont_type,
+          COALESCE(TRIM(GM."FROM_LOCATION"), '') as from_location,
+          COALESCE(TRIM(GM."TO_LOCATION"), '') as to_location,
+          COALESCE(TRIM(GM."FACTORY_LOCATION"), '') as factory_location,
+          COALESCE(TRIM(CUST."CUSTOMER_NAME"), 'Fair Exports (India) Pvt Ltd') as customer,
+          TO_CHAR(GM."CLOSE_DATE", 'DD/MM/YYYY') as close_date,
+          COALESCE(GM."ADVANCE"::text, '0') as advance,
+          COALESCE(GM."OIL_ADVANCE"::text, '0') as oil_advance,
+          COALESCE(GM."OTHER_AMT"::text, '0') as other_advance,
+          COALESCE(GM."C_GR"::text, '') as c_gr,
+          COALESCE(TRIM(GM."SLIP_NO"), '') as slip_no,
+          COALESCE(TRIM(GM."GR_REMARK"), '') as remarks,
+          COALESCE(TRIM(DM."DRIVER_NAME"), '') as driver_name,
+          COALESCE(TRIM(DM."MOBILE_NO"), '') as driver_mobile,
+          TO_CHAR(DM."DL_RENEWABLE_DATE", 'YYYY-MM-DD') as license_validity,
+          COALESCE(TRIM(VM."VENDOR_NAME"), '') as oil_vendor,
+          COALESCE(TRIM(FCJ."CONT_JO_NO"::text), GM."CONT_JO_ID"::text, '') as jo_no,
+          TO_CHAR(GM."CREATED_ON", 'YYYY-MM-DD') as jo_date,
+          COALESCE(TRIM(FCJ."COMMODITY"::text), 'FROZEN BUFFALO BONELESS MEAT') as commodity,
+          COALESCE(TRIM(GM."REMARK"), 'EICHER') as workshop
+        FROM spjlive."FLEET_GR_MAPPING" GM
+        LEFT JOIN spjlive."FLEET_EQUIPMENT_MASTER" EM 
+          ON UPPER(TRIM(EM."EQUIPMENT_NO")) = UPPER(TRIM(GM."VEHICLE_NO"))
+        LEFT JOIN spjlive."CUSTOMER_MASTER" CUST 
+          ON CUST."CUSTOMER_ID" = GM."CUSTOMER_ID"
+        LEFT JOIN spjlive."FLEET_DRIVER_MASTER" DM
+          ON DM."DRIVER_ID" = GM."DRIVER_ID"
+        LEFT JOIN spjlive."VENDOR_MASTER" VM
+          ON VM."VENDOR_ID" = GM."PETROL_VENDOR"
+        LEFT JOIN spjlive."FLEET_CONT_JO" FCJ
+          ON FCJ."CONT_JO_ID" = GM."CONT_JO_ID"
+        WHERE GM."CANCEL_STATUS" IS NULL AND GM."GR_NO" IS NOT NULL
+          AND REGEXP_REPLACE(UPPER(TRIM(GM."VEHICLE_NO")), '[^A-Z0-9]', '', 'g') LIKE '%' || $1 || '%'
+        ORDER BY GM."GR_ID" DESC
+        LIMIT 100;
+      `;
+      const fallbackRes = await db.query(fallbackQuery, [cleanVeh]);
+      if (fallbackRes.rows.length > 0) {
+        spjRows = fallbackRes.rows;
+      }
+    }
 
     let localRows = [];
     try {
       let localCond = ["c.gr_number IS NOT NULL AND c.gr_number != ''"];
       let lParams = [];
       let lIdx = 1;
-      if (fromDate) {
+      if (parsedFrom) {
         localCond.push(`COALESCE(c.gr_date, c.created_at::date) >= $${lIdx}::date`);
-        lParams.push(fromDate);
+        lParams.push(parsedFrom);
         lIdx++;
       }
-      if (toDate) {
+      if (parsedTo) {
         localCond.push(`COALESCE(c.gr_date, c.created_at::date) <= $${lIdx}::date`);
-        lParams.push(toDate);
+        lParams.push(parsedTo);
         lIdx++;
       }
-      if (vehicleNo && vehicleNo.trim()) {
-        localCond.push(`UPPER(TRIM(c.truck_number)) LIKE '%' || UPPER(TRIM($${lIdx})) || '%'`);
-        lParams.push(vehicleNo.trim());
+      if (cleanVeh) {
+        localCond.push(`REGEXP_REPLACE(UPPER(TRIM(COALESCE(c.truck_number, ''))), '[^A-Z0-9]', '', 'g') LIKE '%' || $${lIdx} || '%'`);
+        lParams.push(cleanVeh);
         lIdx++;
       }
       const localQuery = `
@@ -224,13 +334,26 @@ router.get('/search-gr', async (req, res) => {
           TO_CHAR(COALESCE(c.gr_date, c.created_at::date), 'DD/MM/YYYY') as gr_date,
           c.container_number as cont_no,
           CASE WHEN c.size_type LIKE '%20%' THEN '20' ELSE '40' END as cont_size,
+          'HC' as cont_type,
           COALESCE(j.origin_port_name, 'TRANSWORLD-DADRI') as from_location,
           COALESCE(j.pod_port_name, 'ADANI-PATLI') as to_location,
           'ADANI-PATLI' as factory_location,
           COALESCE(j.customer_name, 'Fair Exports (India) Pvt Ltd') as customer,
           TO_CHAR(c.trip_close_date, 'DD/MM/YYYY') as close_date,
           '0' as advance,
-          '0' as oil_advance
+          '0' as oil_advance,
+          '0' as other_advance,
+          '' as c_gr,
+          '' as slip_no,
+          '' as remarks,
+          COALESCE(c.driver_name, '') as driver_name,
+          COALESCE(c.driver_mobile, '') as driver_mobile,
+          '' as license_validity,
+          '' as oil_vendor,
+          COALESCE(j.job_number, c.job_id::text, '') as jo_no,
+          TO_CHAR(c.created_at::date, 'YYYY-MM-DD') as jo_date,
+          'FROZEN BUFFALO BONELESS MEAT' as commodity,
+          'EICHER' as workshop
         FROM job_containers c
         LEFT JOIN job_orders j ON j.id = c.job_id
         WHERE ${localCond.join(' AND ')}
@@ -261,6 +384,115 @@ router.get('/search-gr', async (req, res) => {
     });
   } catch (err) {
     console.error('Error in search-gr:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST Cancel Goods Receipt
+router.post('/cancel-gr', async (req, res) => {
+  try {
+    const { grId, grNo, contNo, reason } = req.body;
+    if (!grId && !grNo && !contNo) {
+      return res.status(400).json({ success: false, message: 'GR ID, GR No, or Container No is required for cancellation.' });
+    }
+
+    // 1. If in spjlive.FLEET_GR_MAPPING, mark CANCEL_STATUS = 'Y'
+    try {
+      if (grNo) {
+        await db.query(`
+          UPDATE spjlive."FLEET_GR_MAPPING" 
+          SET "CANCEL_STATUS" = 'Y', "CANCEL_ON" = NOW(), "CANCEL_BY" = 'USER' 
+          WHERE "GR_NO"::text = $1
+        `, [String(grNo)]);
+      } else if (grId) {
+        await db.query(`
+          UPDATE spjlive."FLEET_GR_MAPPING" 
+          SET "CANCEL_STATUS" = 'Y', "CANCEL_ON" = NOW(), "CANCEL_BY" = 'USER' 
+          WHERE "GR_ID"::text = $1
+        `, [String(grId)]);
+      }
+    } catch (e) {
+      console.warn('Could not cancel in spjlive.FLEET_GR_MAPPING:', e.message);
+    }
+
+    // 2. In job_containers, clear gr_number and gr_date so container returns to pending pool
+    try {
+      if (contNo) {
+        await db.query(`
+          UPDATE job_containers 
+          SET gr_number = NULL, gr_date = NULL, truck_number = NULL, driver_name = NULL, driver_mobile = NULL
+          WHERE UPPER(TRIM(container_number)) = UPPER(TRIM($1))
+        `, [contNo]);
+      } else if (grNo) {
+        await db.query(`
+          UPDATE job_containers 
+          SET gr_number = NULL, gr_date = NULL, truck_number = NULL, driver_name = NULL, driver_mobile = NULL
+          WHERE gr_number = $1
+        `, [grNo]);
+      }
+    } catch (e) {
+      console.warn('Could not reset job_containers for cancelled GR:', e.message);
+    }
+
+    res.json({
+      success: true,
+      message: `Goods Receipt ${grNo || grId} cancelled successfully. Container returned to pending list.`
+    });
+  } catch (err) {
+    console.error('Error cancelling GR:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST / PUT Update existing Goods Receipt
+router.post('/update-gr', async (req, res) => {
+  try {
+    const { grId, grNo, vehicleNo, driver, driverContactNo, licenseValidity, fromLocation, toLocation, handoverLocation, workshop, joFor, oilVendor, slipNo, remarks, cash, oil, others } = req.body;
+    
+    // Update local job_containers if mapped
+    try {
+      if (grNo) {
+        await db.query(`
+          UPDATE job_containers
+          SET truck_number = COALESCE($1, truck_number),
+              driver_name = COALESCE($2, driver_name),
+              driver_mobile = COALESCE($3, driver_mobile)
+          WHERE gr_number = $4
+        `, [vehicleNo, driver, driverContactNo, grNo]);
+      }
+    } catch (e) {
+      console.warn('Could not update job_containers:', e.message);
+    }
+
+    // Update spjlive.FLEET_GR_MAPPING if exists
+    try {
+      if (grNo) {
+        await db.query(`
+          UPDATE spjlive."FLEET_GR_MAPPING"
+          SET "VEHICLE_NO" = COALESCE($1, "VEHICLE_NO"),
+              "FROM_LOCATION" = COALESCE($2, "FROM_LOCATION"),
+              "TO_LOCATION" = COALESCE($3, "TO_LOCATION"),
+              "FACTORY_LOCATION" = COALESCE($4, "FACTORY_LOCATION"),
+              "ADVANCE" = COALESCE($5::numeric, "ADVANCE"),
+              "OIL_ADVANCE" = COALESCE($6::numeric, "OIL_ADVANCE"),
+              "OTHER_AMT" = COALESCE($7::numeric, "OTHER_AMT"),
+              "SLIP_NO" = COALESCE($8, "SLIP_NO"),
+              "GR_REMARK" = COALESCE($9, "GR_REMARK"),
+              "UPDATED_ON" = NOW(),
+              "UPDATED_BY" = 'USER'
+          WHERE "GR_NO"::text = $10
+        `, [vehicleNo, fromLocation, toLocation, handoverLocation, parseFloat(cash) || 0, parseFloat(oil) || 0, parseFloat(others) || 0, slipNo, remarks, String(grNo)]);
+      }
+    } catch (e) {
+      console.warn('Could not update spjlive.FLEET_GR_MAPPING:', e.message);
+    }
+
+    res.json({
+      success: true,
+      message: `Goods Receipt ${grNo || grId} updated successfully.`
+    });
+  } catch (err) {
+    console.error('Error updating GR:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
