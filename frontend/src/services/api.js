@@ -89,6 +89,9 @@ export const api = {
   getOilVendors: () => request('/masters/oil-vendors'),
   getWorkshops: () => request('/masters/workshops'),
   getLocations: () => request('/masters/locations'),
+  getConsignors: () => request('/masters/consignors'),
+  getConsignees: () => request('/masters/consignees'),
+  getTransporters: () => request('/masters/transporters'),
   createCustomer: (data) =>
     request('/masters/customers', {
       method: 'POST',

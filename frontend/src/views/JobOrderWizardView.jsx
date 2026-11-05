@@ -47,8 +47,13 @@ export default function JobOrderWizardView({
 }) {
   const todayStr = new Date().toLocaleDateString('en-GB');
 
+  const [liveConsignors, setLiveConsignors] = useState([]);
+  const [liveConsignees, setLiveConsignees] = useState([]);
+  const [liveTransporters, setLiveTransporters] = useState([]);
+
   // Dynamic Shippers from Local PostgreSQL (falls back to defaults)
   const shippersList = useMemo(() => {
+    if (liveConsignors.length > 0) return liveConsignors;
     if (parties && parties.length > 0) {
       const list = parties
         .filter(p => !p.type || p.type === 'SHIPPER' || p.type === 'FORWARDER')
@@ -57,15 +62,19 @@ export default function JobOrderWizardView({
     }
     return [
       'Fair Exports (India) Pvt Ltd',
+      'SPJ CARGO PVT LTD.',
+      'HMA FOOD EXPORT PVT LTD',
+      'HMA AGRO INDUSTRIES LTD',
       'Marhaba Frozen Foods',
       'Allanasons Private Limited',
       'Al Sameer Exports Pvt Ltd',
       'Deepmala Foods',
       'Deccan Edibles Pvt Ltd'
     ];
-  }, [parties]);
+  }, [liveConsignors, parties]);
 
   const consigneesList = useMemo(() => {
+    if (liveConsignees.length > 0) return liveConsignees;
     if (parties && parties.length > 0) {
       const list = parties
         .filter(p => p.type === 'CONSIGNEE')
@@ -73,15 +82,22 @@ export default function JobOrderWizardView({
       if (list.length > 0) return list;
     }
     return [
+      'FAIR EXPORTS (INDIA) PVT LTD',
+      'HMA AGRO INDUSTRIES LTD',
+      'IFF INDIA FROZEN FOODS PRIVATE LIMITED',
+      'RUSTAM FOODS PVT.LTD.',
+      'MARHABA FROZEN FOODS',
+      'AL AMMAR FROZEN FOOD EXPORTS PVT LTD',
+      'AL-NASIR EXPORTS PVT LTD',
+      'INTERNATIONAL AGRO FOODS',
+      'INDIA FROZEN FOODS',
       'ASIAN PERAL MYANMAR CO. LTD.',
-      'Al Maya Trading LLC (Dubai, UAE)',
-      'EuroMeat B.V. (Rotterdam, Netherlands)',
-      'Al-Shaikh Trading Co. (Jeddah, KSA)',
-      'Gulf Import Corp (Dammam, KSA)'
+      'Al Maya Trading LLC (Dubai, UAE)'
     ];
-  }, [parties]);
+  }, [liveConsignees, parties]);
 
   const transportersList = useMemo(() => {
+    if (liveTransporters.length > 0) return liveTransporters;
     if (parties && parties.length > 0) {
       const list = parties
         .filter(p => !p.type || p.type === 'TRANSPORTER' || p.type === 'VENDOR' || p.type === 'FORWARDER')
@@ -90,14 +106,16 @@ export default function JobOrderWizardView({
     }
     return [
       'AJINKYA TRANSPORT',
-      'SPJ Fleet Logistics',
-      'Dadri Express Logistics',
-      'Transworld Logistics',
-      'CONCOR Multimodal Logistics',
-      'Adani Logistics',
-      'Navkar Corporation Ltd'
+      'SPJ CARGO PVT. LTD',
+      'S.J. CARGO MOVERS',
+      'Shipper\'s Transportation',
+      'GREEN INDIA CARGO MOVERS',
+      'CONSIGNEE TRANSPORT',
+      'ASHIRVAD TRANSPORT',
+      'AVINASH CARGO PVT LTD',
+      'CONCOR CORPORTATION'
     ];
-  }, [parties]);
+  }, [liveTransporters, parties]);
 
   const defaultFromLocations = [
     'TRANSWORLD-DADRI',
@@ -200,6 +218,36 @@ export default function JobOrderWizardView({
           }
         })
         .catch((err) => console.warn('Could not fetch locations from API:', err));
+    }
+
+    if (api.getConsignors) {
+      api.getConsignors()
+        .then((res) => {
+          if (isMounted && res?.data && res.data.length > 0) {
+            setLiveConsignors(res.data);
+          }
+        })
+        .catch((err) => console.warn('Could not fetch consignors:', err));
+    }
+
+    if (api.getConsignees) {
+      api.getConsignees()
+        .then((res) => {
+          if (isMounted && res?.data && res.data.length > 0) {
+            setLiveConsignees(res.data);
+          }
+        })
+        .catch((err) => console.warn('Could not fetch consignees:', err));
+    }
+
+    if (api.getTransporters) {
+      api.getTransporters()
+        .then((res) => {
+          if (isMounted && res?.data && res.data.length > 0) {
+            setLiveTransporters(res.data);
+          }
+        })
+        .catch((err) => console.warn('Could not fetch transporters:', err));
     }
     return () => {
       isMounted = false;

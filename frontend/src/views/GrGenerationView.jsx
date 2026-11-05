@@ -349,6 +349,9 @@ export default function GrGenerationView({
   const [liveVehicles, setLiveVehicles] = useState(vehicleBadges);
   const [liveOilVendors, setLiveOilVendors] = useState(oilVendorPresets);
   const [liveWorkshops, setLiveWorkshops] = useState(workshopPresets);
+  const [liveConsignors, setLiveConsignors] = useState(consignorPresets);
+  const [liveConsignees, setLiveConsignees] = useState(consigneePresets);
+  const [liveTransporters, setLiveTransporters] = useState(transporterPresets);
   const [fromLocationList, setFromLocationList] = useState(defaultFromLocations);
   const [toLocationList, setToLocationList] = useState(defaultToLocations);
   const [handoverLocationList, setHandoverLocationList] = useState(defaultHandoverLocations);
@@ -439,6 +442,39 @@ export default function GrGenerationView({
           }
         })
         .catch((err) => console.warn('Could not fetch locations from API:', err));
+    }
+
+    // 7. Consignors from DB
+    if (api.getConsignors) {
+      api.getConsignors()
+        .then((res) => {
+          if (isMounted && res?.data && res.data.length > 0) {
+            setLiveConsignors(res.data);
+          }
+        })
+        .catch((err) => console.warn('Could not fetch consignors from API:', err));
+    }
+
+    // 8. Consignees from DB
+    if (api.getConsignees) {
+      api.getConsignees()
+        .then((res) => {
+          if (isMounted && res?.data && res.data.length > 0) {
+            setLiveConsignees(res.data);
+          }
+        })
+        .catch((err) => console.warn('Could not fetch consignees from API:', err));
+    }
+
+    // 9. Transporters from DB
+    if (api.getTransporters) {
+      api.getTransporters()
+        .then((res) => {
+          if (isMounted && res?.data && res.data.length > 0) {
+            setLiveTransporters(res.data);
+          }
+        })
+        .catch((err) => console.warn('Could not fetch transporters from API:', err));
     }
 
     return () => {
@@ -924,10 +960,10 @@ export default function GrGenerationView({
                 className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
               >
                 <option value="">-- Select Consignor --</option>
-                {consignorPresets.map((c) => (
+                {liveConsignors.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
-                {form.consignor && !consignorPresets.includes(form.consignor) && (
+                {form.consignor && !liveConsignors.includes(form.consignor) && (
                   <option value={form.consignor}>{form.consignor}</option>
                 )}
               </select>
@@ -944,10 +980,10 @@ export default function GrGenerationView({
                 className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
               >
                 <option value="">-- Select Consignee --</option>
-                {consigneePresets.map((c) => (
+                {liveConsignees.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
-                {form.consignee && !consigneePresets.includes(form.consignee) && (
+                {form.consignee && !liveConsignees.includes(form.consignee) && (
                   <option value={form.consignee}>{form.consignee}</option>
                 )}
               </select>
@@ -964,10 +1000,10 @@ export default function GrGenerationView({
                 className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
               >
                 <option value="">-- Select Transporter --</option>
-                {transporterPresets.map((t) => (
+                {liveTransporters.map((t) => (
                   <option key={t} value={t}>{t}</option>
                 ))}
-                {form.transporter && !transporterPresets.includes(form.transporter) && (
+                {form.transporter && !liveTransporters.includes(form.transporter) && (
                   <option value={form.transporter}>{form.transporter}</option>
                 )}
               </select>

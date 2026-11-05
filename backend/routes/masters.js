@@ -799,5 +799,130 @@ router.get('/locations', async (req, res) => {
   }
 });
 
+// 16. CONSIGNORS (SPJ Customer / Shipper Master)
+router.get('/consignors', async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT DISTINCT TRIM("CUSTOMER_NAME") as name
+      FROM spjlive."CUSTOMER_MASTER"
+      WHERE "CUSTOMER_NAME" IS NOT NULL 
+        AND ("CUSTOMER_TYPE" IN ('E', 'R', 'C') 
+             OR "CUSTOMER_ID" IN (SELECT DISTINCT "CUSTOMER_ID" FROM spjlive."FLEET_CONT_JO" WHERE "CUSTOMER_ID" > 0))
+      ORDER BY name ASC
+    `);
+    const names = rows.map(r => r.name).filter(Boolean);
+    res.json({ success: true, count: names.length, data: names });
+  } catch (err) {
+    console.error('Error fetching consignors:', err);
+    res.json({
+      success: true,
+      data: [
+        'Fair Exports (India) Pvt Ltd',
+        'SPJ CARGO PVT LTD.',
+        'HMA FOOD EXPORT PVT LTD',
+        'HMA AGRO INDUSTRIES LTD',
+        'Marhaba Frozen Foods',
+        'Allanasons Private Limited',
+        'Al Sameer Exports Pvt Ltd',
+        'Deepmala Foods',
+        'Deccan Edibles Pvt Ltd',
+        'UNITED FARM PRODUCT PRIVATE LIMITED',
+        'S. J. CARGO MOVERS'
+      ]
+    });
+  }
+});
+
+// 17. CONSIGNEES (SPJ Buyer / Consignee / Delivery Master)
+router.get('/consignees', async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT DISTINCT TRIM("CUSTOMER_NAME") as name
+      FROM spjlive."CUSTOMER_MASTER"
+      WHERE "CUSTOMER_NAME" IS NOT NULL 
+        AND ("CUSTOMER_ID" IN (SELECT DISTINCT "CONSIGNEE_ID" FROM spjlive."FLEET_CONT_JO" WHERE "CONSIGNEE_ID" > 0)
+             OR "CUSTOMER_TYPE" IN ('E', 'I', 'C'))
+      ORDER BY name ASC
+    `);
+    const names = rows.map(r => r.name).filter(Boolean);
+    res.json({ success: true, count: names.length, data: names });
+  } catch (err) {
+    console.error('Error fetching consignees:', err);
+    res.json({
+      success: true,
+      data: [
+        'FAIR EXPORTS (INDIA) PVT LTD',
+        'HMA AGRO INDUSTRIES LTD',
+        'IFF INDIA FROZEN FOODS PRIVATE LIMITED',
+        'RUSTAM FOODS PVT.LTD.',
+        'MARHABA FROZEN FOODS',
+        'AL AMMAR FROZEN FOOD EXPORTS PVT LTD',
+        'AL-NASIR EXPORTS PVT LTD',
+        'INTERNATIONAL AGRO FOODS',
+        'INDIA FROZEN FOODS',
+        'MIRHA EXPORTS PVT. LTD.',
+        'MASH AGRO FOODS LTD',
+        'ASIAN PERAL MYANMAR CO. LTD.',
+        'Al Maya Trading LLC (Dubai, UAE)'
+      ]
+    });
+  }
+});
+
+// 18. TRANSPORTERS (SPJ Transport Vendor Master)
+router.get('/transporters', async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT DISTINCT TRIM(VM."VENDOR_NAME") as name
+      FROM spjlive."VENDOR_MASTER" VM
+      WHERE VM."VENDOR_NAME" IS NOT NULL
+        AND (VM."VENDOR_ID" IN (
+              SELECT "VENDOR_ID" FROM spjlive."VENDOR_TYPE_DETAILS" WHERE "VENDER_TYPE_CODE" = 'T'
+             )
+             OR VM."VENDOR_ID" IN (
+              SELECT DISTINCT "TRANSPORTER_ID" FROM spjlive."FLEET_CONT_JO" WHERE "TRANSPORTER_ID" > 0
+             ))
+      ORDER BY name ASC
+    `);
+    const names = rows.map(r => r.name).filter(Boolean);
+    res.json({ success: true, count: names.length, data: names });
+  } catch (err) {
+    console.error('Error fetching transporters:', err);
+    res.json({
+      success: true,
+      data: [
+        'AJINKYA TRANSPORT',
+        'SPJ CARGO PVT. LTD',
+        'S.J. CARGO MOVERS',
+        'Shipper\'s Transportation',
+        'GREEN INDIA CARGO MOVERS',
+        'CONSIGNEE TRANSPORT',
+        'ASHIRVAD TRANSPORT',
+        'AVINASH CARGO PVT LTD',
+        'BK LOGISTIC',
+        'CONCOR CORPORTATION',
+        'DASHMESH BULK CARRIERS',
+        'DK TRANSPORT',
+        'FUTURE LOGISTICS',
+        'GLOBAL EXPRESS MULTILOGISTICS PVT LTD',
+        'HARINDRA KUMAR',
+        'HIND CARRIERS PVT. LTD.',
+        'IILPL',
+        'J P REFFER LOGISTICS AND SERVICES',
+        'JBM Cargo Movers',
+        'K B CARGO MOVERS',
+        'KUNDA EXPRESS PVT LTD',
+        'MAHALAXMI TRANS-LIFT',
+        'MV Trans India',
+        'NITIN ROADWAYS',
+        'OM SAI RAM ROADWAYS',
+        'PRABHU LOGISTICS PVT LTD',
+        'VS Transport Co',
+        'XPERT TRANSLINE'
+      ]
+    });
+  }
+});
+
 module.exports = router;
 
