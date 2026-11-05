@@ -125,6 +125,10 @@ export default function GrGenerationView({
     driver: '',
     driverContactNo: '',
     licenseValidity: '',
+    workshop: 'EICHER',
+    joFor: 'Shifting',
+    surveyBy: '',
+    vehicleType: 'T40',
     oilVendor: '',
     slipNo: '',
     remarks: '',
@@ -145,6 +149,9 @@ export default function GrGenerationView({
 
   // Dropdown presets for inputs with dropdown
   const vehicleBadges = ['HR55AN2094', 'UP16BT4820', 'NL01AD8941', 'MH46AR7712', 'DL1AA3901'];
+  const workshopPresets = ['EICHER', 'TATA MOTORS', 'ASHOK LEYLAND', 'BHARATBENZ', 'MAHINDRA', 'SPJ IN-HOUSE YARD (DADRI)'];
+  const joForPresets = ['Shifting', 'Factory Stuffing', 'Port Delivery / Gate-in', 'Empty Pickup / Return', 'Breakdown-ICD / Repair'];
+  const vehicleTypePresets = ['T40', 'T20', '40ft Multi-Axle Trailer', '20ft Skeletal Trailer', 'Heavy Duty Low-Bed'];
   const driverPresets = [
     { name: 'Ramesh Kumar', phone: '9876543210' },
     { name: 'Suresh Yadav', phone: '9811223344' },
@@ -663,7 +670,74 @@ export default function GrGenerationView({
             </div>
           </div>
 
-          {/* Row 2: Oil Vendor, Slip No, Remarks */}
+          {/* Row 2: Workshop, Jo For, Survey By, Vehicle Type */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1.5 border-t border-slate-100">
+            {/* Workshop (Dropdown with presets) */}
+            <div>
+              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                Workshop
+              </label>
+              <select
+                value={form.workshop}
+                onChange={(e) => setForm({ ...form, workshop: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+              >
+                <option value="">---Select Workshop---</option>
+                {workshopPresets.map((w) => (
+                  <option key={w} value={w}>{w}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Jo For (Dropdown with presets) */}
+            <div>
+              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                Jo For
+              </label>
+              <select
+                value={form.joFor}
+                onChange={(e) => setForm({ ...form, joFor: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+              >
+                <option value="">---Select Purpose---</option>
+                {joForPresets.map((jf) => (
+                  <option key={jf} value={jf}>{jf}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Survey By */}
+            <div>
+              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                Survey By
+              </label>
+              <input
+                type="text"
+                placeholder="Surveyor / Inspector Name"
+                value={form.surveyBy}
+                onChange={(e) => setForm({ ...form, surveyBy: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+              />
+            </div>
+
+            {/* Vehicle Type */}
+            <div>
+              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
+                Vehicle Type
+              </label>
+              <select
+                value={form.vehicleType}
+                onChange={(e) => setForm({ ...form, vehicleType: e.target.value })}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+              >
+                {vehicleTypePresets.map((vt) => (
+                  <option key={vt} value={vt}>{vt}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Row 3: Oil Vendor, Slip No, Remarks */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1.5 border-t border-slate-100">
             {/* Oil Vendor (Required *) */}
             <div>
