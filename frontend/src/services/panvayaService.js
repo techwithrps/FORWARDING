@@ -78,7 +78,7 @@ export function clearPanvayaCache() {
 
 const RENDER_BACKEND = (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL)
   ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "")
-  : "https://spj-backend.onrender.com";
+  : (typeof window !== "undefined" ? `http://${window.location.hostname}:5001` : "http://localhost:5001");
 
 async function requestPanvaya(endpoint, options = {}) {
   const apiKey = getPanvayaApiKey();

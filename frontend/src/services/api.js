@@ -1,7 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_URL ||
-  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:5001/api/v1'
-    : 'https://forwarding-7veb.onrender.com/api/v1');
+  (typeof window !== 'undefined'
+    ? `http://${window.location.hostname}:5001/api/v1`
+    : 'http://localhost:5001/api/v1');
 
 // Helper for fetch with reasonable timeout and error handling
 async function request(endpoint, options = {}) {
