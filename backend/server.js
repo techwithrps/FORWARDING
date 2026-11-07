@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const net = require('net');
 require('dotenv').config();
 
 const db = require('./config/db');
@@ -36,6 +37,31 @@ app.get('/health', async (req, res) => {
   } catch (err) {
     res.status(500).json({ status: 'DOWN', error: err.message });
   }
+});
+
+// Diagnostic TCP Network Check
+app.get('/debug-network', (req, res) => {
+  const host = process.env.PGHOST || '103.197.76.251';
+  const port = process.env.PGPORT ? parseInt(process.env.PGPORT, 10) : 5432;
+  const socket = new net.Socket();
+  socket.setTimeout(6000);
+
+  socket.on('connect', () => {
+    socket.destroy();
+    res.json({ success: true, message: `TCP socket successfully established to ${host}:${port}` });
+  });
+
+  socket.on('timeout', () => {
+    socket.destroy();
+    res.status(504).json({ success: false, error: `TCP timeout after 6s to ${host}:${port}. Firewall/Lucid IT is blocking outbound connection.` });
+  });
+
+  socket.on('error', (err) => {
+    socket.destroy();
+    res.status(500).json({ success: false, error: err.message, code: err.code });
+  });
+
+  socket.connect(port, host);
 });
 
 // Root
