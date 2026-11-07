@@ -5,7 +5,7 @@
       "destination": "https://forwarding-7veb.onrender.com/api/v1/$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]
