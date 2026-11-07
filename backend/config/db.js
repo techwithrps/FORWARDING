@@ -1,12 +1,24 @@
 const { Pool } = require('pg');
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://iamrps@localhost:5432/forwarder_db',
+// Robust configuration supporting discrete PG* vars and connection string
+const poolConfig = {
+  host: process.env.PGHOST || '103.197.76.251',
+  port: process.env.PGPORT ? parseInt(process.env.PGPORT, 10) : 5432,
+  user: process.env.PGUSER || 'postgres',
+  password: process.env.PGPASSWORD || 'SPJ#Secured!2026@Database',
+  database: process.env.PGDATABASE || 'forwarder_db',
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
   ssl: false
-});
+};
+
+// If discrete password not supplied but DATABASE_URL exists, fallback to connectionString
+if (!process.env.PGPASSWORD && process.env.DATABASE_URL) {
+  poolConfig.connectionString = process.env.DATABASE_URL;
+}
+
+const pool = new Pool(poolConfig);
 
 pool.on('connect', () => {
   // console.log('Connected to PostgreSQL Database (forwarder_db)');
