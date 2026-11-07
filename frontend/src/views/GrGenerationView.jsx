@@ -642,21 +642,64 @@ export default function GrGenerationView({
       return;
     }
 
+    const grPayload = {
+      containerId: form.contNo,
+      contNo: form.contNo,
+      truckNo: form.vehicleNo,
+      vehicleNo: form.vehicleNo,
+      driverName: form.driver,
+      driver: form.driver,
+      driverMobile: form.driverContactNo,
+      driverContactNo: form.driverContactNo,
+      grNo: form.grNo,
+      grDate: form.grDate || todayDateStr,
+      cGr: form.cGr,
+      consignor: form.consignor,
+      consignee: form.consignee,
+      transporter: form.transporter,
+      fromLocation: form.fromLocation,
+      toLocation: form.toLocation,
+      handoverLocation: form.handoverLocation,
+      licenseValidity: form.licenseValidity,
+      workshop: form.workshop,
+      joFor: form.joFor,
+      surveyBy: form.surveyBy,
+      vehicleType: form.vehicleType,
+      oilVendor: form.oilVendor,
+      slipNo: form.slipNo,
+      remarks: form.remarks,
+      cash: form.cash,
+      advance: form.cash,
+      oil: form.oil,
+      oilAdvance: form.oil,
+      others: form.others,
+      otherAdvance: form.others,
+      total: form.total,
+      commodity: form.commodity,
+      size: form.size,
+      type: form.type,
+      weight: form.weight,
+      joNo: form.joNo,
+      joDate: form.joDate
+    };
+
+    if (api.generateGR) {
+      api.generateGR(grPayload).then(res => {
+        if (res?.grNumber) {
+          setForm(prev => ({ ...prev, grNo: res.grNumber }));
+        }
+      }).catch(e => console.warn('generateGR API error:', e));
+    }
+
     if (onUpdateContainerGR) {
-      onUpdateContainerGR(
-        form.joNo,
-        form.contNo,
-        form.vehicleNo,
-        form.driver,
-        form.driverContactNo
-      );
+      onUpdateContainerGR(grPayload);
     }
 
     if (onSave) {
-      onSave(form);
+      onSave(grPayload);
     }
 
-    setSuccessMessage(`✓ Goods Receipt ${form.grNo ? form.grNo + ' ' : ''}saved successfully for ${form.contNo}!`);
+    setSuccessMessage(`✓ Goods Receipt ${form.grNo ? form.grNo + ' ' : ''}saved successfully with complete advance & routing!`);
   };
 
   return (

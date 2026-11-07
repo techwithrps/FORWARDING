@@ -794,40 +794,62 @@ export default function JobOrderWizardView({
   // Load Previous Booking for Edit
   const handleLoadForEdit = (prevJob) => {
     setForm({
-      ...form,
       joNo: prevJob.joNo || prevJob.id || form.joNo,
+      joDate: prevJob.joDate || prevJob.date || todayStr,
       joType: prevJob.joType || 'Export FCL',
       modeOfShipment: prevJob.modeOfShipment || 'Multimodal (Rail + Road)',
-      consignor: prevJob.customer || prevJob.consignor || '',
-      consignee: prevJob.consignee || consigneesList[0],
-      shippingLine: prevJob.shippingLine || prevJob.line || linesList[0],
-      lineBookingNo: prevJob.bookingNo || '',
+      consignor: prevJob.customer || prevJob.consignor || prevJob.customerName || '',
+      consignee: prevJob.consignee || prevJob.consigneeName || consigneesList[0],
+      shippingLine: prevJob.shippingLine || prevJob.shippingLineName || prevJob.line || linesList[0],
+      lineBookingNo: prevJob.bookingNo || prevJob.lineBookingNo || '',
+      bookingDate: prevJob.bookingDate || prevJob.joDate || todayStr,
+      bookingValidity: prevJob.bookingValidity || '',
+      bookingReValidity: prevJob.bookingReValidity || prevJob.bookingRevalidity || '',
+      emptyPickupLocation: prevJob.emptyPickupLocation || 'TRANSWORLD-DADRI',
       fromLocation: prevJob.fromLocation || prevJob.origin || 'Dadri ICD (INICD6)',
-      toLocation: prevJob.toLocation || 'Nhava Sheva-NSFT (INNSA1)',
+      toLocation: prevJob.toLocation || prevJob.podPort || 'Nhava Sheva-NSFT (INNSA1)',
+      handoverLocation: prevJob.handoverLocation || 'ADANI-PATLI',
       pol: prevJob.pol || 'INNSA1',
       pod: prevJob.podCode || prevJob.pod || 'AEJEA',
-      vesselName: prevJob.vessel || 'MAERSK COLOMBO',
+      vesselName: prevJob.vesselName || prevJob.vessel || 'MAERSK COLOMBO',
       voyage: prevJob.voyage || '2604W',
+      etdDate: prevJob.etdDate || '',
+      etaDate: prevJob.etaDate || '',
+      siCutDate: prevJob.siCutDate || '',
+      portCutDate: prevJob.portCutDate || '',
+      temperature: prevJob.temperature || '',
+      transporter: prevJob.transporter || 'AJINKYA TRANSPORT',
+      chaName: prevJob.chaName || '',
+      onAccount: prevJob.onAccount || '',
+      packageType: prevJob.packageType || 'Cartons',
+      cartons: prevJob.cartons !== undefined && prevJob.cartons !== null ? String(prevJob.cartons) : '',
+      cbm: prevJob.cbm !== undefined && prevJob.cbm !== null ? String(prevJob.cbm) : '',
+      fpod: prevJob.fpod || '',
+      hblNo: prevJob.hblNo || '',
+      boeNo: prevJob.boeNo || '',
+      commodity: prevJob.commodity || '',
       noOfCont: prevJob.containersCount || (prevJob.containers ? prevJob.containers.length : 1),
-      sellRate: String(prevJob.sellFreight || '145000'),
-      buyRate: String(prevJob.buyFreight || '118000')
+      sellRate: String(prevJob.sellRate || prevJob.sellFreight || '145000'),
+      buyRate: String(prevJob.buyRate || prevJob.buyFreight || '118000'),
+      remarks: prevJob.remarks || ''
     });
 
     if (prevJob.containers && prevJob.containers.length > 0) {
       setContainers(
         prevJob.containers.map((c, idx) => ({
           sr: idx + 1,
-          contNo: c.containerNo || c.contNo || '',
-          size: c.sizeType?.includes('20') ? '20' : '40',
-          type: c.sizeType?.includes('GP') ? 'GP' : 'HC',
-          tareWeight: c.tareWeight || 3820,
-          cargoWeight: c.cargoWeight || '24500',
-          grossWeight: c.grossWeight || '28320',
-          sealNo: c.sealNo || '',
-          vehicleNo: c.truckNo || '',
-          grNo: c.grNo || '',
-          grDate: todayStr,
-          remarks: ''
+          contNo: c.containerNo || c.contNo || c.no || '',
+          size: c.size || (c.sizeType?.includes('20') ? '20' : '40'),
+          type: c.type || (c.sizeType?.includes('GP') ? 'GP' : 'HC'),
+          tareWeight: c.tareWeight || c.tare || 3820,
+          cargoWeight: c.cargoWeight || c.cargo || '24500',
+          grossWeight: c.grossWeight || c.gross || '28320',
+          sealNo: c.sealNo || c.seal || '',
+          agentSeal: c.agentSeal || c.customSeal || '',
+          vehicleNo: c.truckNo || c.vehicleNo || c.truck || '',
+          grNo: c.grNo || c.grNumber || c.gr || '',
+          grDate: c.grDate ? (typeof c.grDate === 'string' && c.grDate.includes('T') ? c.grDate.split('T')[0] : c.grDate) : todayStr,
+          remarks: c.remarks || c.grRemarks || ''
         }))
       );
     }

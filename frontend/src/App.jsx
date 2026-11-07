@@ -66,12 +66,18 @@ export default function App() {
   const getInitialView = () => {
     try {
       const hash = window.location.hash.replace('#', '').trim();
-      if (hash) return hash;
+      // If stuck on GrGeneration, cleanly reset URL and state to Dashboard
+      if (hash === 'GrGeneration') {
+        window.history.replaceState(null, '', '#Dashboard');
+        try { localStorage.setItem('forwarder_active_view', 'Dashboard'); } catch {}
+        return 'Dashboard';
+      }
+      if (hash && hash !== 'Dashboard') return hash;
       const params = new URLSearchParams(window.location.search);
       const viewParam = params.get('view');
-      if (viewParam) return viewParam;
+      if (viewParam && viewParam !== 'GrGeneration') return viewParam;
       const saved = localStorage.getItem('forwarder_active_view');
-      if (saved) return saved;
+      if (saved && saved !== 'GrGeneration') return saved;
     } catch {
       // ignore
     }
@@ -132,13 +138,9 @@ export default function App() {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showInlinePartyModal, setShowInlinePartyModal] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState(null);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(() => {
-    // Show on initial load if not already dismissed in this session
-    return !sessionStorage.getItem('spj_v2_welcomed');
-  });
+  const [showWelcomeModal, setShowWelcomeModal] = useState(true);
 
   const handleDismissWelcome = () => {
-    sessionStorage.setItem('spj_v2_welcomed', 'true');
     setShowWelcomeModal(false);
   };
 
@@ -319,17 +321,38 @@ export default function App() {
         setJobs(bRes.value.data.map(j => ({
           id: j.id,
           joNo: j.joNo,
+          joType: j.joType || 'Export FCL',
+          modeOfShipment: j.modeOfShipment || 'Multimodal (Rail + Road)',
           bookingNo: j.bookingNo,
           customer: j.customerName || j.consignor,
           consignor: j.consignor,
+          customerName: j.customerName || j.consignor,
+          consignee: j.consignee || j.consigneeName || '',
+          consigneeName: j.consigneeName || j.consignee || '',
           line: j.shippingLineName || j.shippingLine,
           shippingLine: j.shippingLine,
+          shippingLineName: j.shippingLineName || j.shippingLine,
+          transporter: j.transporter || 'AJINKYA TRANSPORT',
           vessel: j.vessel,
+          vesselName: j.vessel,
           voyage: j.voyage,
           origin: j.fromLocation,
           fromLocation: j.fromLocation,
           pod: j.toLocation,
+          podPort: j.toLocation,
           toLocation: j.toLocation,
+          emptyPickupLocation: j.emptyPickupLocation || '',
+          handoverLocation: j.handoverLocation || '',
+          pol: j.pol || 'INNSA1',
+          commodity: j.commodity || '',
+          temperature: j.temperature || '',
+          bookingDate: j.bookingDate || '',
+          bookingValidity: j.bookingValidity || '',
+          bookingRevalidity: j.bookingRevalidity || '',
+          etdDate: j.etdDate || '',
+          etaDate: j.etaDate || '',
+          portCutDate: j.portCutDate || '',
+          siCutDate: j.siCutDate || '',
           chaName: j.chaName || '',
           onAccount: j.onAccount || '',
           packageType: j.packageType || 'Cartons',
@@ -343,6 +366,9 @@ export default function App() {
           status: j.status,
           sellFreight: j.sellFreight,
           buyFreight: j.buyFreight,
+          sellRate: j.sellRate || j.sellFreight,
+          buyRate: j.buyRate || j.buyFreight,
+          remarks: j.remarks || '',
           sbNo: j.sbNo,
           sbDate: j.sbDate,
           partyInvoiceNo: j.partyInvoiceNo,
@@ -354,22 +380,36 @@ export default function App() {
             id: c.id,
             no: c.containerNo,
             containerNo: c.containerNo,
-            size: c.sizeType,
+            size: c.size || c.sizeType,
+            type: c.type || 'HC',
             sizeType: c.sizeType,
             tare: c.tareWeight,
+            tareWeight: c.tareWeight,
             gross: c.grossWeight,
+            grossWeight: c.grossWeight,
             cargo: c.cargoWeight,
+            cargoWeight: c.cargoWeight,
             seal: c.sealNo,
             sealNo: c.sealNo,
             agentSeal: c.agentSeal || '',
             customSeal: c.agentSeal || '',
-            gr: c.grNumber,
-            grNumber: c.grNumber,
+            gr: c.grNumber || c.grNo || '',
+            grNo: c.grNumber || c.grNo || '',
+            grNumber: c.grNumber || c.grNo || '',
             grDate: c.grDate,
-            truck: c.truckNo,
-            truckNo: c.truckNo,
-            driverName: c.driverName,
-            driverMobile: c.driverMobile,
+            truck: c.truckNo || c.vehicleNo || '',
+            truckNo: c.truckNo || c.vehicleNo || '',
+            vehicleNo: c.truckNo || c.vehicleNo || '',
+            driverName: c.driverName || '',
+            driverMobile: c.driverMobile || '',
+            advance: c.advance || 0,
+            oilAdvance: c.oilAdvance || 0,
+            otherAdvance: c.otherAdvance || 0,
+            slipNo: c.slipNo || '',
+            oilVendor: c.oilVendor || '',
+            workshop: c.workshop || '',
+            cGr: c.cGr || '',
+            remarks: c.grRemarks || '',
             status: c.status
           }))
         })));
@@ -542,39 +582,88 @@ export default function App() {
           setJobs(refreshedBookings.data.map(j => ({
             id: j.id,
             joNo: j.joNo,
+            joType: j.joType || 'Export FCL',
+            modeOfShipment: j.modeOfShipment || 'Multimodal (Rail + Road)',
             bookingNo: j.bookingNo,
             customer: j.customerName || j.consignor,
             consignor: j.consignor,
+            customerName: j.customerName || j.consignor,
+            consignee: j.consignee || j.consigneeName || '',
+            consigneeName: j.consigneeName || j.consignee || '',
             line: j.shippingLineName || j.shippingLine,
             shippingLine: j.shippingLine,
+            shippingLineName: j.shippingLineName || j.shippingLine,
+            transporter: j.transporter || 'AJINKYA TRANSPORT',
             vessel: j.vessel,
+            vesselName: j.vessel,
             voyage: j.voyage,
             origin: j.fromLocation,
             fromLocation: j.fromLocation,
             pod: j.toLocation,
+            podPort: j.toLocation,
             toLocation: j.toLocation,
+            emptyPickupLocation: j.emptyPickupLocation || '',
+            handoverLocation: j.handoverLocation || '',
+            pol: j.pol || 'INNSA1',
+            commodity: j.commodity || '',
+            temperature: j.temperature || '',
+            bookingDate: j.bookingDate || '',
+            bookingValidity: j.bookingValidity || '',
+            bookingRevalidity: j.bookingRevalidity || '',
+            etdDate: j.etdDate || '',
+            etaDate: j.etaDate || '',
+            portCutDate: j.portCutDate || '',
+            siCutDate: j.siCutDate || '',
+            chaName: j.chaName || '',
+            onAccount: j.onAccount || '',
+            packageType: j.packageType || 'Cartons',
+            cartons: Number(j.cartons) || 0,
+            cbm: Number(j.cbm) || 0,
+            fpod: j.fpod || '',
+            boeNo: j.boeNo || '',
+            boeDate: j.boeDate || null,
+            hblNo: j.hblNo || '',
+            containersCount: j.containersCount || (j.containers ? j.containers.length : 1),
             status: j.status,
             sellFreight: j.sellFreight,
             buyFreight: j.buyFreight,
-            containersCount: j.containersCount,
+            sellRate: j.sellRate || j.sellFreight,
+            buyRate: j.buyRate || j.buyFreight,
+            remarks: j.remarks || '',
             containers: (j.containers || []).map(c => ({
               id: c.id,
               no: c.containerNo,
               containerNo: c.containerNo,
-              size: c.sizeType,
+              size: c.size || c.sizeType,
+              type: c.type || 'HC',
               sizeType: c.sizeType,
               tare: c.tareWeight,
+              tareWeight: c.tareWeight,
               gross: c.grossWeight,
+              grossWeight: c.grossWeight,
               cargo: c.cargoWeight,
+              cargoWeight: c.cargoWeight,
               seal: c.sealNo,
               sealNo: c.sealNo,
-              gr: c.grNumber || '',
-              grNumber: c.grNumber || '',
+              agentSeal: c.agentSeal || '',
+              customSeal: c.agentSeal || '',
+              gr: c.grNumber || c.grNo || '',
+              grNo: c.grNumber || c.grNo || '',
+              grNumber: c.grNumber || c.grNo || '',
               grDate: c.grDate,
-              truck: c.truckNo || '',
-              truckNo: c.truckNo || '',
+              truck: c.truckNo || c.vehicleNo || '',
+              truckNo: c.truckNo || c.vehicleNo || '',
+              vehicleNo: c.truckNo || c.vehicleNo || '',
               driverName: c.driverName || '',
               driverMobile: c.driverMobile || '',
+              advance: c.advance || 0,
+              oilAdvance: c.oilAdvance || 0,
+              otherAdvance: c.otherAdvance || 0,
+              slipNo: c.slipNo || '',
+              oilVendor: c.oilVendor || '',
+              workshop: c.workshop || '',
+              cGr: c.cGr || '',
+              remarks: c.grRemarks || '',
               status: c.status || 'ALLOTTED'
             }))
           })));
@@ -589,34 +678,48 @@ export default function App() {
     }
   };
 
-  const handleUpdateContainerGR = async (jobId, containerNo, truckNo, driverName, driverMobile) => {
+  const handleUpdateContainerGR = async (jobIdOrPayload, containerNo, truckNo, driverName, driverMobile) => {
     try {
-      await api.generateGR({
-        containerId: containerNo,
-        truckNo,
-        driverName,
-        driverMobile
-      });
+      let payload;
+      if (typeof jobIdOrPayload === 'object' && jobIdOrPayload !== null) {
+        payload = jobIdOrPayload;
+      } else {
+        payload = {
+          jobId: jobIdOrPayload,
+          containerId: containerNo,
+          contNo: containerNo,
+          truckNo,
+          driverName,
+          driverMobile
+        };
+      }
+      await api.generateGR(payload);
       await loadInitialData();
     } catch (err) {
       console.error('GR Generation API error:', err);
       // Local fallback
+      const jId = typeof jobIdOrPayload === 'object' ? (jobIdOrPayload.joNo || jobIdOrPayload.jobId) : jobIdOrPayload;
+      const cNo = typeof jobIdOrPayload === 'object' ? (jobIdOrPayload.contNo || jobIdOrPayload.containerId) : containerNo;
+      const trk = typeof jobIdOrPayload === 'object' ? (jobIdOrPayload.vehicleNo || jobIdOrPayload.truckNo) : truckNo;
+      const drv = typeof jobIdOrPayload === 'object' ? (jobIdOrPayload.driver || jobIdOrPayload.driverName) : driverName;
+      const phn = typeof jobIdOrPayload === 'object' ? (jobIdOrPayload.driverContactNo || jobIdOrPayload.driverMobile) : driverMobile;
+
       setJobs((prevJobs) =>
         prevJobs.map((j) => {
-          if (j.id === jobId || j.joNo === jobId) {
+          if (j.id === jId || j.joNo === jId) {
             return {
               ...j,
               status: 'STUFFED',
               containers: j.containers.map((c) =>
-                (c.no === containerNo || c.containerNo === containerNo)
+                (c.no === cNo || c.containerNo === cNo)
                   ? {
                       ...c,
                       gr: `GR-${Math.floor(1000 + Math.random() * 9000)}`,
                       grNumber: `GR-${Math.floor(1000 + Math.random() * 9000)}`,
-                      truck: truckNo || c.truck,
-                      truckNo: truckNo || c.truckNo,
-                      driverName: driverName || c.driverName,
-                      driverMobile: driverMobile || c.driverMobile,
+                      truck: trk || c.truck,
+                      truckNo: trk || c.truckNo,
+                      driverName: drv || c.driverName,
+                      driverMobile: phn || c.driverMobile,
                       status: 'STUFFED'
                     }
                   : c

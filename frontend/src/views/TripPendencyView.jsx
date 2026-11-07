@@ -62,18 +62,18 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
       contIndex: idx,
       contNo: cno || 'TBA',
       size: r.sizeType || '40HC',
-      customer: r.shipper || 'Consignor',
-      consignee: 'Consignee',
-      line: r.shippingLine || 'Shipping Line',
+      customer: r.shipper || 'Fair Exports (India) Pvt Ltd',
+      consignee: r.consignee || 'ASIAN PERAL MYANMAR CO. LTD.',
+      line: r.shippingLine || 'Maersk Line India Pvt Ltd',
       origin: r.origin || 'Dadri ICD',
       pod: r.destination || 'Port',
       bookingNo: r.bookingNo || '-',
-      sealNo: '',
-      cargoWeight: 24000,
+      sealNo: r.sealNo || '',
+      cargoWeight: r.cargoWeight || 24000,
       vehicleNo: r.truckNo || '',
       driverName: r.driverName || '',
       driverPhone: r.driverMobile || '',
-      transporter: 'Dadri Express Logistics'
+      transporter: r.transporter || 'AJINKYA TRANSPORT'
     });
   });
 
@@ -90,18 +90,18 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
           contIndex: idx,
           contNo: cno || 'TBA',
           size: c.size || c.sizeType || '40HC',
-          customer: job.customer || job.customerName || job.consignor || 'Consignor',
-          consignee: job.consignee || 'Consignee',
-          line: job.line || job.shippingLineName || job.shippingLine || 'Shipping Line',
+          customer: job.customer || job.customerName || job.consignor || 'Fair Exports (India) Pvt Ltd',
+          consignee: job.consignee || job.consigneeName || 'ASIAN PERAL MYANMAR CO. LTD.',
+          line: job.line || job.shippingLineName || job.shippingLine || 'Maersk Line India Pvt Ltd',
           origin: job.origin || job.fromLocation || 'Dadri ICD',
           pod: job.pod || job.toLocation || 'Port',
           bookingNo: job.bookingNo || '-',
-          sealNo: c.seal || c.sealNo || '',
+          sealNo: c.sealNo || c.seal || '',
           cargoWeight: c.cargoWeight || c.cargo || 24000,
-          vehicleNo: c.truck && c.truck !== 'TBA' ? c.truck : (c.truckNo || ''),
+          vehicleNo: c.truck && c.truck !== 'TBA' ? c.truck : (c.truckNo || c.vehicleNo || ''),
           driverName: c.driverName || '',
           driverPhone: c.driverMobile || '',
-          transporter: 'Dadri Express Logistics'
+          transporter: job.transporter || 'AJINKYA TRANSPORT'
         });
       }
     });
@@ -123,7 +123,24 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
       const driver = rowData.driverName || 'Ramesh Kumar';
       const phone = rowData.driverPhone || '9876543210';
       if (onUpdateContainerGR) {
-        await onUpdateContainerGR(item.jobId, item.contNo, vehicle, driver, phone);
+        await onUpdateContainerGR({
+          jobId: item.jobId,
+          joNo: item.joNo,
+          containerId: item.contNo,
+          contNo: item.contNo,
+          truckNo: vehicle,
+          vehicleNo: vehicle,
+          driverName: driver,
+          driver: driver,
+          driverMobile: phone,
+          driverContactNo: phone,
+          consignor: item.customer,
+          consignee: item.consignee,
+          transporter: item.transporter,
+          fromLocation: item.origin,
+          toLocation: item.pod,
+          handoverLocation: item.pod
+        });
         count++;
       }
     }

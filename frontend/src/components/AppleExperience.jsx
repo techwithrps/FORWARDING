@@ -380,7 +380,17 @@ export function AppleHelloPageTransition({ activeView }) {
       setVisible(false);
     }, 1300);
 
-    return () => clearTimeout(timer);
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        setVisible(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [activeView]);
 
   if (!visible || !meta) return null;
@@ -427,6 +437,18 @@ export function AppleHelloPageTransition({ activeView }) {
  * Appears when logging in or opening the platform
  */
 export function AppleWelcomeModal({ isOpen, onClose }) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        e.preventDefault();
+        onClose?.();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
