@@ -76,9 +76,7 @@ export function clearPanvayaCache() {
   } catch (e) {}
 }
 
-const RENDER_BACKEND = (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL)
-  ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "")
-  : (typeof window !== "undefined" ? `http://${window.location.hostname}:5001` : "http://localhost:5001");
+const RENDER_BACKEND = 'https://territory-traveler-mistress-hostel.trycloudflare.com';
 
 async function requestPanvaya(endpoint, options = {}) {
   const apiKey = getPanvayaApiKey();

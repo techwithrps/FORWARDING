@@ -1,7 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL ||
-  (typeof window !== 'undefined'
-    ? `http://${window.location.hostname}:5001/api/v1`
-    : 'http://localhost:5001/api/v1');
+const API_BASE = import.meta.env.VITE_API_URL || 'https://territory-traveler-mistress-hostel.trycloudflare.com/api/v1';
 
 // Helper for fetch with reasonable timeout and error handling
 async function request(endpoint, options = {}) {
