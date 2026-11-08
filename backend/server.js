@@ -64,8 +64,14 @@ app.get('/debug-network', (req, res) => {
   socket.connect(port, host);
 });
 
-// Root
-app.get('/', (req, res) => {
+const path = require('path');
+
+// Serve static frontend files from parent folder (C:\inetpub\wwwroot\Forwarder2.O)
+const staticPath = path.join(__dirname, '..');
+app.use(express.static(staticPath));
+
+// API Info endpoint
+app.get('/api', (req, res) => {
   res.json({
     message: 'Welcome to Forwarder 2.0 (eLOGiFreight™) Core API Engine',
     version: '2.0.0',
@@ -87,9 +93,17 @@ app.use('/api/v1/operations', operationsRouter);
 app.use('/api/v1/commercial', commercialRouter);
 app.use('/api/v1/empty', emptyRouter);
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: `Route not found: ${req.method} ${req.url}` });
+// Fallback for SPA routing: send index.html if file exists, else 404
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api') || req.url.startsWith('/health') || req.url.startsWith('/debug')) {
+    return res.status(404).json({ success: false, message: `Route not found: ${req.method} ${req.url}` });
+  }
+  const indexPath = path.join(staticPath, 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      res.status(404).json({ success: false, message: `Route not found: ${req.method} ${req.url}` });
+    }
+  });
 });
 
 // Error handler
