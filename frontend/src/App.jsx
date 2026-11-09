@@ -133,6 +133,7 @@ export default function App() {
   const [copilotFillData, setCopilotFillData] = useState(null);
   const [copilotClearTrigger, setCopilotClearTrigger] = useState(0);
   const [triggerGenerateInvoice, setTriggerGenerateInvoice] = useState(0);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [userRole, setUserRole] = useState('ADMIN'); // 'ADMIN' or 'OPERATIONS'
   const [currentBranch, setCurrentBranch] = useState('Dadri ICD (INICD6)');
   const [showCommandPalette, setShowCommandPalette] = useState(false);
@@ -784,6 +785,7 @@ export default function App() {
           onToggleSidebar={() => setSidebarOpen(prev => !prev)}
           onSelectView={(view) => setActiveView(view)}
           onOpenPartyModal={() => setShowInlinePartyModal(true)}
+          onToggleCopilot={() => setIsCopilotOpen(prev => !prev)}
           jobs={jobs}
           parties={parties}
           onSelectJob={(id) => {
@@ -880,6 +882,25 @@ export default function App() {
               jobs={jobs}
               onUpdateContainerGR={handleUpdateContainerGR}
               onNewBookingClick={() => setActiveView('ContainerBooking')}
+              onNavigateToGrGeneration={(selectedContainers) => {
+                const list = Array.isArray(selectedContainers) ? selectedContainers : [selectedContainers];
+                const primary = list[0] || {};
+                setSelectedGrForEdit({
+                  ...primary,
+                  selectedContainersList: list,
+                  cont_no: list.map(c => c.contNo).join(', '),
+                  cont_size: primary.size || '40',
+                  weight: list.reduce((sum, c) => sum + (Number(c.cargoWeight) || 24000), 0),
+                  customer: primary.customer,
+                  consignee: primary.consignee,
+                  shippingLine: primary.line,
+                  from_location: primary.origin,
+                  to_location: primary.pod,
+                  jo_no: primary.joNo,
+                  jo_date: primary.joDate
+                });
+                setActiveView('GrGeneration');
+              }}
             />
           )}
 
@@ -1048,6 +1069,8 @@ export default function App() {
 
       {/* ================= AI LOGISTICS COPILOT (LIVE FORM FILL & STATUS) ================= */}
       <AICopilot
+        isOpen={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
         jobs={jobs}
         parties={parties}
         activeView={activeView}

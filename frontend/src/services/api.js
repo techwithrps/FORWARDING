@@ -199,6 +199,11 @@ export const api = {
   approveTariff: (id, data) => request(`/masters/tariffs/${id}/approve`, { method: 'PUT', body: JSON.stringify(data) }),
 
   // 34-Page Lifecycle Operations
+  getRunningPosition: () => request('/operations/running-position'),
+  getTripClose: () => request('/operations/trip-close'),
+  getEdiData: () => request('/operations/edi-update'),
+  getRailOutData: () => request('/operations/rail-out'),
+  getVesselPlanData: () => request('/operations/vessel-plan'),
   updateRunningPosition: (payload) => request('/operations/running-position', { method: 'POST', body: JSON.stringify(payload) }),
   updateTripClose: (payload) => request('/operations/trip-close', { method: 'POST', body: JSON.stringify(payload) }),
   updateEdi: (payload) => request('/operations/edi-update', { method: 'POST', body: JSON.stringify(payload) }),

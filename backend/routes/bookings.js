@@ -145,11 +145,11 @@ router.post('/', async (req, res) => {
         cha_name, on_account, package_type, cartons, cbm, fpod, hbl_no, boe_no, boe_date,
         jo_type, mode_of_shipment, transporter, booking_date, booking_validity, booking_revalidity,
         empty_pickup_location, handover_location, etd_date, eta_date, si_cut_date, port_cut_date,
-        sell_rate, buy_rate
+        services_required, sell_rate, buy_rate
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
         $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36,
-        $37, $38, $39, $40, $41, $42
+        $37, $38, $39, $40, $41, $42, $43
       ) RETURNING *;
     `;
     const jobValues = [
@@ -193,6 +193,7 @@ router.post('/', async (req, res) => {
       b.etaDate || '',
       b.siCutDate || '',
       b.portCutDate || '',
+      Array.isArray(b.servicesRequired) ? b.servicesRequired.join(', ') : (b.servicesRequired || 'Transport, Clearance, Rail, Forwarding'),
       Number(b.sellRate) || Number(b.sellFreight) || 0,
       Number(b.buyRate) || Number(b.buyFreight) || 0
     ];

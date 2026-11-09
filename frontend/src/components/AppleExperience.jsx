@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import spjLogo from '../assets/spj-logo.png';
 import { HelloEffect } from '@/components/ui/hello-effect';
 import {
   LayoutDashboard,
@@ -472,7 +473,7 @@ export function AppleWelcomeModal({ isOpen, onClose }) {
         {/* Official SPJ Group of Companies Logo (Transparent & Prominent) */}
         <div className="flex justify-center items-center pt-2 pb-1 relative z-10">
           <img
-            src="/spj-logo.png"
+            src={spjLogo}
             alt="SPJ Group of Companies"
             className="h-16 sm:h-20 md:h-24 w-auto max-w-[360px] sm:max-w-[420px] object-contain select-none"
             style={{ mixBlendMode: 'multiply' }}

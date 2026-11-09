@@ -17,7 +17,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNewBookingClick }) {
+export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNewBookingClick, onNavigateToGrGeneration }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [customerFilter, setCustomerFilter] = useState('ALL');
   const [activeGrModal, setActiveGrModal] = useState(null); // Container for printable GR modal
@@ -59,6 +59,7 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
     pendingContainers.push({
       jobId: r.jobNo || r.id,
       joNo: r.jobNo || r.id,
+      joDate: r.joDate || r.bookingDate || '',
       contIndex: idx,
       contNo: cno || 'TBA',
       size: r.sizeType || '40HC',
@@ -73,7 +74,8 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
       vehicleNo: r.truckNo || '',
       driverName: r.driverName || '',
       driverPhone: r.driverMobile || '',
-      transporter: r.transporter || 'AJINKYA TRANSPORT'
+      transporter: r.transporter || 'AJINKYA TRANSPORT',
+      rawRecord: r
     });
   });
 
@@ -87,6 +89,7 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
         pendingContainers.push({
           jobId: job.id,
           joNo: job.joNo || job.id,
+          joDate: job.joDate || job.bookingDate || (job.createdAt ? job.createdAt.split('T')[0] : '') || '',
           contIndex: idx,
           contNo: cno || 'TBA',
           size: c.size || c.sizeType || '40HC',
@@ -101,7 +104,8 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
           vehicleNo: c.truck && c.truck !== 'TBA' ? c.truck : (c.truckNo || c.vehicleNo || ''),
           driverName: c.driverName || '',
           driverPhone: c.driverMobile || '',
-          transporter: job.transporter || 'AJINKYA TRANSPORT'
+          transporter: job.transporter || 'AJINKYA TRANSPORT',
+          rawRecord: c
         });
       }
     });
@@ -290,11 +294,27 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
             </select>
           </div>
 
-          <div className="flex items-center justify-between sm:justify-end gap-2 text-xs">
+          <div className="flex items-center justify-between sm:justify-end gap-2 text-xs flex-wrap">
             {batchNotice && (
               <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md font-mono">
                 {batchNotice}
               </span>
+            )}
+
+            {selectedItems.length > 0 && onNavigateToGrGeneration && (
+              <button
+                type="button"
+                onClick={() => {
+                  const targets = filtered.filter(item => selectedItems.includes(item.jobId + '-' + item.contIndex));
+                  onNavigateToGrGeneration(targets);
+                }}
+                className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+                title="Open GR Generation screen for selected container(s)"
+              >
+                <Truck className="w-3.5 h-3.5" />
+                <span>Generate GR ({selectedItems.length} selected)</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             )}
 
             {filtered.length > 0 && (
@@ -305,7 +325,7 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
                 title="1-Click: Generates GR bilty, assigns trucks, and dispatches all selected units!"
               >
                 <Zap className="w-3.5 h-3.5" />
-                <span>⚡ Batch Generate GRs ({selectedItems.length || filtered.length})</span>
+                <span>⚡ Auto-Dispatch All ({selectedItems.length || filtered.length})</span>
               </button>
             )}
           </div>
@@ -334,6 +354,7 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
                 </th>
                 <th className="p-2.5 font-semibold text-center w-8">Sr.</th>
                 <th className="p-2.5 font-semibold min-w-[100px]">JO No</th>
+                <th className="p-2.5 font-semibold min-w-[95px]">JO Date</th>
                 <th className="p-2.5 font-semibold min-w-[120px]">Cont No</th>
                 <th className="p-2.5 font-semibold min-w-[70px]">Size/Type</th>
                 <th className="p-2.5 font-semibold min-w-[130px]">Customer (Consignor)</th>
@@ -344,7 +365,7 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
             <tbody className="divide-y divide-slate-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-10 text-center text-slate-400 font-sans">
+                  <td colSpan={9} className="p-10 text-center text-slate-400 font-sans">
                     <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
                     <p className="font-medium text-slate-700 text-sm">No Pending Trips!</p>
                     <p className="text-xs text-slate-400 mt-0.5">
@@ -370,14 +391,21 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
                       </td>
                       <td className="p-2 text-center text-slate-500 font-mono">{idx + 1}</td>
                       <td className="p-2 font-mono font-bold text-blue-700">{item.joNo || item.jobId}</td>
+                      <td className="p-2 font-mono text-slate-600 text-[11px] whitespace-nowrap">{item.joDate || '-'}</td>
                       <td className="p-2 font-mono font-bold text-[rgb(25,40,57)]">{item.contNo}</td>
                       <td className="p-2 font-mono text-slate-600">{item.size}</td>
                       <td className="p-2 font-medium text-[rgb(25,40,57)]">{item.customer}</td>
                       <td className="p-2 text-slate-700">{item.line}</td>
                       <td className="p-2 text-right">
                         <button
-                          onClick={() => handleGenerateGr(item)}
-                          className="px-3 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-1 shadow-xs transition ml-auto"
+                          onClick={() => {
+                            if (onNavigateToGrGeneration) {
+                              onNavigateToGrGeneration([item]);
+                            } else {
+                              handleGenerateGr(item);
+                            }
+                          }}
+                          className="px-3 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-1 shadow-xs transition ml-auto cursor-pointer"
                         >
                           <Truck className="w-3 h-3" />
                           <span>Generate GR</span>

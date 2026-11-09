@@ -9,8 +9,18 @@ import {
   Layers,
   Building2,
   Search,
-  Clock
+  Clock,
+  Printer,
+  PlusCircle,
+  RotateCcw,
+  X,
+  Check,
+  Lock,
+  Unlock,
+  FileText,
+  ShieldCheck
 } from 'lucide-react';
+import spjLogo from '../assets/spj-logo.png';
 import api from '../services/api.js';
 
 export default function GrGenerationView({
@@ -132,8 +142,12 @@ export default function GrGenerationView({
   const [form, setForm] = useState(initialFormState);
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [selectedContainers, setSelectedContainers] = useState([]);
+  const [isSavedLocked, setIsSavedLocked] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showContainerPickerModal, setShowContainerPickerModal] = useState(false);
 
-  // Sync form when opening an existing GR from GR Searching
+  // Sync form when opening an existing GR from GR Searching or pre-filling from Trip Pendency
   useEffect(() => {
     if (initialGrData && (initialGrData.gr_no || initialGrData.grNo)) {
       setForm({
@@ -159,7 +173,7 @@ export default function GrGenerationView({
         licenseValidity: initialGrData.license_validity || initialGrData.licenseValidity || '',
         workshop: initialGrData.workshop || '',
         joFor: initialGrData.jo_for || 'Shifting',
-        surveyBy: initialGrData.survey_by || '',
+        surveyBy: initialGrData.survey_by || initialGrData.surveyBy || '',
         vehicleType: initialGrData.vh_type || initialGrData.vehicleType || 'T40',
         oilVendor: initialGrData.oil_vendor || initialGrData.oilVendor || '',
         slipNo: initialGrData.slip_no || initialGrData.slipNo || '',
@@ -169,17 +183,47 @@ export default function GrGenerationView({
         others: String(initialGrData.other_advance || initialGrData.others || '0'),
         balance: '0',
         total: String((parseFloat(initialGrData.advance || initialGrData.cash) || 0) + (parseFloat(initialGrData.oil_advance || initialGrData.oil) || 0) + (parseFloat(initialGrData.other_advance || initialGrData.others) || 0)),
-        otherAdvance: '',
+        otherAdvance: initialGrData.other_advance_reason || initialGrData.other_reason || initialGrData.otherAdvance || (initialGrData.other_advance && initialGrData.other_advance !== '0' ? 'Other Advance' : ''),
         grId: String(initialGrData.gr_id || initialGrData.grId || '')
       });
+      if (initialGrData.selectedContainersList) {
+        setSelectedContainers(initialGrData.selectedContainersList);
+      }
       setIsEditing(true);
+      setIsSavedLocked(false);
       setSuccessMessage(`Viewing details for Goods Receipt #${initialGrData.gr_no || initialGrData.grNo}`);
+    } else if (initialGrData && initialGrData.selectedContainersList) {
+      // Coming from Trip Pendency multi-selection
+      const list = initialGrData.selectedContainersList;
+      setSelectedContainers(list);
+      const primary = list[0] || {};
+      const totalWt = list.reduce((sum, item) => sum + (parseFloat(item.cargoWeight || item.weight) || 24000), 0);
+      setForm(prev => ({
+        ...prev,
+        contNo: list.map(c => c.contNo).join(', '),
+        size: list.length === 2 ? '20*2' : (primary.size || '40'),
+        weight: String(totalWt),
+        consignor: primary.customer || prev.consignor,
+        consignee: primary.consignee || prev.consignee,
+        transporter: primary.transporter || prev.transporter,
+        fromLocation: primary.origin || prev.fromLocation,
+        toLocation: primary.pod || prev.toLocation,
+        joNo: primary.joNo || prev.joNo,
+        joDate: primary.joDate || prev.joDate || todayDateStr,
+        vehicleNo: primary.vehicleNo || prev.vehicleNo,
+        driver: primary.driverName || prev.driver,
+        driverContactNo: primary.driverPhone || prev.driverContactNo
+      }));
+      setIsSavedLocked(false);
+      setSuccessMessage(`Loaded ${list.length} container(s) from Trip Pendency for GR Generation`);
     }
   }, [initialGrData, todayDateStr]);
 
   const handleResetToNew = () => {
     setForm(initialFormState);
     setIsEditing(false);
+    setIsSavedLocked(false);
+    setSelectedContainers([]);
     setFormError('');
     setSuccessMessage('');
     if (onClearInitialGr) onClearInitialGr();
@@ -526,6 +570,68 @@ export default function GrGenerationView({
     'General Cargo (FAK)'
   ];
 
+  // Multi-Container Selection with Vehicle Size Capacity Check: 20*2 or 40*1
+  const handleToggleContainer = (c) => {
+    setFormError('');
+    const cNo = (c.contNo || c.containerNo || '').trim().toUpperCase();
+    if (!cNo) return;
+
+    const isAlready = selectedContainers.some(sc => (sc.contNo || sc.containerNo || '').toUpperCase() === cNo);
+    if (isAlready) {
+      // Unselect
+      const remaining = selectedContainers.filter(sc => (sc.contNo || sc.containerNo || '').toUpperCase() !== cNo);
+      setSelectedContainers(remaining);
+      if (remaining.length === 0) {
+        setForm(prev => ({ ...prev, contNo: '', size: '40', weight: '24500' }));
+      } else {
+        const primary = remaining[0];
+        const totalWt = remaining.reduce((sum, item) => sum + (parseFloat(item.weight || item.cargoWeight) || 24000), 0);
+        setForm(prev => ({
+          ...prev,
+          contNo: remaining.map(x => x.contNo).join(', '),
+          size: remaining.length === 2 ? '20*2' : (primary.size || '20'),
+          weight: String(totalWt)
+        }));
+      }
+      return;
+    }
+
+    // Vehicle size check: user can select 20*2 or 40*1
+    const is40 = String(c.size || '').includes('40') || String(c.type || '').includes('40');
+    const is20 = String(c.size || '').includes('20') || String(c.type || '').includes('20');
+
+    if (selectedContainers.length === 0) {
+      // First container: allowed
+      setSelectedContainers([c]);
+      handleContNoChange(c.contNo);
+    } else if (selectedContainers.length === 1) {
+      const existing = selectedContainers[0];
+      const existingIs40 = String(existing.size || '').includes('40') || String(existing.type || '').includes('40');
+      const existingIs20 = String(existing.size || '').includes('20') || String(existing.type || '').includes('20');
+
+      if (existingIs40) {
+        setFormError('Trailer Capacity Reached: A trailer carrying a 40ft container is at maximum capacity (40*1). Cannot load another container.');
+        return;
+      }
+      if (is40) {
+        setFormError('Trailer Capacity Conflict: Cannot mix 40ft and 20ft containers on the same vehicle! (Rule: 20*2 or 40*1).');
+        return;
+      }
+      // Both are 20ft -> Allow 20*2!
+      const newSel = [...selectedContainers, c];
+      setSelectedContainers(newSel);
+      const totalWt = (parseFloat(existing.weight || 24000) || 0) + (parseFloat(c.weight || 24000) || 0);
+      setForm(prev => ({
+        ...prev,
+        contNo: newSel.map(x => x.contNo).join(', '),
+        size: '20*2',
+        weight: String(totalWt)
+      }));
+    } else {
+      setFormError('Trailer Capacity Reached: Vehicle is at maximum capacity! Only two 20ft containers (20*2) or one 40ft container (40*1) allowed.');
+    }
+  };
+
   // Auto-fill when container is selected
   const handleContNoChange = (selectedContNo) => {
     setFormError('');
@@ -700,6 +806,7 @@ export default function GrGenerationView({
     }
 
     setSuccessMessage(`✓ Goods Receipt ${form.grNo ? form.grNo + ' ' : ''}saved successfully with complete advance & routing!`);
+    setIsSavedLocked(true);
   };
 
   return (
@@ -720,13 +827,37 @@ export default function GrGenerationView({
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs">
+        <div className="flex items-center gap-1.5 text-xs flex-wrap">
           {successMessage && (
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3 shrink-0" />
               <span className="truncate max-w-[260px]">{successMessage}</span>
             </span>
           )}
+
+          {/* Print GR Old Application Format Button (Requirement 6) */}
+          {form.grNo && (
+            <button
+              type="button"
+              onClick={() => setShowPrintModal(true)}
+              className="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-black active:scale-95 text-white font-extrabold text-[11px] flex items-center gap-1.5 border border-slate-800 shadow-2xs transition cursor-pointer select-none"
+              title="Print Goods Receipt in Classic Old Application Format"
+            >
+              <Printer className="w-3.5 h-3.5 text-cyan-300" />
+              <span>Print GR</span>
+            </button>
+          )}
+
+          {/* Clear / New GR Button (Requirement 4) */}
+          <button
+            type="button"
+            onClick={handleResetToNew}
+            className="px-2.5 py-1 rounded-md bg-white hover:bg-slate-50 text-slate-700 font-bold text-[11px] border border-slate-300 flex items-center gap-1 transition cursor-pointer"
+            title="Clear form for fresh blank entry"
+          >
+            <RotateCcw className="w-3 h-3 text-slate-500" />
+            <span>Clear / New</span>
+          </button>
 
           {/* Quick Navigation to GR Searching if available */}
           {onNavigateToGrSearching && (
@@ -755,6 +886,58 @@ export default function GrGenerationView({
           )}
         </div>
       </div>
+
+      {/* Screen Disabled / Form Locked Banner after Save (Requirement 4) */}
+      {isSavedLocked && (
+        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 shadow-xs flex flex-wrap items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5">
+            <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-black text-xs flex items-center justify-center shadow-xs shrink-0">
+              <Check className="w-4 h-4 stroke-[3]" />
+            </span>
+            <div>
+              <div className="text-xs font-black text-emerald-950 flex items-center gap-2 flex-wrap">
+                <span>Record Saved Successfully: {form.grNo}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900 font-bold border border-emerald-400">
+                  Form Disabled
+                </span>
+              </div>
+              <div className="text-[11px] text-emerald-800 font-medium">
+                Record is saved in database. Screen is disabled to avoid duplicate entries. You can print the GR or clear the screen for next entry.
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowPrintModal(true)}
+              className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <Printer className="w-3.5 h-3.5 text-cyan-300" />
+              <span>Print Old GR Format</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResetToNew}
+              className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>+ Clear Screen / Next GR</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsSavedLocked(false)}
+              className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-300 transition cursor-pointer"
+              title="Unlock form to edit fields"
+            >
+              <Unlock className="w-3 h-3 text-slate-500" />
+              <span>Unlock</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Error Alert */}
       {formError && (
@@ -823,26 +1006,62 @@ export default function GrGenerationView({
 
           {/* Row 1: Cont No, Size/Type, Weight, Commodity */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-            {/* Cont No */}
+            {/* Cont No with Multi-Selection & Capacity Check (Requirement 5 & 8) */}
             <div>
-              <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Cont No <span className="text-rose-500 font-bold">*</span>
-              </label>
-              <select
-                value={form.contNo}
-                onChange={(e) => handleContNoChange(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
-              >
-                <option value="">-- Select Container ({containerOptions.length} Pending) --</option>
-                {containerOptions.map((c) => (
-                  <option key={c.contNo} value={c.contNo}>
-                    {c.displayLabel || `${c.contNo} - ${c.joNo || 'JO'}`} ({c.size}{c.type || ''} • {c.consignor ? c.consignor.slice(0, 20) : 'Standard'})
-                  </option>
-                ))}
-                {form.contNo && !containerOptions.some(c => c.contNo === form.contNo) && (
-                  <option value={form.contNo}>{form.contNo}</option>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                  <span>Cont No</span>
+                  <span className="text-rose-500 font-bold">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowContainerPickerModal(true)}
+                  disabled={isSavedLocked}
+                  className="text-[10px] font-extrabold text-blue-600 hover:text-blue-800 flex items-center gap-0.5 cursor-pointer disabled:opacity-50"
+                  title="Multi-select containers with vehicle capacity check (20*2 or 40*1)"
+                >
+                  <Layers className="w-3 h-3 text-blue-600" />
+                  <span>Multi-Select ({selectedContainers.length || (form.contNo ? 1 : 0)})</span>
+                </button>
+              </div>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  list="container-options-list"
+                  placeholder="Select or type Cont No..."
+                  value={form.contNo}
+                  disabled={isSavedLocked}
+                  onChange={(e) => handleContNoChange(e.target.value)}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
+                />
+                <datalist id="container-options-list">
+                  {containerOptions.map((c) => (
+                    <option key={c.contNo} value={c.contNo}>
+                      {c.displayLabel || `${c.contNo} - ${c.joNo || 'JO'}`} ({c.size}{c.type || ''} • {c.consignor ? c.consignor.slice(0, 20) : 'Standard'})
+                    </option>
+                  ))}
+                </datalist>
+              </div>
+
+              {/* Capacity indicator badge */}
+              <div className="flex items-center gap-1 mt-1 flex-wrap">
+                {selectedContainers.length > 0 ? (
+                  <span className={`px-1.5 py-0.2 rounded text-[9px] font-mono font-bold ${
+                    selectedContainers.length === 2
+                      ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                      : String(form.size).includes('40')
+                      ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                      : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                  }`}>
+                    {selectedContainers.length === 2 ? 'Trailer: 20*2 [FULL]' : String(form.size).includes('40') ? 'Trailer: 40*1 [FULL]' : 'Trailer: 20*1 (Can add 1 more 20ft)'}
+                  </span>
+                ) : (
+                  <span className="text-[9px] text-slate-400 font-medium">
+                    Rule: 20*2 or 40*1 per vehicle
+                  </span>
                 )}
-              </select>
+              </div>
             </div>
 
             {/* Size/Type (Split/Multi-box) */}
@@ -992,126 +1211,144 @@ export default function GrGenerationView({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {/* Consignor */}
+            {/* Consignor (Auto Search like Commodity) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Consignor
               </label>
-              <select
-                value={form.consignor}
-                onChange={(e) => setForm({ ...form, consignor: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
-              >
-                <option value="">-- Select Consignor --</option>
-                {liveConsignors.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-                {form.consignor && !liveConsignors.includes(form.consignor) && (
-                  <option value={form.consignor}>{form.consignor}</option>
-                )}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-consignor-list"
+                  placeholder="Type or select Consignor..."
+                  value={form.consignor}
+                  disabled={isSavedLocked}
+                  onChange={(e) => setForm({ ...form, consignor: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
+                />
+                <datalist id="live-consignor-list">
+                  {liveConsignors.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
+              </div>
             </div>
 
-            {/* Consignee */}
+            {/* Consignee (Auto Search like Commodity) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Consignee
               </label>
-              <select
-                value={form.consignee}
-                onChange={(e) => setForm({ ...form, consignee: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
-              >
-                <option value="">-- Select Consignee --</option>
-                {liveConsignees.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-                {form.consignee && !liveConsignees.includes(form.consignee) && (
-                  <option value={form.consignee}>{form.consignee}</option>
-                )}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-consignee-list"
+                  placeholder="Type or select Consignee..."
+                  value={form.consignee}
+                  disabled={isSavedLocked}
+                  onChange={(e) => setForm({ ...form, consignee: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
+                />
+                <datalist id="live-consignee-list">
+                  {liveConsignees.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
+              </div>
             </div>
 
-            {/* Transporter */}
+            {/* Transporter (Auto Search like Commodity) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Transporter
               </label>
-              <select
-                value={form.transporter}
-                onChange={(e) => setForm({ ...form, transporter: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
-              >
-                <option value="">-- Select Transporter --</option>
-                {liveTransporters.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-                {form.transporter && !liveTransporters.includes(form.transporter) && (
-                  <option value={form.transporter}>{form.transporter}</option>
-                )}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-transporter-list"
+                  placeholder="Type or select Transporter..."
+                  value={form.transporter}
+                  disabled={isSavedLocked}
+                  onChange={(e) => setForm({ ...form, transporter: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
+                />
+                <datalist id="live-transporter-list">
+                  {liveTransporters.map((t) => (
+                    <option key={t} value={t} />
+                  ))}
+                </datalist>
+              </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1.5 border-t border-slate-100">
-            {/* From Location */}
+            {/* From Location (Auto Search like Commodity) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 From Location
               </label>
-              <select
-                value={form.fromLocation}
-                onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
-              >
-                <option value="">-- Select From Location --</option>
-                {fromLocationList.map((loc) => (
-                  <option key={loc} value={loc}>{loc}</option>
-                ))}
-                {form.fromLocation && !fromLocationList.includes(form.fromLocation) && (
-                  <option value={form.fromLocation}>{form.fromLocation}</option>
-                )}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-from-list"
+                  placeholder="Type or select From Location..."
+                  value={form.fromLocation}
+                  disabled={isSavedLocked}
+                  onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
+                />
+                <datalist id="live-from-list">
+                  {fromLocationList.map((loc) => (
+                    <option key={loc} value={loc} />
+                  ))}
+                </datalist>
+              </div>
             </div>
 
-            {/* To Location */}
+            {/* To Location (Auto Search like Commodity) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 To Location
               </label>
-              <select
-                value={form.toLocation}
-                onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
-              >
-                <option value="">-- Select To Location --</option>
-                {toLocationList.map((loc) => (
-                  <option key={loc} value={loc}>{loc}</option>
-                ))}
-                {form.toLocation && !toLocationList.includes(form.toLocation) && (
-                  <option value={form.toLocation}>{form.toLocation}</option>
-                )}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-to-list"
+                  placeholder="Type or select To Location..."
+                  value={form.toLocation}
+                  disabled={isSavedLocked}
+                  onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
+                />
+                <datalist id="live-to-list">
+                  {toLocationList.map((loc) => (
+                    <option key={loc} value={loc} />
+                  ))}
+                </datalist>
+              </div>
             </div>
 
-            {/* Handover Location */}
+            {/* Handover Location (Auto Search like Commodity) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Handover Location
               </label>
-              <select
-                value={form.handoverLocation}
-                onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
-              >
-                <option value="">-- Select Handover Location --</option>
-                {handoverLocationList.map((loc) => (
-                  <option key={loc} value={loc}>{loc}</option>
-                ))}
-                {form.handoverLocation && !handoverLocationList.includes(form.handoverLocation) && (
-                  <option value={form.handoverLocation}>{form.handoverLocation}</option>
-                )}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-handover-list"
+                  placeholder="Type or select Handover Location..."
+                  value={form.handoverLocation}
+                  disabled={isSavedLocked}
+                  onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
+                />
+                <datalist id="live-handover-list">
+                  {handoverLocationList.map((loc) => (
+                    <option key={loc} value={loc} />
+                  ))}
+                </datalist>
+              </div>
             </div>
           </div>
         </div>
@@ -1131,51 +1368,51 @@ export default function GrGenerationView({
 
           {/* Row 1: Vehicle No, Driver, Driver Contact No, License Validity */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-            {/* Vehicle No (Dropdown Selector with Auto-Fill Driver, Contact & License) */}
+            {/* Vehicle No (Auto Search like Commodity with Auto-Fill Driver & License) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Vehicle No
               </label>
-              <select
-                value={form.vehicleNo}
-                onChange={(e) => handleVehicleChange(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold uppercase outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
-              >
-                <option value="">-- SELECT VEHICLE NO --</option>
-                {liveVehicles.map((v) => {
-                  const tNo = typeof v === 'object' ? v.truckNo : v;
-                  return (
-                    <option key={tNo} value={tNo}>
-                      {tNo}
-                    </option>
-                  );
-                })}
-                {form.vehicleNo && !liveVehicles.some(v => (v.truckNo || v) === form.vehicleNo) && (
-                  <option value={form.vehicleNo}>{form.vehicleNo}</option>
-                )}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-vehicle-list"
+                  placeholder="Type or select Vehicle No..."
+                  value={form.vehicleNo}
+                  disabled={isSavedLocked}
+                  onChange={(e) => handleVehicleChange(e.target.value)}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold uppercase outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
+                />
+                <datalist id="live-vehicle-list">
+                  {liveVehicles.map((v) => {
+                    const tNo = typeof v === 'object' ? v.truckNo : v;
+                    return <option key={tNo} value={tNo} />;
+                  })}
+                </datalist>
+              </div>
             </div>
 
-            {/* Driver (Dropdown Selector with Auto-Fill Contact & License, Required *) */}
+            {/* Driver (Auto Search like Commodity, Required *) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Driver <span className="text-rose-500 font-bold">*</span>
               </label>
-              <select
-                value={form.driver}
-                onChange={(e) => handleDriverChange(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all truncate"
-              >
-                <option value="">-- Select Driver --</option>
-                {liveDrivers.map((d) => (
-                  <option key={d.name} value={d.name}>
-                    {d.name}
-                  </option>
-                ))}
-                {form.driver && !liveDrivers.some(d => d.name === form.driver) && (
-                  <option value={form.driver}>{form.driver}</option>
-                )}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-driver-list"
+                  placeholder="Type or select Driver..."
+                  value={form.driver}
+                  disabled={isSavedLocked}
+                  onChange={(e) => handleDriverChange(e.target.value)}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
+                />
+                <datalist id="live-driver-list">
+                  {liveDrivers.map((d) => (
+                    <option key={d.name} value={d.name} />
+                  ))}
+                </datalist>
+              </div>
             </div>
 
             {/* Driver Contact No */}
@@ -1187,8 +1424,9 @@ export default function GrGenerationView({
                 type="text"
                 placeholder="10-digit Mobile No"
                 value={form.driverContactNo}
+                disabled={isSavedLocked}
                 onChange={(e) => setForm({ ...form, driverContactNo: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
               />
             </div>
 
@@ -1200,33 +1438,37 @@ export default function GrGenerationView({
               <input
                 type="date"
                 value={form.licenseValidity}
+                disabled={isSavedLocked}
                 onChange={(e) => setForm({ ...form, licenseValidity: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
               />
             </div>
           </div>
 
           {/* Row 2: Workshop, Jo For, Survey By, Vehicle Type */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1.5 border-t border-slate-100">
-            {/* Workshop (Dropdown with live DB list) */}
+            {/* Workshop (Auto Search like Commodity) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Workshop
               </label>
-              <select
-                value={form.workshop}
-                onChange={(e) => setForm({ ...form, workshop: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
-              >
-                <option value="">---Select Workshop---</option>
-                {liveWorkshops.map((w) => {
-                  const val = typeof w === 'object' ? w.name : w;
-                  return <option key={val} value={val}>{val}</option>;
-                })}
-                {form.workshop && !liveWorkshops.map(w => typeof w === 'object' ? w.name : w).includes(form.workshop) && (
-                  <option value={form.workshop}>{form.workshop}</option>
-                )}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-workshop-list"
+                  placeholder="Type or select Workshop..."
+                  value={form.workshop}
+                  disabled={isSavedLocked}
+                  onChange={(e) => setForm({ ...form, workshop: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
+                />
+                <datalist id="live-workshop-list">
+                  {liveWorkshops.map((w) => {
+                    const val = typeof w === 'object' ? w.name : w;
+                    return <option key={val} value={val} />;
+                  })}
+                </datalist>
+              </div>
             </div>
 
             {/* Jo For (Dropdown with presets) */}
@@ -1279,25 +1521,28 @@ export default function GrGenerationView({
 
           {/* Row 3: Oil Vendor, Slip No, Remarks */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1.5 border-t border-slate-100">
-            {/* Oil Vendor (Optional) */}
+            {/* Oil Vendor (Auto Search like Commodity) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Oil Vendor
               </label>
-              <select
-                value={form.oilVendor}
-                onChange={(e) => setForm({ ...form, oilVendor: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
-              >
-                <option value="">---Select Oil Vendor---</option>
-                {liveOilVendors.map((ov) => {
-                  const val = typeof ov === 'object' ? ov.name : ov;
-                  return <option key={val} value={val}>{val}</option>;
-                })}
-                {form.oilVendor && !liveOilVendors.map(ov => typeof ov === 'object' ? ov.name : ov).includes(form.oilVendor) && (
-                  <option value={form.oilVendor}>{form.oilVendor}</option>
-                )}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-oilvendor-list"
+                  placeholder="Type or select Oil Vendor..."
+                  value={form.oilVendor}
+                  disabled={isSavedLocked}
+                  onChange={(e) => setForm({ ...form, oilVendor: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
+                />
+                <datalist id="live-oilvendor-list">
+                  {liveOilVendors.map((ov) => {
+                    const val = typeof ov === 'object' ? ov.name : ov;
+                    return <option key={val} value={val} />;
+                  })}
+                </datalist>
+              </div>
             </div>
 
             {/* Slip No */}
@@ -1451,6 +1696,18 @@ export default function GrGenerationView({
           </div>
 
           <div className="flex items-center gap-2">
+            {form.grNo && (
+              <button
+                type="button"
+                onClick={() => setShowPrintModal(true)}
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white font-black text-xs shadow-xs flex items-center gap-1.5 transition cursor-pointer"
+                title="Print Lorry Receipt in Old Application Format"
+              >
+                <Printer className="w-3.5 h-3.5 text-cyan-300" />
+                <span>Print GR Format</span>
+              </button>
+            )}
+
             {isEditing ? (
               <>
                 <button
@@ -1475,7 +1732,8 @@ export default function GrGenerationView({
             ) : (
               <button
                 type="submit"
-                className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-xs shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+                disabled={isSavedLocked}
+                className={`px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-xs shadow-sm flex items-center gap-1.5 transition cursor-pointer ${isSavedLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>Generate GR</span>
@@ -1485,6 +1743,288 @@ export default function GrGenerationView({
           </div>
         </div>
       </form>
+
+      {/* Container Multi-Select Modal with 20*2 or 40*1 Capacity Rules (Requirement 5) */}
+      {showContainerPickerModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-bold flex items-center gap-1.5">
+                  <Layers className="w-4 h-4 text-cyan-400" />
+                  <span>Select Containers &bull; Vehicle Capacity Check (20*2 or 40*1)</span>
+                </h3>
+                <p className="text-[10px] text-slate-300">
+                  Trailer can carry either 1 × 40ft OR up to 2 × 20ft containers.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowContainerPickerModal(false)}
+                className="text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-700">Selected: {selectedContainers.length} unit(s)</span>
+                {selectedContainers.length > 0 && (
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                    selectedContainers.length === 2
+                      ? 'bg-purple-100 text-purple-800'
+                      : String(selectedContainers[0]?.size).includes('40')
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-emerald-100 text-emerald-800'
+                  }`}>
+                    {selectedContainers.length === 2 ? '20*2 (Full Capacity)' : String(selectedContainers[0]?.size).includes('40') ? '40*1 (Full Capacity)' : '20*1 (1 more 20ft allowed)'}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowContainerPickerModal(false)}
+                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+
+            <div className="overflow-y-auto p-3 divide-y divide-slate-100 space-y-1.5">
+              {containerOptions.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 text-xs">No pending containers available for allotment.</div>
+              ) : (
+                containerOptions.map((c) => {
+                  const isChecked = selectedContainers.some(sc => sc.contNo === c.contNo);
+                  return (
+                    <div
+                      key={c.contNo}
+                      onClick={() => handleToggleContainer(c)}
+                      className={`p-2.5 rounded-lg border transition flex items-center justify-between cursor-pointer ${
+                        isChecked
+                          ? 'bg-blue-50 border-blue-400 text-blue-900 font-semibold'
+                          : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {}} // handled by row click
+                          className="rounded text-blue-600 cursor-pointer w-4 h-4"
+                        />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-xs">{c.contNo}</span>
+                            <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono font-bold ${
+                              String(c.size).includes('20') ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {c.size}{c.type || 'HC'}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-mono">JO: {c.joNo || 'N/A'}</span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 truncate max-w-[340px]">
+                            {c.consignor} &bull; {c.commodity}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right text-xs font-mono">
+                        <div className="font-bold text-slate-800">{c.weight || '24500'} kg</div>
+                        <div className="text-[10px] text-slate-400">{c.fromLocation || 'Dadri'} &rarr; {c.toLocation || 'Patli'}</div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Old Application Printable GR Format Modal (Requirement 6) */}
+      {showPrintModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 print:p-0 print:bg-white overflow-y-auto">
+          <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-300 overflow-hidden print:border-none print:shadow-none print:max-w-none print:w-full">
+            {/* Screen Action Bar */}
+            <div className="p-3 bg-slate-900 text-white flex items-center justify-between print:hidden">
+              <div className="flex items-center gap-2">
+                <Printer className="w-4 h-4 text-cyan-400" />
+                <span className="text-xs font-bold">Old Application GR Format &bull; Official Lorry Receipt</span>
+                <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-blue-800 text-cyan-200">{form.grNo}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print Document</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPrintModal(false)}
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Document Sheet (Classic SPJ Bilty) */}
+            <div className="p-6 sm:p-8 bg-white font-sans text-slate-900 space-y-4 print:p-2 text-xs">
+              {/* Header Box */}
+              <div className="border-2 border-slate-900 p-3 rounded-t-lg bg-slate-50 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <img src={spjLogo} alt="SPJ Group" className="h-12 w-auto object-contain" />
+                  <div>
+                    <h1 className="text-base font-black tracking-tight text-slate-900 uppercase">
+                      SPJ GROUP OF COMPANIES
+                    </h1>
+                    <p className="text-[10px] text-slate-600 font-medium">
+                      eLOGiFreight Logistics Pvt. Ltd. &bull; Pan-India Containerised Multi-Modal Fleet
+                    </p>
+                    <p className="text-[9px] text-slate-500 font-mono">
+                      Regd. Office: ICD Dadri Complex / Tilpata Road, Greater Noida - 201306, UP | GSTIN: 09AAACF9128M1Z8
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right border-l-2 border-slate-900 pl-4 shrink-0">
+                  <div className="text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">LORRY RECEIPT / BILTY</div>
+                  <div className="text-base font-mono font-black text-blue-800">{form.grNo || 'GR-2026-PENDING'}</div>
+                  <div className="text-[10px] font-mono text-slate-600">Date: {form.grDate}</div>
+                </div>
+              </div>
+
+              {/* GR Metadata Bar */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 border-x-2 border-b-2 border-slate-900 p-2.5 bg-slate-100/70 font-mono text-[11px]">
+                <div><span className="text-slate-500 block text-[9px] uppercase">Job Order No:</span><strong>{form.joNo || 'N/A'}</strong></div>
+                <div><span className="text-slate-500 block text-[9px] uppercase">Job Order Date:</span><strong>{form.joDate || 'N/A'}</strong></div>
+                <div><span className="text-slate-500 block text-[9px] uppercase">Customer GR / Ref:</span><strong>{form.cGr || 'N/A'}</strong></div>
+                <div><span className="text-slate-500 block text-[9px] uppercase">Consignment Type:</span><strong>{form.joFor || 'Shifting / Export'}</strong></div>
+              </div>
+
+              {/* Consignor & Consignee Box */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 border-2 border-slate-900 divide-y sm:divide-y-0 sm:divide-x-2 divide-slate-900">
+                <div className="p-3 space-y-1">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Consignor (Shipper)</div>
+                  <div className="text-xs font-bold text-slate-900">{form.consignor || 'Fair Exports (India) Pvt Ltd'}</div>
+                  <div className="text-[10px] text-slate-600">From / Origin: <span className="font-semibold">{form.fromLocation || 'TRANSWORLD-DADRI'}</span></div>
+                  <div className="text-[10px] text-slate-600">Factory Handover: <span className="font-semibold">{form.handoverLocation || 'ADANI-PATLI'}</span></div>
+                </div>
+
+                <div className="p-3 space-y-1">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Consignee (Buyer / Destination)</div>
+                  <div className="text-xs font-bold text-slate-900">{form.consignee || 'ASIAN PERAL MYANMAR CO. LTD.'}</div>
+                  <div className="text-[10px] text-slate-600">To / Gateway Port: <span className="font-semibold text-blue-800">{form.toLocation || 'ADANI-PATLI'}</span></div>
+                  <div className="text-[10px] text-slate-600">Surveyor / Inspected By: <span className="font-semibold">{form.surveyBy || 'Standard SPJ Yard Survey'}</span></div>
+                </div>
+              </div>
+
+              {/* Vehicle & Driver Details */}
+              <div className="border-2 border-slate-900 p-3 bg-slate-50 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                <div><span className="text-slate-500 block text-[9px] uppercase">Vehicle No:</span><strong className="font-mono text-blue-900">{form.vehicleNo || 'UP16BT9912'}</strong></div>
+                <div><span className="text-slate-500 block text-[9px] uppercase">Transporter:</span><strong>{form.transporter || 'AJINKYA TRANSPORT'}</strong></div>
+                <div><span className="text-slate-500 block text-[9px] uppercase">Driver Name:</span><strong>{form.driver || 'Ramesh Kumar'}</strong></div>
+                <div><span className="text-slate-500 block text-[9px] uppercase">Mobile / License:</span><strong className="font-mono">{form.driverContactNo || 'N/A'} {form.licenseValidity ? `(DL Exp: ${form.licenseValidity})` : ''}</strong></div>
+              </div>
+
+              {/* Container Particulars Table */}
+              <div className="border-2 border-slate-900 overflow-hidden">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="bg-slate-200 text-slate-800 font-bold uppercase text-[10px] border-b-2 border-slate-900">
+                    <tr>
+                      <th className="p-2 border-r border-slate-900 w-8 text-center">Sr.</th>
+                      <th className="p-2 border-r border-slate-900">Container Number</th>
+                      <th className="p-2 border-r border-slate-900 w-24">Size &amp; Type</th>
+                      <th className="p-2 border-r border-slate-900">Commodity</th>
+                      <th className="p-2 border-r border-slate-900 w-28 text-right">Gross Weight</th>
+                      <th className="p-2 w-28">Workshop / Yard</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y border-slate-900 font-mono text-[11px]">
+                    {selectedContainers.length > 0 ? (
+                      selectedContainers.map((c, idx) => (
+                        <tr key={idx}>
+                          <td className="p-2 border-r border-slate-900 text-center font-bold">{idx + 1}</td>
+                          <td className="p-2 border-r border-slate-900 font-bold text-blue-900">{c.contNo}</td>
+                          <td className="p-2 border-r border-slate-900">{c.size}{c.type || 'HC'}</td>
+                          <td className="p-2 border-r border-slate-900 font-sans">{c.commodity || form.commodity}</td>
+                          <td className="p-2 border-r border-slate-900 text-right font-bold">{c.weight || '24500'} kg</td>
+                          <td className="p-2 font-sans">{form.workshop || 'EICHER'}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td className="p-2 border-r border-slate-900 text-center font-bold">1</td>
+                        <td className="p-2 border-r border-slate-900 font-bold text-blue-900">{form.contNo || 'TBA'}</td>
+                        <td className="p-2 border-r border-slate-900">{form.size}{form.type || 'HC'}</td>
+                        <td className="p-2 border-r border-slate-900 font-sans">{form.commodity}</td>
+                        <td className="p-2 border-r border-slate-900 text-right font-bold">{form.weight || '24500'} kg</td>
+                        <td className="p-2 font-sans">{form.workshop || 'EICHER'}</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Financial Advance & Settlement Statement */}
+              <div className="border-2 border-slate-900 p-3 bg-slate-50 space-y-2">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Trip Advance &amp; Accounts Settlement
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-xs">
+                  <div className="p-2 bg-white rounded border border-slate-300">
+                    <span className="text-[9px] text-slate-500 block uppercase">Cash Advance</span>
+                    <strong>₹ {form.cash || '0'}</strong>
+                  </div>
+                  <div className="p-2 bg-white rounded border border-slate-300">
+                    <span className="text-[9px] text-slate-500 block uppercase">Diesel / Fuel Advance</span>
+                    <strong>₹ {form.oil || '0'}</strong>
+                    <div className="text-[8px] text-slate-500 font-sans truncate">{form.oilVendor ? `${form.oilVendor} (Slip: ${form.slipNo || 'N/A'})` : ''}</div>
+                  </div>
+                  <div className="p-2 bg-white rounded border border-slate-300">
+                    <span className="text-[9px] text-slate-500 block uppercase">Other Advance</span>
+                    <strong>₹ {form.others || '0'}</strong>
+                    <div className="text-[8px] text-slate-500 font-sans truncate">{form.otherAdvance}</div>
+                  </div>
+                  <div className="p-2 bg-blue-50 rounded border border-blue-300 text-blue-900">
+                    <span className="text-[9px] text-blue-700 block uppercase font-bold">Total Advance Paid</span>
+                    <strong className="text-sm">₹ {form.total || '0'}</strong>
+                  </div>
+                  <div className="p-2 bg-white rounded border border-slate-300">
+                    <span className="text-[9px] text-slate-500 block uppercase">Balance Due</span>
+                    <strong>₹ {form.balance || '0'}</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Terms and Signatures */}
+              <div className="text-[9px] text-slate-500 leading-relaxed border-t border-slate-300 pt-2">
+                <strong>Conditions:</strong> The goods are accepted for transport at Owner's risk unless otherwise insured. Goods booked subject to Dadri / Gautam Budh Nagar jurisdiction. The carrier is not responsible for transit delays due to railway blockages, border checks, or weather conditions.
+              </div>
+
+              <div className="grid grid-cols-3 gap-6 pt-10 border-t-2 border-slate-900 text-center text-xs">
+                <div>
+                  <div className="border-t border-slate-400 pt-1 font-bold">Consignor Signature</div>
+                  <div className="text-[9px] text-slate-400">Shipper / Authorized Rep.</div>
+                </div>
+                <div>
+                  <div className="border-t border-slate-400 pt-1 font-bold">Driver Signature / LTI</div>
+                  <div className="text-[9px] text-slate-400">{form.driver || 'Driver'}</div>
+                </div>
+                <div>
+                  <div className="border-t border-slate-400 pt-1 font-bold text-blue-900">For SPJ LOGISTICS</div>
+                  <div className="text-[9px] text-slate-400">Authorized Signatory</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -12,7 +12,8 @@ router.get('/trip-pendency', async (req, res) => {
         c.driver_name, c.driver_mobile, c.current_status,
         j.job_number, j.booking_no, j.customer_name, j.consignee_name, j.shipping_line_name,
         j.origin_port_name, j.pod_port_name, j.vessel_name, j.commodity, j.transporter,
-        j.handover_location, j.empty_pickup_location
+        j.handover_location, j.empty_pickup_location,
+        j.booking_date, j.created_at as jo_created_at
       FROM job_containers c
       JOIN job_orders j ON c.job_id = j.id
       WHERE c.gr_number IS NULL OR c.gr_number = '' OR c.current_status = 'ALLOTTED'
@@ -24,6 +25,7 @@ router.get('/trip-pendency', async (req, res) => {
       containerNo: r.container_number,
       sizeType: r.size_type,
       jobNo: r.job_number,
+      joDate: r.booking_date || (r.jo_created_at ? new Date(r.jo_created_at).toISOString().split('T')[0] : '') || '',
       bookingNo: r.booking_no,
       shipper: r.customer_name || 'Fair Exports (India) Pvt Ltd',
       consignee: r.consignee_name || 'ASIAN PERAL MYANMAR CO. LTD.',
@@ -224,6 +226,9 @@ router.get('/search-gr', async (req, res) => {
         COALESCE(GM."ADVANCE"::text, '0') as advance,
         COALESCE(GM."OIL_ADVANCE"::text, '0') as oil_advance,
         COALESCE(GM."OTHER_AMT"::text, '0') as other_advance,
+        COALESCE(TRIM(GM."OTHER_REASON"), '') as other_advance_reason,
+        COALESCE(TRIM(GM."OTHER_REASON"), '') as other_reason,
+        COALESCE(TRIM(FCJ."CLR_BY"), '') as survey_by,
         COALESCE(GM."C_GR"::text, '') as c_gr,
         COALESCE(TRIM(GM."SLIP_NO"), '') as slip_no,
         COALESCE(TRIM(GM."GR_REMARK"), '') as remarks,
@@ -276,6 +281,9 @@ router.get('/search-gr', async (req, res) => {
           COALESCE(GM."ADVANCE"::text, '0') as advance,
           COALESCE(GM."OIL_ADVANCE"::text, '0') as oil_advance,
           COALESCE(GM."OTHER_AMT"::text, '0') as other_advance,
+          COALESCE(TRIM(GM."OTHER_REASON"), '') as other_advance_reason,
+          COALESCE(TRIM(GM."OTHER_REASON"), '') as other_reason,
+          COALESCE(TRIM(FCJ."CLR_BY"), '') as survey_by,
           COALESCE(GM."C_GR"::text, '') as c_gr,
           COALESCE(TRIM(GM."SLIP_NO"), '') as slip_no,
           COALESCE(TRIM(GM."GR_REMARK"), '') as remarks,
@@ -351,6 +359,9 @@ router.get('/search-gr', async (req, res) => {
           COALESCE(c.advance::text, '0') as advance,
           COALESCE(c.oil_advance::text, '0') as oil_advance,
           COALESCE(c.other_advance::text, '0') as other_advance,
+          COALESCE(c.other_reason, '') as other_advance_reason,
+          COALESCE(c.other_reason, '') as other_reason,
+          COALESCE(c.survey_by, '') as survey_by,
           COALESCE(c.c_gr, '') as c_gr,
           COALESCE(c.slip_no, '') as slip_no,
           COALESCE(c.gr_remarks, '') as remarks,
@@ -458,7 +469,8 @@ router.post('/update-gr', async (req, res) => {
     const {
       grId, grNo, vehicleNo, truckNo, driver, driverName, driverContactNo, driverMobile,
       licenseValidity, fromLocation, toLocation, handoverLocation, workshop, joFor,
-      oilVendor, slipNo, remarks, cash, advance, oil, oilAdvance, others, otherAdvance, cGr
+      oilVendor, slipNo, remarks, cash, advance, oil, oilAdvance, others, otherAdvance, otherReason,
+      surveyBy, cGr
     } = req.body;
 
     const actualTruck = vehicleNo || truckNo;
@@ -467,6 +479,7 @@ router.post('/update-gr', async (req, res) => {
     const actualCash = parseFloat(cash !== undefined ? cash : advance) || 0;
     const actualOil = parseFloat(oil !== undefined ? oil : oilAdvance) || 0;
     const actualOthers = parseFloat(others !== undefined ? others : otherAdvance) || 0;
+    const actualOtherReason = otherReason || otherAdvance || '';
 
     // Update local job_containers if mapped
     try {
@@ -488,11 +501,14 @@ router.post('/update-gr', async (req, res) => {
               from_location = COALESCE($13, from_location),
               to_location = COALESCE($14, to_location),
               license_validity = COALESCE($15, license_validity),
+              survey_by = COALESCE($16, survey_by),
+              other_reason = COALESCE($17, other_reason),
               updated_at = NOW()
-          WHERE gr_number = $16
+          WHERE gr_number = $18
         `, [
           actualTruck, actualDriver, actualPhone, actualCash, actualOil, actualOthers,
-          slipNo, oilVendor, workshop, cGr, remarks, handoverLocation, fromLocation, toLocation, licenseValidity, grNo
+          slipNo, oilVendor, workshop, cGr, remarks, handoverLocation, fromLocation, toLocation, licenseValidity,
+          surveyBy, actualOtherReason, grNo
         ]);
       }
     } catch (e) {
@@ -511,16 +527,17 @@ router.post('/update-gr', async (req, res) => {
               "ADVANCE" = COALESCE($5::numeric, "ADVANCE"),
               "OIL_ADVANCE" = COALESCE($6::numeric, "OIL_ADVANCE"),
               "OTHER_AMT" = COALESCE($7::numeric, "OTHER_AMT"),
-              "SLIP_NO" = COALESCE($8, "SLIP_NO"),
-              "GR_REMARK" = COALESCE($9, "GR_REMARK"),
-              "REMARK" = COALESCE($10, "REMARK"),
-              "C_GR" = COALESCE($11::numeric, "C_GR"),
+              "OTHER_REASON" = COALESCE($8, "OTHER_REASON"),
+              "SLIP_NO" = COALESCE($9, "SLIP_NO"),
+              "GR_REMARK" = COALESCE($10, "GR_REMARK"),
+              "REMARK" = COALESCE($11, "REMARK"),
+              "C_GR" = COALESCE($12::numeric, "C_GR"),
               "UPDATED_ON" = NOW(),
               "UPDATED_BY" = 'USER'
-          WHERE "GR_NO"::text = $12 OR "GR_ID"::text = $13
+          WHERE "GR_NO"::text = $13 OR "GR_ID"::text = $14
         `, [
           actualTruck, fromLocation, toLocation, handoverLocation,
-          actualCash, actualOil, actualOthers,
+          actualCash, actualOil, actualOthers, actualOtherReason,
           slipNo, remarks, workshop, parseFloat(cGr) || null, String(grNo), String(grId || grNo)
         ]);
       }
@@ -543,7 +560,7 @@ router.post('/generate-gr', async (req, res) => {
   try {
     const {
       containerId, contNo, truckNo, vehicleNo, driverName, driver, driverMobile, driverContactNo,
-      grNo, grDate, advance, cash, oilAdvance, oil, otherAdvance, others,
+      grNo, grDate, advance, cash, oilAdvance, oil, otherAdvance, others, otherReason, surveyBy,
       slipNo, oilVendor, workshop, cGr, remarks,
       fromLocation, toLocation, handoverLocation, licenseValidity,
       consignor, consignee, joNo, commodity, size, type, weight
@@ -560,6 +577,7 @@ router.post('/generate-gr', async (req, res) => {
     const actualCash = parseFloat(advance !== undefined ? advance : cash) || 0;
     const actualOil = parseFloat(oilAdvance !== undefined ? oilAdvance : oil) || 0;
     const actualOthers = parseFloat(otherAdvance !== undefined ? otherAdvance : others) || 0;
+    const actualOtherReason = otherReason || (typeof otherAdvance === 'string' && isNaN(Number(otherAdvance)) ? otherAdvance : '');
     const actualGrDate = grDate || new Date().toISOString().split('T')[0];
 
     // Get next GR sequence
@@ -598,6 +616,8 @@ router.post('/generate-gr', async (req, res) => {
           from_location = COALESCE($15, from_location),
           to_location = COALESCE($16, to_location),
           license_validity = $17,
+          survey_by = COALESCE($18, survey_by),
+          other_reason = COALESCE($19, other_reason),
           current_status = 'STUFFED',
           milestone_dates = jsonb_set(
             COALESCE(milestone_dates, '{}'::jsonb),
@@ -605,14 +625,14 @@ router.post('/generate-gr', async (req, res) => {
             to_jsonb(NOW()::text)
           ),
           updated_at = NOW()
-        WHERE id = $18 OR container_number = $18 OR container_number = $19
+        WHERE id = $20 OR container_number = $20 OR container_number = $21
         RETURNING *;
       `;
       const values = [
         finalGrNo, actualGrDate, actualTruck, actualDriver, actualPhone,
         actualCash, actualOil, actualOthers, slipNo || '', oilVendor || '', workshop || '',
         cGr || '', remarks || '', handoverLocation || '', fromLocation || '', toLocation || '',
-        licenseValidity || '', containerId, actualContNo
+        licenseValidity || '', surveyBy || '', actualOtherReason, containerId, actualContNo
       ];
       const { rows } = await db.query(updateQuery, values);
       if (rows.length > 0) {
@@ -760,6 +780,7 @@ async function getLifecycleRows(extraWhere = '1=1') {
       c.telex_released, c.telex_release_date, c.tr_no, c.tr_status, c.tr_date,
       c.handover_status, c.handover_date, c.egm_no, c.egm_date, c.discharge_date,
       c.delivered_to_consignee_date, c.empty_returned_depot_date,
+      c.empty_out_date, c.factory_gate_in_date, c.factory_gate_out_date, c.buffer_in_date, c.loaded_icd_in_date,
       j.job_number, j.booking_no, j.customer_name, j.shipping_line_name,
       j.origin_port_name, j.pod_port_name, j.vessel_name, j.commodity
     FROM job_containers c
@@ -789,6 +810,11 @@ async function getLifecycleRows(extraWhere = '1=1') {
     driverMobile: r.driver_mobile || '',
     currentLocation: r.current_location || 'En-Route ICD to Gateway Port',
     runningStatus: r.running_status || 'IN_TRANSIT',
+    emptyOutDate: r.empty_out_date ? new Date(r.empty_out_date).toISOString().split('T')[0] : '',
+    factoryGateInDate: r.factory_gate_in_date ? new Date(r.factory_gate_in_date).toISOString().split('T')[0] : '',
+    factoryGateOutDate: r.factory_gate_out_date ? new Date(r.factory_gate_out_date).toISOString().split('T')[0] : '',
+    bufferInDate: r.buffer_in_date ? new Date(r.buffer_in_date).toISOString().split('T')[0] : '',
+    loadedIcdInDate: r.loaded_icd_in_date ? new Date(r.loaded_icd_in_date).toISOString().split('T')[0] : '',
     podReceivedBy: r.pod_received_by || '',
     tripCloseDate: r.trip_close_date || null,
     ediSbStatus: r.edi_sb_status || 'LEO_GENERATED',
@@ -823,16 +849,44 @@ router.get('/running-position', async (req, res) => {
 
 router.post('/running-position', async (req, res) => {
   try {
-    const { containerId, currentLocation, runningStatus, gpsLat, gpsLng } = req.body;
+    const {
+      containerId,
+      currentLocation,
+      runningStatus,
+      emptyOutDate,
+      factoryGateInDate,
+      factoryGateOutDate,
+      bufferInDate,
+      loadedIcdInDate,
+      gpsLat,
+      gpsLng
+    } = req.body;
+
     const { rows } = await db.query(
       `UPDATE job_containers SET 
          current_location = COALESCE($1, current_location),
          running_status = COALESCE($2, running_status),
-         gps_lat = COALESCE($3, gps_lat),
-         gps_lng = COALESCE($4, gps_lng),
+         empty_out_date = COALESCE($3::date, empty_out_date),
+         factory_gate_in_date = COALESCE($4::date, factory_gate_in_date),
+         factory_gate_out_date = COALESCE($5::date, factory_gate_out_date),
+         buffer_in_date = COALESCE($6::date, buffer_in_date),
+         loaded_icd_in_date = COALESCE($7::date, loaded_icd_in_date),
+         gps_lat = COALESCE($8, gps_lat),
+         gps_lng = COALESCE($9, gps_lng),
          updated_at = NOW()
-       WHERE id = $5 OR container_number = $5 RETURNING *`,
-      [currentLocation, runningStatus, gpsLat, gpsLng, containerId]
+       WHERE id = $10 OR container_number = $10 RETURNING *`,
+      [
+        currentLocation,
+        runningStatus,
+        emptyOutDate || null,
+        factoryGateInDate || null,
+        factoryGateOutDate || null,
+        bufferInDate || null,
+        loadedIcdInDate || null,
+        gpsLat,
+        gpsLng,
+        containerId
+      ]
     );
     res.json({ success: true, data: rows[0] });
   } catch (err) {

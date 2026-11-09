@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import {
   Ship,
@@ -28,6 +28,26 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
   const [selectedContIds, setSelectedContIds] = useState([]);
   const [bulkVal, setBulkVal] = useState('');
   const [bulkDate, setBulkDate] = useState('');
+  const [liveRows, setLiveRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadLiveData = async () => {
+    try {
+      setLoading(true);
+      const res = await api.getRunningPosition();
+      if (res?.data && Array.isArray(res.data)) {
+        setLiveRows(res.data);
+      }
+    } catch (err) {
+      console.warn('Could not load live lifecycle data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLiveData();
+  }, []);
 
   // 11 distinct operational lifecycle sections (Pages 24-34)
   const sections = [
@@ -44,39 +64,77 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
     { id: 'ShipmentDischargeStatus', pageNo: '34', title: 'Shipment Discharge Status', desc: 'Destination port vessel discharge & empty turnaround' }
   ];
 
-  // Flatten containers from live PostgreSQL jobs
+  // Flatten containers from live PostgreSQL + local jobs
+  const seenCnos = new Set();
   const rows = [];
+
+  liveRows.forEach((c) => {
+    const cno = (c.containerNo || c.container_number || '').trim();
+    if (cno) seenCnos.add(cno.toUpperCase());
+    rows.push({
+      id: c.id,
+      containerNo: cno || 'TBA',
+      size: c.sizeType || '40HC',
+      jobNo: c.jobNo || c.job_number || 'JO',
+      customer: c.customer || c.shipper || 'Fair Exports (India) Pvt Ltd',
+      origin: c.origin || 'Dadri ICD',
+      destination: c.destination || 'Port',
+      line: c.shippingLine || 'Maersk Line',
+      vessel: c.vessel || 'MAERSK COLOMBO',
+      sbNo: c.sbNo || 'SB-981024',
+      sbDate: c.sbDate || '2026-10-28',
+      blNo: c.blNo || 'MSK-2026-98124',
+      ediStatus: c.ediSbStatus || 'LEO_PASSED',
+      trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
+      wagonNo: c.wagonNo || 'CR-104928',
+      rakeDate: c.rakeOutDate || '2026-10-29',
+      feederVessel: c.feederVessel || c.vessel || 'MAERSK COLOMBO',
+      cutOffDate: c.cutOffDate || '2026-11-03',
+      sobDate: c.sobDate || '2026-11-05',
+      blStage: c.blStage || 'DRAFT_BL_APPROVED',
+      telexReleased: Boolean(c.telexReleased),
+      trNo: c.trNo || 'TR-2026-DAD-881',
+      trStatus: c.trStatus || 'APPROVED',
+      handoverStatus: c.handoverStatus || 'COMPLETED',
+      egmNo: c.egmNo || 'EGM-2026-JNPT-0192',
+      dischargeDate: c.dischargeDate || '2026-11-12'
+    });
+  });
+
   jobs.forEach((j) => {
     (j.containers || []).forEach((c) => {
-      rows.push({
-        id: c.id,
-        containerNo: c.no || c.containerNo || 'MSKU-TBA',
-        size: c.size || c.sizeType || '40HC',
-        jobNo: j.id || j.joNo,
-        customer: j.customer || j.consignor || 'Fair Exports (India)',
-        origin: j.origin || j.fromLocation || 'Dadri ICD',
-        destination: j.pod || j.toLocation || 'Jebel Ali',
-        line: j.line || j.shippingLine || 'Maersk Line',
-        vessel: j.vessel || 'MAERSK COLOMBO',
-        sbNo: j.sbNo || 'SB-981024',
-        sbDate: j.sbDate || '2026-10-28',
-        blNo: j.blNo || 'MSK-2026-98124',
-        // Operational attributes
-        ediStatus: c.ediSbStatus || 'LEO_PASSED',
-        trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
-        wagonNo: c.wagonNo || 'CR-104928',
-        rakeDate: c.rakeOutDate || '2026-10-29',
-        feederVessel: c.feederVessel || j.vessel || 'MAERSK COLOMBO',
-        cutOffDate: c.cutOffDate || '2026-11-03',
-        sobDate: c.sobDate || '2026-11-05',
-        blStage: c.blStage || 'DRAFT_BL_APPROVED',
-        telexReleased: c.telexReleased || false,
-        trNo: c.trNo || 'TR-2026-DAD-881',
-        trStatus: c.trStatus || 'APPROVED',
-        handoverStatus: c.handoverStatus || 'COMPLETED',
-        egmNo: c.egmNo || 'EGM-2026-JNPT-0192',
-        dischargeDate: c.dischargeDate || '2026-11-12'
-      });
+      const cno = (c.no || c.containerNo || '').trim();
+      if (cno && !seenCnos.has(cno.toUpperCase())) {
+        seenCnos.add(cno.toUpperCase());
+        rows.push({
+          id: c.id,
+          containerNo: cno || 'MSKU-TBA',
+          size: c.size || c.sizeType || '40HC',
+          jobNo: j.id || j.joNo,
+          customer: j.customer || j.consignor || 'Fair Exports (India)',
+          origin: j.origin || j.fromLocation || 'Dadri ICD',
+          destination: j.pod || j.toLocation || 'Jebel Ali',
+          line: j.line || j.shippingLine || 'Maersk Line',
+          vessel: j.vessel || 'MAERSK COLOMBO',
+          sbNo: j.sbNo || 'SB-981024',
+          sbDate: j.sbDate || '2026-10-28',
+          blNo: j.blNo || 'MSK-2026-98124',
+          ediStatus: c.ediSbStatus || 'LEO_PASSED',
+          trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
+          wagonNo: c.wagonNo || 'CR-104928',
+          rakeDate: c.rakeOutDate || '2026-10-29',
+          feederVessel: c.feederVessel || j.vessel || 'MAERSK COLOMBO',
+          cutOffDate: c.cutOffDate || '2026-11-03',
+          sobDate: c.sobDate || '2026-11-05',
+          blStage: c.blStage || 'DRAFT_BL_APPROVED',
+          telexReleased: c.telexReleased || false,
+          trNo: c.trNo || 'TR-2026-DAD-881',
+          trStatus: c.trStatus || 'APPROVED',
+          handoverStatus: c.handoverStatus || 'COMPLETED',
+          egmNo: c.egmNo || 'EGM-2026-JNPT-0192',
+          dischargeDate: c.dischargeDate || '2026-11-12'
+        });
+      }
     });
   });
 

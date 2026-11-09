@@ -35,9 +35,18 @@ export default function AICopilot({
   onFillBookingForm,
   onClearBookingForm,
   onGenerateInvoiceDirect,
-  onCreateBookingDirect
+  onCreateBookingDirect,
+  isOpen: externalIsOpen,
+  onClose: externalOnClose
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const setIsOpen = (val) => {
+    if (externalOnClose && !val) {
+      externalOnClose();
+    }
+    setInternalIsOpen(val);
+  };
   const [isMinimized, setIsMinimized] = useState(false);
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
@@ -529,26 +538,7 @@ export default function AICopilot({
 
   return (
     <>
-      {/* Floating Launcher Button at Bottom Right */}
-      {!isOpen && (
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-5 right-5 z-40 px-3.5 py-2.5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold text-xs shadow-xl flex items-center gap-2 transition-all transform hover:scale-105 active:scale-95 cursor-pointer border border-white/20 select-none group"
-          title="Open AI Logistics Copilot (End-to-End Actions)"
-        >
-          <div className="relative">
-            <Sparkles className="w-4 h-4 text-amber-300" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          </div>
-          <span className="tracking-wide">AI Copilot</span>
-          <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-[10px] font-mono text-cyan-200">
-            End-to-End
-          </span>
-        </button>
-      )}
-
-      {/* Floating Copilot Chat Window */}
+      {/* Floating Copilot Chat Window (Triggered from Top Header) */}
       {isOpen && (
         <div className="fixed bottom-5 right-5 z-50 w-[95vw] sm:w-[430px] max-h-[88vh] rounded-2xl bg-white border border-slate-300 shadow-2xl flex flex-col overflow-hidden animate-slide-up font-sans">
           {/* Header */}

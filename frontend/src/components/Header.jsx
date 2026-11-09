@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import spjLogo from '../assets/spj-logo.png';
 import {
   Search,
   Bell,
@@ -27,7 +28,8 @@ import {
   Clock,
   ArrowRight,
   ExternalLink,
-  History
+  History,
+  Sparkles
 } from 'lucide-react';
 
 export default function Header({
@@ -43,7 +45,8 @@ export default function Header({
   jobs = [],
   parties = [],
   onSelectJob,
-  onOpenWelcome
+  onOpenWelcome,
+  onToggleCopilot
 }) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -191,7 +194,7 @@ export default function Header({
             title="SPJ Group of Companies - Go to Dashboard"
           >
             <img
-              src="/spj-logo.png"
+              src={spjLogo}
               alt="SPJ Group of Companies"
               className="h-9 sm:h-10 md:h-11 w-auto object-contain max-w-[210px] sm:max-w-[260px] drop-shadow-2xs"
             />
@@ -414,6 +417,18 @@ export default function Header({
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2 shrink-0">
+        {/* AI Copilot Button (Shifted on top after search option as requested) */}
+        <button
+          type="button"
+          onClick={onToggleCopilot}
+          className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 active:scale-95 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition cursor-pointer select-none"
+          title="Open AI Logistics Copilot"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+          <span>AI Copilot</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        </button>
+
         {/* Compact Vessel Button */}
         <button
           type="button"

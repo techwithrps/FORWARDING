@@ -45,7 +45,14 @@ export default function JobOrderWizardView({
   onResetCopilotFill,
   copilotClearTrigger = 0
 }) {
-  const todayStr = new Date().toLocaleDateString('en-GB');
+  const getTodayDateStr = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const todayStr = getTodayDateStr();
 
   const [liveConsignors, setLiveConsignors] = useState([]);
   const [liveConsignees, setLiveConsignees] = useState([]);
@@ -338,6 +345,7 @@ export default function JobOrderWizardView({
     joDate: todayStr,
     joType: 'Export',
     modeOfShipment: 'SEA Export',
+    servicesRequired: ['Transport', 'Clearance', 'Rail', 'Forwarding'],
     consignor: '',
     consignee: '',
     shippingLine: '',
@@ -735,16 +743,18 @@ export default function JobOrderWizardView({
 
   // Clear Form for fresh blank entry
   const handleClearForm = () => {
+    const today = getTodayDateStr();
     setForm({
       joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
-      joDate: todayStr,
+      joDate: today,
       joType: 'Export',
       modeOfShipment: 'SEA Export',
+      servicesRequired: ['Transport', 'Clearance', 'Rail', 'Forwarding'],
       consignor: '',
       consignee: '',
       shippingLine: '',
       lineBookingNo: '',
-      bookingDate: todayStr,
+      bookingDate: today,
       bookingValidity: '',
       bookingReValidity: '',
       emptyPickupLocation: '',
@@ -780,7 +790,7 @@ export default function JobOrderWizardView({
         sealNo: '',
         vehicleNo: '',
         grNo: '',
-        grDate: todayStr,
+        grDate: today,
         remarks: ''
       }
     ]);
@@ -793,11 +803,21 @@ export default function JobOrderWizardView({
 
   // Load Previous Booking for Edit
   const handleLoadForEdit = (prevJob) => {
+    const today = getTodayDateStr();
+    let svcReq = ['Transport', 'Clearance', 'Rail', 'Forwarding'];
+    if (prevJob.services_required) {
+      svcReq = typeof prevJob.services_required === 'string'
+        ? prevJob.services_required.split(',').map(s => s.trim())
+        : prevJob.services_required;
+    } else if (prevJob.servicesRequired) {
+      svcReq = Array.isArray(prevJob.servicesRequired) ? prevJob.servicesRequired : [prevJob.servicesRequired];
+    }
     setForm({
       joNo: prevJob.joNo || prevJob.id || form.joNo,
-      joDate: prevJob.joDate || prevJob.date || todayStr,
+      joDate: prevJob.joDate || prevJob.date || today,
       joType: prevJob.joType || 'Export FCL',
       modeOfShipment: prevJob.modeOfShipment || 'Multimodal (Rail + Road)',
+      servicesRequired: svcReq,
       consignor: prevJob.customer || prevJob.consignor || prevJob.customerName || '',
       consignee: prevJob.consignee || prevJob.consigneeName || consigneesList[0],
       shippingLine: prevJob.shippingLine || prevJob.shippingLineName || prevJob.line || linesList[0],
@@ -995,6 +1015,7 @@ export default function JobOrderWizardView({
       joDate: form.joDate || todayStr,
       joType: form.joType,
       modeOfShipment: form.modeOfShipment,
+      servicesRequired: Array.isArray(form.servicesRequired) ? form.servicesRequired.join(', ') : (form.servicesRequired || 'Transport, Clearance, Rail, Forwarding'),
       transporter: form.transporter || 'AJINKYA TRANSPORT',
       bookingDate: form.bookingDate || form.joDate || todayStr,
       bookingValidity: form.bookingValidity,
@@ -1091,7 +1112,7 @@ export default function JobOrderWizardView({
             <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">JO Date:</span>
             <input
               type="date"
-              value={form.joDate || todayStr}
+              value={form.joDate ? (form.joDate.includes('T') ? form.joDate.split('T')[0] : (form.joDate.includes('/') ? form.joDate.split('/').reverse().join('-') : form.joDate)) : todayStr}
               onChange={(e) => setForm({ ...form, joDate: e.target.value })}
               className="bg-transparent text-xs font-mono font-bold text-slate-800 outline-none cursor-pointer"
             />
@@ -1204,38 +1225,42 @@ export default function JobOrderWizardView({
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Transporter <span className="text-rose-500 font-bold">*</span>
               </label>
-              <select
-                value={form.transporter}
-                onChange={(e) => setForm({ ...form, transporter: e.target.value })}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('transporter', false, form.transporter)}`}
-              >
-                <option value="">-- Select Transporter --</option>
-                {transportersList.map((t, i) => (
-                  <option key={i} value={t}>{t}</option>
-                ))}
-                {form.transporter && !transportersList.includes(form.transporter) && (
-                  <option value={form.transporter}>{form.transporter}</option>
-                )}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-job-transporter-list"
+                  placeholder="Type or select Transporter..."
+                  value={form.transporter}
+                  onChange={(e) => setForm({ ...form, transporter: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('transporter', false, form.transporter)}`}
+                />
+                <datalist id="live-job-transporter-list">
+                  {transportersList.map((t, i) => (
+                    <option key={i} value={t} />
+                  ))}
+                </datalist>
+              </div>
             </div>
 
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 From Location <span className="text-rose-500 font-bold">*</span>
               </label>
-              <select
-                value={form.fromLocation}
-                onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('fromLocation', false, form.fromLocation)}`}
-              >
-                <option value="">-- Select From Location --</option>
-                {fromLocationList.map((loc, i) => (
-                  <option key={i} value={loc}>{loc}</option>
-                ))}
-                {form.fromLocation && !fromLocationList.includes(form.fromLocation) && (
-                  <option value={form.fromLocation}>{form.fromLocation}</option>
-                )}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-job-from-list"
+                  placeholder="Type or select From Location..."
+                  value={form.fromLocation}
+                  onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('fromLocation', false, form.fromLocation)}`}
+                />
+                <datalist id="live-job-from-list">
+                  {fromLocationList.map((loc, i) => (
+                    <option key={i} value={loc} />
+                  ))}
+                </datalist>
+              </div>
             </div>
           </div>
 
@@ -1245,61 +1270,70 @@ export default function JobOrderWizardView({
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 To Location <span className="text-rose-500 font-bold">*</span>
               </label>
-              <select
-                value={form.toLocation}
-                onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('toLocation', false, form.toLocation)}`}
-              >
-                <option value="">-- Select To Location --</option>
-                {toLocationList.map((loc, i) => (
-                  <option key={i} value={loc}>{loc}</option>
-                ))}
-                {form.toLocation && !toLocationList.includes(form.toLocation) && (
-                  <option value={form.toLocation}>{form.toLocation}</option>
-                )}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-job-to-list"
+                  placeholder="Type or select To Location..."
+                  value={form.toLocation}
+                  onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('toLocation', false, form.toLocation)}`}
+                />
+                <datalist id="live-job-to-list">
+                  {toLocationList.map((loc, i) => (
+                    <option key={i} value={loc} />
+                  ))}
+                </datalist>
+              </div>
             </div>
 
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Handover Location <span className="text-rose-500 font-bold">*</span>
               </label>
-              <select
-                value={form.handoverLocation}
-                onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('handoverLocation', false, form.handoverLocation)}`}
-              >
-                <option value="">-- Select Handover Location --</option>
-                {handoverLocationList.map((loc, i) => (
-                  <option key={i} value={loc}>{loc}</option>
-                ))}
-                {form.handoverLocation && !handoverLocationList.includes(form.handoverLocation) && (
-                  <option value={form.handoverLocation}>{form.handoverLocation}</option>
-                )}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-job-handover-list"
+                  placeholder="Type or select Handover Location..."
+                  value={form.handoverLocation}
+                  onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('handoverLocation', false, form.handoverLocation)}`}
+                />
+                <datalist id="live-job-handover-list">
+                  {handoverLocationList.map((loc, i) => (
+                    <option key={i} value={loc} />
+                  ))}
+                </datalist>
+              </div>
             </div>
 
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 POL (Port of Loading) <span className="text-rose-500 font-bold">*</span>
               </label>
-              <select
-                value={form.pol}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setForm({ ...form, pol: val });
-                  setRouteFilterOnly(true);
-                  setSelectedCarrierFilter('ALL');
-                }}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass('pol', true, form.pol)}`}
-              >
-                <option value="">-- Select --</option>
-                {polList.map((p) => (
-                  <option key={p.code} value={p.code}>
-                    {p.flag} {p.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-job-pol-list"
+                  placeholder="Type or select POL..."
+                  value={form.pol}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setForm({ ...form, pol: val });
+                    setRouteFilterOnly(true);
+                    setSelectedCarrierFilter('ALL');
+                  }}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass('pol', true, form.pol)}`}
+                />
+                <datalist id="live-job-pol-list">
+                  {polList.map((p) => (
+                    <option key={p.code} value={p.code}>
+                      {p.flag} {p.name}
+                    </option>
+                  ))}
+                </datalist>
+              </div>
             </div>
 
             <div>
@@ -1325,18 +1359,64 @@ export default function JobOrderWizardView({
                   </span>
                 </button>
               </div>
-              <select
-                value={form.pod}
-                onChange={(e) => handlePodChange(e.target.value)}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('pod', true, form.pod)}`}
-              >
-                <option value="">-- Select --</option>
-                {podList.map((p) => (
-                  <option key={p.code} value={p.code}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  list="live-job-pod-list"
+                  placeholder="Type or select POD..."
+                  value={form.pod}
+                  onChange={(e) => handlePodChange(e.target.value)}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('pod', true, form.pod)}`}
+                />
+                <datalist id="live-job-pod-list">
+                  {podList.map((p) => (
+                    <option key={p.code} value={p.code}>
+                      {p.name}
+                    </option>
+                  ))}
+                </datalist>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 3: Service Required (Point 14) */}
+          <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-blue-50/50 p-2.5 rounded-lg border border-blue-100/70">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-800 flex items-center gap-1">
+                <span>Service Required:</span>
+                <span className="text-rose-500 font-bold">*</span>
+              </span>
+              <span className="text-[9px] text-slate-500 font-semibold">(Multiple Selection Supported)</span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {['Transport', 'Clearance', 'Rail', 'Forwarding'].map((svc, idx) => {
+                const isChecked = form.servicesRequired?.includes(svc);
+                return (
+                  <label
+                    key={svc}
+                    className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-md cursor-pointer transition select-none ${
+                      isChecked
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        const prev = form.servicesRequired || [];
+                        const updated = e.target.checked
+                          ? [...prev, svc]
+                          : prev.filter(s => s !== svc);
+                        setForm({ ...form, servicesRequired: updated });
+                      }}
+                      className="hidden"
+                    />
+                    <span>{idx + 1}) {svc}</span>
+                    {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </label>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -1358,74 +1438,88 @@ export default function JobOrderWizardView({
           </div>
 
           <div className="space-y-2">
-            {/* Row 1: Consignor -> Consignee -> Transporter -> Set Temp (4 Cols) */}
+            {/* Row 1: Consignor -> Consignee -> CHA Agent -> On Account (4 Cols) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                   Consignor (Shipper) <span className="text-rose-500 font-bold">*</span>
                 </label>
-                <select
-                  value={form.consignor}
-                  onChange={(e) => handleConsignorChange(e.target.value)}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate ${getFieldClass('consignor', true, form.consignor)}`}
-                >
-                  <option value="">-- Select --</option>
-                  {shippersList.map((name, i) => (
-                    <option key={i} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    list="live-job-consignor-list"
+                    placeholder="Type or select Consignor..."
+                    value={form.consignor}
+                    onChange={(e) => handleConsignorChange(e.target.value)}
+                    className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate ${getFieldClass('consignor', true, form.consignor)}`}
+                  />
+                  <datalist id="live-job-consignor-list">
+                    {shippersList.map((name, i) => (
+                      <option key={i} value={name} />
+                    ))}
+                  </datalist>
+                </div>
               </div>
 
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Consignee</label>
-                <select
-                  value={form.consignee}
-                  onChange={(e) => setForm({ ...form, consignee: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none truncate font-semibold ${getFieldClass(form.consignee)}`}
-                >
-                  <option value="">-- Select Consignee --</option>
-                  {consigneesList.map((name, i) => (
-                    <option key={i} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    list="live-job-consignee-list"
+                    placeholder="Type or select Consignee..."
+                    value={form.consignee}
+                    onChange={(e) => setForm({ ...form, consignee: e.target.value })}
+                    className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none truncate font-semibold ${getFieldClass(form.consignee)}`}
+                  />
+                  <datalist id="live-job-consignee-list">
+                    {consigneesList.map((name, i) => (
+                      <option key={i} value={name} />
+                    ))}
+                  </datalist>
+                </div>
               </div>
 
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                   Customs CHA Agent
                 </label>
-                <select
-                  value={form.chaName || ''}
-                  onChange={(e) => setForm({ ...form, chaName: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.chaName)}`}
-                >
-                  <option value="">-- Optional / Direct Shipper --</option>
-                  {chaList.map((cha, i) => (
-                    <option key={i} value={cha}>{cha}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    list="live-job-cha-list"
+                    placeholder="Optional / Direct Shipper"
+                    value={form.chaName || ''}
+                    onChange={(e) => setForm({ ...form, chaName: e.target.value })}
+                    className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.chaName)}`}
+                  />
+                  <datalist id="live-job-cha-list">
+                    {chaList.map((cha, i) => (
+                      <option key={i} value={cha} />
+                    ))}
+                  </datalist>
+                </div>
               </div>
 
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                   On Account Of (Third Party)
                 </label>
-                <select
-                  value={form.onAccount || ''}
-                  onChange={(e) => setForm({ ...form, onAccount: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.onAccount)}`}
-                >
-                  <option value="">-- Optional / Direct Shipper --</option>
-                  {shippersList.map((name, i) => (
-                    <option key={i} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    list="live-job-onaccount-list"
+                    placeholder="Optional / Direct Shipper"
+                    value={form.onAccount || ''}
+                    onChange={(e) => setForm({ ...form, onAccount: e.target.value })}
+                    className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.onAccount)}`}
+                  />
+                  <datalist id="live-job-onaccount-list">
+                    {shippersList.map((name, i) => (
+                      <option key={i} value={name} />
+                    ))}
+                  </datalist>
+                </div>
               </div>
             </div>
 
@@ -1435,24 +1529,24 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                   Shipping Line <span className="text-rose-500 font-bold">*</span>
                 </label>
-                <select
-                  value={form.shippingLine}
-                  onChange={(e) => {
-                    setForm({ ...form, shippingLine: e.target.value });
-                    setFormError('');
-                  }}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate ${getFieldClass('shippingLine', true, form.shippingLine)}`}
-                >
-                  <option value="">-- Select --</option>
-                  {linesList.map((name, i) => (
-                    <option key={i} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                  {form.shippingLine && !linesList.includes(form.shippingLine) && (
-                    <option value={form.shippingLine}>{form.shippingLine}</option>
-                  )}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    list="live-job-shippingline-list"
+                    placeholder="Type or select Shipping Line..."
+                    value={form.shippingLine}
+                    onChange={(e) => {
+                      setForm({ ...form, shippingLine: e.target.value });
+                      setFormError('');
+                    }}
+                    className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate ${getFieldClass('shippingLine', true, form.shippingLine)}`}
+                  />
+                  <datalist id="live-job-shippingline-list">
+                    {linesList.map((name, i) => (
+                      <option key={i} value={name} />
+                    ))}
+                  </datalist>
+                </div>
               </div>
 
               <div>
@@ -1470,7 +1564,7 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Booking Date</label>
                 <input
                   type="date"
-                  value={form.bookingDate || form.joDate || todayStr}
+                  value={form.bookingDate ? (form.bookingDate.includes('T') ? form.bookingDate.split('T')[0] : (form.bookingDate.includes('/') ? form.bookingDate.split('/').reverse().join('-') : form.bookingDate)) : todayStr}
                   onChange={(e) => setForm({ ...form, bookingDate: e.target.value })}
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono outline-none ${getFieldClass('bookingDate', false, form.bookingDate)}`}
                 />
@@ -1670,18 +1764,23 @@ export default function JobOrderWizardView({
                   <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                     Commodity <span className="text-blue-500 font-mono text-[9px]">({dbCommodities.length} in DB)</span>
                   </label>
-                  <select
-                    value={line.commodity || ''}
-                    onChange={(e) => handleEquipmentLineChange(idx, "commodity", e.target.value)}
-                    className={`w-full px-3 py-1.5 rounded-lg text-xs font-mono font-bold outline-none ${getFieldClass(line.commodity)}`}
-                  >
-                    <option value="">-- Select Commodity --</option>
-                    {dbCommodities.map((cmd) => (
-                      <option key={cmd.id || cmd.code} value={cmd.name}>
-                        {cmd.name} {cmd.requires_reefer ? '❄️ (Reefer -18°C)' : '📦 (Dry Box)'}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      list={`live-commodity-list-${idx}`}
+                      placeholder="Type to search Commodity..."
+                      value={line.commodity || ''}
+                      onChange={(e) => handleEquipmentLineChange(idx, "commodity", e.target.value)}
+                      className={`w-full px-3 py-1.5 rounded-lg text-xs font-mono font-bold outline-none ${getFieldClass(line.commodity)}`}
+                    />
+                    <datalist id={`live-commodity-list-${idx}`}>
+                      {dbCommodities.map((cmd) => (
+                        <option key={cmd.id || cmd.code} value={cmd.name}>
+                          {cmd.requires_reefer ? '❄️ Reefer (-18°C)' : '📦 Dry Box'}
+                        </option>
+                      ))}
+                    </datalist>
+                  </div>
                 </div>
 
                 <div className="w-36 sm:w-40">
