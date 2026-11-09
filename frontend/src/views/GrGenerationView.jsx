@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import spjLogo from '../assets/spj-logo.png';
 import api from '../services/api.js';
+import GRPrintDocument from '../components/GRPrintDocument';
 
 export default function GrGenerationView({
   jobs = [],
@@ -836,17 +837,15 @@ export default function GrGenerationView({
           )}
 
           {/* Print GR Old Application Format Button (Requirement 6) */}
-          {form.grNo && (
-            <button
-              type="button"
-              onClick={() => setShowPrintModal(true)}
-              className="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-black active:scale-95 text-white font-extrabold text-[11px] flex items-center gap-1.5 border border-slate-800 shadow-2xs transition cursor-pointer select-none"
-              title="Print Goods Receipt in Classic Old Application Format"
-            >
-              <Printer className="w-3.5 h-3.5 text-cyan-300" />
-              <span>Print GR</span>
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setShowPrintModal(true)}
+            className="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-black active:scale-95 text-white font-extrabold text-[11px] flex items-center gap-1.5 border border-slate-800 shadow-2xs transition cursor-pointer select-none"
+            title="Print Goods Receipt in Classic Old Application Format"
+          >
+            <Printer className="w-3.5 h-3.5 text-cyan-300" />
+            <span>Print GR</span>
+          </button>
 
           {/* Clear / New GR Button (Requirement 4) */}
           <button
@@ -1843,187 +1842,15 @@ export default function GrGenerationView({
         </div>
       )}
 
-      {/* Old Application Printable GR Format Modal (Requirement 6) */}
+      {/* Classic Official GR Print Modal (Requirement 6 - matching eLOGiFreight / LogiPark PDF) */}
       {showPrintModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 print:p-0 print:bg-white overflow-y-auto">
-          <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-300 overflow-hidden print:border-none print:shadow-none print:max-w-none print:w-full">
-            {/* Screen Action Bar */}
-            <div className="p-3 bg-slate-900 text-white flex items-center justify-between print:hidden">
-              <div className="flex items-center gap-2">
-                <Printer className="w-4 h-4 text-cyan-400" />
-                <span className="text-xs font-bold">Old Application GR Format &bull; Official Lorry Receipt</span>
-                <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-blue-800 text-cyan-200">{form.grNo}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Document</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowPrintModal(false)}
-                  className="px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Printable Document Sheet (Classic SPJ Bilty) */}
-            <div className="p-6 sm:p-8 bg-white font-sans text-slate-900 space-y-4 print:p-2 text-xs">
-              {/* Header Box */}
-              <div className="border-2 border-slate-900 p-3 rounded-t-lg bg-slate-50 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <img src={spjLogo} alt="SPJ Group" className="h-12 w-auto object-contain" />
-                  <div>
-                    <h1 className="text-base font-black tracking-tight text-slate-900 uppercase">
-                      SPJ GROUP OF COMPANIES
-                    </h1>
-                    <p className="text-[10px] text-slate-600 font-medium">
-                      eLOGiFreight Logistics Pvt. Ltd. &bull; Pan-India Containerised Multi-Modal Fleet
-                    </p>
-                    <p className="text-[9px] text-slate-500 font-mono">
-                      Regd. Office: ICD Dadri Complex / Tilpata Road, Greater Noida - 201306, UP | GSTIN: 09AAACF9128M1Z8
-                    </p>
-                  </div>
-                </div>
-
-                <div className="text-right border-l-2 border-slate-900 pl-4 shrink-0">
-                  <div className="text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">LORRY RECEIPT / BILTY</div>
-                  <div className="text-base font-mono font-black text-blue-800">{form.grNo || 'GR-2026-PENDING'}</div>
-                  <div className="text-[10px] font-mono text-slate-600">Date: {form.grDate}</div>
-                </div>
-              </div>
-
-              {/* GR Metadata Bar */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 border-x-2 border-b-2 border-slate-900 p-2.5 bg-slate-100/70 font-mono text-[11px]">
-                <div><span className="text-slate-500 block text-[9px] uppercase">Job Order No:</span><strong>{form.joNo || 'N/A'}</strong></div>
-                <div><span className="text-slate-500 block text-[9px] uppercase">Job Order Date:</span><strong>{form.joDate || 'N/A'}</strong></div>
-                <div><span className="text-slate-500 block text-[9px] uppercase">Customer GR / Ref:</span><strong>{form.cGr || 'N/A'}</strong></div>
-                <div><span className="text-slate-500 block text-[9px] uppercase">Consignment Type:</span><strong>{form.joFor || 'Shifting / Export'}</strong></div>
-              </div>
-
-              {/* Consignor & Consignee Box */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 border-2 border-slate-900 divide-y sm:divide-y-0 sm:divide-x-2 divide-slate-900">
-                <div className="p-3 space-y-1">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Consignor (Shipper)</div>
-                  <div className="text-xs font-bold text-slate-900">{form.consignor || 'Fair Exports (India) Pvt Ltd'}</div>
-                  <div className="text-[10px] text-slate-600">From / Origin: <span className="font-semibold">{form.fromLocation || 'TRANSWORLD-DADRI'}</span></div>
-                  <div className="text-[10px] text-slate-600">Factory Handover: <span className="font-semibold">{form.handoverLocation || 'ADANI-PATLI'}</span></div>
-                </div>
-
-                <div className="p-3 space-y-1">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Consignee (Buyer / Destination)</div>
-                  <div className="text-xs font-bold text-slate-900">{form.consignee || 'ASIAN PERAL MYANMAR CO. LTD.'}</div>
-                  <div className="text-[10px] text-slate-600">To / Gateway Port: <span className="font-semibold text-blue-800">{form.toLocation || 'ADANI-PATLI'}</span></div>
-                  <div className="text-[10px] text-slate-600">Surveyor / Inspected By: <span className="font-semibold">{form.surveyBy || 'Standard SPJ Yard Survey'}</span></div>
-                </div>
-              </div>
-
-              {/* Vehicle & Driver Details */}
-              <div className="border-2 border-slate-900 p-3 bg-slate-50 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                <div><span className="text-slate-500 block text-[9px] uppercase">Vehicle No:</span><strong className="font-mono text-blue-900">{form.vehicleNo || 'UP16BT9912'}</strong></div>
-                <div><span className="text-slate-500 block text-[9px] uppercase">Transporter:</span><strong>{form.transporter || 'AJINKYA TRANSPORT'}</strong></div>
-                <div><span className="text-slate-500 block text-[9px] uppercase">Driver Name:</span><strong>{form.driver || 'Ramesh Kumar'}</strong></div>
-                <div><span className="text-slate-500 block text-[9px] uppercase">Mobile / License:</span><strong className="font-mono">{form.driverContactNo || 'N/A'} {form.licenseValidity ? `(DL Exp: ${form.licenseValidity})` : ''}</strong></div>
-              </div>
-
-              {/* Container Particulars Table */}
-              <div className="border-2 border-slate-900 overflow-hidden">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead className="bg-slate-200 text-slate-800 font-bold uppercase text-[10px] border-b-2 border-slate-900">
-                    <tr>
-                      <th className="p-2 border-r border-slate-900 w-8 text-center">Sr.</th>
-                      <th className="p-2 border-r border-slate-900">Container Number</th>
-                      <th className="p-2 border-r border-slate-900 w-24">Size &amp; Type</th>
-                      <th className="p-2 border-r border-slate-900">Commodity</th>
-                      <th className="p-2 border-r border-slate-900 w-28 text-right">Gross Weight</th>
-                      <th className="p-2 w-28">Workshop / Yard</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y border-slate-900 font-mono text-[11px]">
-                    {selectedContainers.length > 0 ? (
-                      selectedContainers.map((c, idx) => (
-                        <tr key={idx}>
-                          <td className="p-2 border-r border-slate-900 text-center font-bold">{idx + 1}</td>
-                          <td className="p-2 border-r border-slate-900 font-bold text-blue-900">{c.contNo}</td>
-                          <td className="p-2 border-r border-slate-900">{c.size}{c.type || 'HC'}</td>
-                          <td className="p-2 border-r border-slate-900 font-sans">{c.commodity || form.commodity}</td>
-                          <td className="p-2 border-r border-slate-900 text-right font-bold">{c.weight || '24500'} kg</td>
-                          <td className="p-2 font-sans">{form.workshop || 'EICHER'}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td className="p-2 border-r border-slate-900 text-center font-bold">1</td>
-                        <td className="p-2 border-r border-slate-900 font-bold text-blue-900">{form.contNo || 'TBA'}</td>
-                        <td className="p-2 border-r border-slate-900">{form.size}{form.type || 'HC'}</td>
-                        <td className="p-2 border-r border-slate-900 font-sans">{form.commodity}</td>
-                        <td className="p-2 border-r border-slate-900 text-right font-bold">{form.weight || '24500'} kg</td>
-                        <td className="p-2 font-sans">{form.workshop || 'EICHER'}</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Financial Advance & Settlement Statement */}
-              <div className="border-2 border-slate-900 p-3 bg-slate-50 space-y-2">
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  Trip Advance &amp; Accounts Settlement
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-xs">
-                  <div className="p-2 bg-white rounded border border-slate-300">
-                    <span className="text-[9px] text-slate-500 block uppercase">Cash Advance</span>
-                    <strong>₹ {form.cash || '0'}</strong>
-                  </div>
-                  <div className="p-2 bg-white rounded border border-slate-300">
-                    <span className="text-[9px] text-slate-500 block uppercase">Diesel / Fuel Advance</span>
-                    <strong>₹ {form.oil || '0'}</strong>
-                    <div className="text-[8px] text-slate-500 font-sans truncate">{form.oilVendor ? `${form.oilVendor} (Slip: ${form.slipNo || 'N/A'})` : ''}</div>
-                  </div>
-                  <div className="p-2 bg-white rounded border border-slate-300">
-                    <span className="text-[9px] text-slate-500 block uppercase">Other Advance</span>
-                    <strong>₹ {form.others || '0'}</strong>
-                    <div className="text-[8px] text-slate-500 font-sans truncate">{form.otherAdvance}</div>
-                  </div>
-                  <div className="p-2 bg-blue-50 rounded border border-blue-300 text-blue-900">
-                    <span className="text-[9px] text-blue-700 block uppercase font-bold">Total Advance Paid</span>
-                    <strong className="text-sm">₹ {form.total || '0'}</strong>
-                  </div>
-                  <div className="p-2 bg-white rounded border border-slate-300">
-                    <span className="text-[9px] text-slate-500 block uppercase">Balance Due</span>
-                    <strong>₹ {form.balance || '0'}</strong>
-                  </div>
-                </div>
-              </div>
-
-              {/* Terms and Signatures */}
-              <div className="text-[9px] text-slate-500 leading-relaxed border-t border-slate-300 pt-2">
-                <strong>Conditions:</strong> The goods are accepted for transport at Owner's risk unless otherwise insured. Goods booked subject to Dadri / Gautam Budh Nagar jurisdiction. The carrier is not responsible for transit delays due to railway blockages, border checks, or weather conditions.
-              </div>
-
-              <div className="grid grid-cols-3 gap-6 pt-10 border-t-2 border-slate-900 text-center text-xs">
-                <div>
-                  <div className="border-t border-slate-400 pt-1 font-bold">Consignor Signature</div>
-                  <div className="text-[9px] text-slate-400">Shipper / Authorized Rep.</div>
-                </div>
-                <div>
-                  <div className="border-t border-slate-400 pt-1 font-bold">Driver Signature / LTI</div>
-                  <div className="text-[9px] text-slate-400">{form.driver || 'Driver'}</div>
-                </div>
-                <div>
-                  <div className="border-t border-slate-400 pt-1 font-bold text-blue-900">For SPJ LOGISTICS</div>
-                  <div className="text-[9px] text-slate-400">Authorized Signatory</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <GRPrintDocument
+          grData={{
+            ...form,
+            selectedContainers
+          }}
+          onClose={() => setShowPrintModal(false)}
+        />
       )}
     </div>
   );

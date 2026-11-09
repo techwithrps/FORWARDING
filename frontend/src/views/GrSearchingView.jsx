@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Download, LogOut, ArrowLeft, Truck, FileText, CheckCircle2, AlertCircle, RefreshCw, Layers } from 'lucide-react';
+import { Search, Download, LogOut, ArrowLeft, Truck, FileText, CheckCircle2, AlertCircle, RefreshCw, Layers, Printer } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import api from '../services/api.js';
+import GRPrintDocument from '../components/GRPrintDocument';
 
 export default function GrSearchingView({ onExit, onSelectGr }) {
   const todayStr = new Date().toISOString().split('T')[0];
@@ -20,6 +21,7 @@ export default function GrSearchingView({ onExit, onSelectGr }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [reportDate, setReportDate] = useState('');
   const [vehicleList, setVehicleList] = useState([]);
+  const [selectedGrForPrint, setSelectedGrForPrint] = useState(null);
 
   // Fetch available fleet vehicles for quick datalist autocomplete
   useEffect(() => {
@@ -395,17 +397,49 @@ export default function GrSearchingView({ onExit, onSelectGr }) {
                       )}
                     </td>
 
-                    {/* Action: Open in GR Generation */}
+                    {/* Action: Open in GR Generation & Print */}
                     <td className="px-3 py-2 text-center whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => onSelectGr && onSelectGr(r)}
-                        className="px-2.5 py-1 rounded-md bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white font-bold text-[10px] border border-blue-200/80 transition-all flex items-center justify-center gap-1 shadow-2xs cursor-pointer mx-auto"
-                        title="Open in GR Generation to Edit or Cancel"
-                      >
-                        <FileText className="w-3 h-3" />
-                        <span>Edit / View</span>
-                      </button>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => onSelectGr && onSelectGr(r)}
+                          className="px-2 py-1 rounded-md bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white font-bold text-[10px] border border-blue-200/80 transition-all flex items-center justify-center gap-1 shadow-2xs cursor-pointer"
+                          title="Open in GR Generation to Edit or Cancel"
+                        >
+                          <FileText className="w-3 h-3" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedGrForPrint({
+                            grNo: r.gr_no,
+                            grDate: r.gr_date,
+                            consignor: r.customer,
+                            consignee: r.consignee,
+                            vehicleNo: r.vehicle_no,
+                            fromLocation: r.from_location,
+                            toLocation: r.to_location,
+                            handoverLocation: r.factory_location || r.handover_location,
+                            driver: r.driver_name,
+                            driverContactNo: r.driver_mobile,
+                            joNo: r.jo_no,
+                            contNo: r.cont_no,
+                            size: r.cont_size || r.vh_size,
+                            type: r.cont_type || 'HC',
+                            shippingLine: r.line,
+                            sealNo: r.seal_no,
+                            weight: r.weight,
+                            slipNo: r.slip_no,
+                            commodity: r.commodity,
+                            workshop: r.workshop
+                          })}
+                          className="px-2 py-1 rounded-md bg-slate-900 hover:bg-black text-white font-bold text-[10px] border border-slate-800 transition-all flex items-center justify-center gap-1 shadow-2xs cursor-pointer"
+                          title="Print GR in Classic SPJ Old Application Format"
+                        >
+                          <Printer className="w-3 h-3 text-cyan-300" />
+                          <span>Print</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -430,6 +464,14 @@ export default function GrSearchingView({ onExit, onSelectGr }) {
           </div>
         )}
       </div>
+
+      {/* Classic Official GR Print Modal */}
+      {selectedGrForPrint && (
+        <GRPrintDocument
+          grData={selectedGrForPrint}
+          onClose={() => setSelectedGrForPrint(null)}
+        />
+      )}
     </div>
   );
 }
