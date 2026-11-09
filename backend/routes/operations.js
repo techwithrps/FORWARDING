@@ -198,7 +198,7 @@ router.get('/search-gr', async (req, res) => {
     }
 
     if (cleanVeh) {
-      conditions.push(`REGEXP_REPLACE(UPPER(TRIM(GM."VEHICLE_NO")), '[^A-Z0-9]', '', 'g') LIKE '%' || $${paramIndex} || '%'`);
+      conditions.push(`REGEXP_REPLACE(UPPER(TRIM(GM."VEHICLE_NO"::text)), '[^A-Z0-9]', '', 'g') LIKE '%' || $${paramIndex} || '%'`);
       params.push(cleanVeh);
       paramIndex++;
     }
@@ -209,40 +209,40 @@ router.get('/search-gr', async (req, res) => {
       SELECT 
         GM."GR_ID"::text as gr_id,
         GM."CONT_JO_ID"::text as cont_jo_id,
-        TRIM(GM."VEHICLE_NO") as vehicle_no,
+        TRIM(GM."VEHICLE_NO"::text) as vehicle_no,
         COALESCE(EM."EQUIPMENT_TYPE", 'T40') as vh_type,
         COALESCE(GM."CONT_SIZE", '40') as vh_size,
         GM."GR_NO"::text as gr_no,
         TO_CHAR(GM."GR_DATE", 'YYYY-MM-DD') as gr_date_iso,
         TO_CHAR(GM."GR_DATE", 'DD/MM/YYYY') as gr_date,
-        TRIM(SPLIT_PART(GM."CONT_NO", '-', 1)) as cont_no,
+        TRIM(SPLIT_PART(GM."CONT_NO"::text, '-', 1)) as cont_no,
         COALESCE(GM."CONT_SIZE", '40') as cont_size,
         COALESCE(GM."CONT_TYPE", 'HC') as cont_type,
-        COALESCE(TRIM(GM."FROM_LOCATION"), '') as from_location,
-        COALESCE(TRIM(GM."TO_LOCATION"), '') as to_location,
-        COALESCE(TRIM(GM."FACTORY_LOCATION"), '') as factory_location,
-        COALESCE(TRIM(CUST."CUSTOMER_NAME"), 'Fair Exports (India) Pvt Ltd') as customer,
+        COALESCE(TRIM(GM."FROM_LOCATION"::text), '') as from_location,
+        COALESCE(TRIM(GM."TO_LOCATION"::text), '') as to_location,
+        COALESCE(TRIM(GM."FACTORY_LOCATION"::text), '') as factory_location,
+        COALESCE(TRIM(CUST."CUSTOMER_NAME"::text), 'Fair Exports (India) Pvt Ltd') as customer,
         TO_CHAR(GM."CLOSE_DATE", 'DD/MM/YYYY') as close_date,
         COALESCE(GM."ADVANCE"::text, '0') as advance,
         COALESCE(GM."OIL_ADVANCE"::text, '0') as oil_advance,
         COALESCE(GM."OTHER_AMT"::text, '0') as other_advance,
-        COALESCE(TRIM(GM."OTHER_REASON"), '') as other_advance_reason,
-        COALESCE(TRIM(GM."OTHER_REASON"), '') as other_reason,
-        COALESCE(TRIM(FCJ."CLR_BY"), '') as survey_by,
+        COALESCE(TRIM(GM."OTHER_REASON"::text), '') as other_advance_reason,
+        COALESCE(TRIM(GM."OTHER_REASON"::text), '') as other_reason,
+        COALESCE(TRIM(FCJ."CLR_BY"::text), '') as survey_by,
         COALESCE(GM."C_GR"::text, '') as c_gr,
-        COALESCE(TRIM(GM."SLIP_NO"), '') as slip_no,
-        COALESCE(TRIM(GM."GR_REMARK"), '') as remarks,
-        COALESCE(TRIM(DM."DRIVER_NAME"), '') as driver_name,
-        COALESCE(TRIM(DM."MOBILE_NO"), '') as driver_mobile,
+        COALESCE(TRIM(GM."SLIP_NO"::text), '') as slip_no,
+        COALESCE(TRIM(GM."GR_REMARK"::text), '') as remarks,
+        COALESCE(TRIM(DM."DRIVER_NAME"::text), '') as driver_name,
+        COALESCE(TRIM(DM."MOBILE_NO"::text), '') as driver_mobile,
         TO_CHAR(DM."DL_RENEWABLE_DATE", 'YYYY-MM-DD') as license_validity,
-        COALESCE(TRIM(VM."VENDOR_NAME"), '') as oil_vendor,
+        COALESCE(TRIM(VM."VENDOR_NAME"::text), '') as oil_vendor,
         COALESCE(TRIM(FCJ."CONT_JO_NO"::text), GM."CONT_JO_ID"::text, '') as jo_no,
         TO_CHAR(GM."CREATED_ON", 'YYYY-MM-DD') as jo_date,
         COALESCE(TRIM(FCJ."COMMODITY"::text), 'FROZEN BUFFALO BONELESS MEAT') as commodity,
-        COALESCE(TRIM(GM."REMARK"), 'EICHER') as workshop
+        COALESCE(TRIM(GM."REMARK"::text), 'EICHER') as workshop
       FROM spjlive."FLEET_GR_MAPPING" GM
       LEFT JOIN spjlive."FLEET_EQUIPMENT_MASTER" EM 
-        ON UPPER(TRIM(EM."EQUIPMENT_NO")) = UPPER(TRIM(GM."VEHICLE_NO"))
+        ON UPPER(TRIM(EM."EQUIPMENT_NO"::text)) = UPPER(TRIM(GM."VEHICLE_NO"::text))
       LEFT JOIN spjlive."CUSTOMER_MASTER" CUST 
         ON CUST."CUSTOMER_ID" = GM."CUSTOMER_ID"
       LEFT JOIN spjlive."FLEET_DRIVER_MASTER" DM
@@ -264,40 +264,40 @@ router.get('/search-gr', async (req, res) => {
         SELECT 
           GM."GR_ID"::text as gr_id,
           GM."CONT_JO_ID"::text as cont_jo_id,
-          TRIM(GM."VEHICLE_NO") as vehicle_no,
+          TRIM(GM."VEHICLE_NO"::text) as vehicle_no,
           COALESCE(EM."EQUIPMENT_TYPE", 'T40') as vh_type,
           COALESCE(GM."CONT_SIZE", '40') as vh_size,
           GM."GR_NO"::text as gr_no,
           TO_CHAR(GM."GR_DATE", 'YYYY-MM-DD') as gr_date_iso,
           TO_CHAR(GM."GR_DATE", 'DD/MM/YYYY') as gr_date,
-          TRIM(SPLIT_PART(GM."CONT_NO", '-', 1)) as cont_no,
+          TRIM(SPLIT_PART(GM."CONT_NO"::text, '-', 1)) as cont_no,
           COALESCE(GM."CONT_SIZE", '40') as cont_size,
           COALESCE(GM."CONT_TYPE", 'HC') as cont_type,
-          COALESCE(TRIM(GM."FROM_LOCATION"), '') as from_location,
-          COALESCE(TRIM(GM."TO_LOCATION"), '') as to_location,
-          COALESCE(TRIM(GM."FACTORY_LOCATION"), '') as factory_location,
-          COALESCE(TRIM(CUST."CUSTOMER_NAME"), 'Fair Exports (India) Pvt Ltd') as customer,
+          COALESCE(TRIM(GM."FROM_LOCATION"::text), '') as from_location,
+          COALESCE(TRIM(GM."TO_LOCATION"::text), '') as to_location,
+          COALESCE(TRIM(GM."FACTORY_LOCATION"::text), '') as factory_location,
+          COALESCE(TRIM(CUST."CUSTOMER_NAME"::text), 'Fair Exports (India) Pvt Ltd') as customer,
           TO_CHAR(GM."CLOSE_DATE", 'DD/MM/YYYY') as close_date,
           COALESCE(GM."ADVANCE"::text, '0') as advance,
           COALESCE(GM."OIL_ADVANCE"::text, '0') as oil_advance,
           COALESCE(GM."OTHER_AMT"::text, '0') as other_advance,
-          COALESCE(TRIM(GM."OTHER_REASON"), '') as other_advance_reason,
-          COALESCE(TRIM(GM."OTHER_REASON"), '') as other_reason,
-          COALESCE(TRIM(FCJ."CLR_BY"), '') as survey_by,
+          COALESCE(TRIM(GM."OTHER_REASON"::text), '') as other_advance_reason,
+          COALESCE(TRIM(GM."OTHER_REASON"::text), '') as other_reason,
+          COALESCE(TRIM(FCJ."CLR_BY"::text), '') as survey_by,
           COALESCE(GM."C_GR"::text, '') as c_gr,
-          COALESCE(TRIM(GM."SLIP_NO"), '') as slip_no,
-          COALESCE(TRIM(GM."GR_REMARK"), '') as remarks,
-          COALESCE(TRIM(DM."DRIVER_NAME"), '') as driver_name,
-          COALESCE(TRIM(DM."MOBILE_NO"), '') as driver_mobile,
+          COALESCE(TRIM(GM."SLIP_NO"::text), '') as slip_no,
+          COALESCE(TRIM(GM."GR_REMARK"::text), '') as remarks,
+          COALESCE(TRIM(DM."DRIVER_NAME"::text), '') as driver_name,
+          COALESCE(TRIM(DM."MOBILE_NO"::text), '') as driver_mobile,
           TO_CHAR(DM."DL_RENEWABLE_DATE", 'YYYY-MM-DD') as license_validity,
-          COALESCE(TRIM(VM."VENDOR_NAME"), '') as oil_vendor,
+          COALESCE(TRIM(VM."VENDOR_NAME"::text), '') as oil_vendor,
           COALESCE(TRIM(FCJ."CONT_JO_NO"::text), GM."CONT_JO_ID"::text, '') as jo_no,
           TO_CHAR(GM."CREATED_ON", 'YYYY-MM-DD') as jo_date,
           COALESCE(TRIM(FCJ."COMMODITY"::text), 'FROZEN BUFFALO BONELESS MEAT') as commodity,
-          COALESCE(TRIM(GM."REMARK"), 'EICHER') as workshop
+          COALESCE(TRIM(GM."REMARK"::text), 'EICHER') as workshop
         FROM spjlive."FLEET_GR_MAPPING" GM
         LEFT JOIN spjlive."FLEET_EQUIPMENT_MASTER" EM 
-          ON UPPER(TRIM(EM."EQUIPMENT_NO")) = UPPER(TRIM(GM."VEHICLE_NO"))
+          ON UPPER(TRIM(EM."EQUIPMENT_NO"::text)) = UPPER(TRIM(GM."VEHICLE_NO"::text))
         LEFT JOIN spjlive."CUSTOMER_MASTER" CUST 
           ON CUST."CUSTOMER_ID" = GM."CUSTOMER_ID"
         LEFT JOIN spjlive."FLEET_DRIVER_MASTER" DM
@@ -307,7 +307,7 @@ router.get('/search-gr', async (req, res) => {
         LEFT JOIN spjlive."FLEET_CONT_JO" FCJ
           ON FCJ."CONT_JO_ID" = GM."CONT_JO_ID"
         WHERE GM."CANCEL_STATUS" IS NULL AND GM."GR_NO" IS NOT NULL
-          AND REGEXP_REPLACE(UPPER(TRIM(GM."VEHICLE_NO")), '[^A-Z0-9]', '', 'g') LIKE '%' || $1 || '%'
+          AND REGEXP_REPLACE(UPPER(TRIM(GM."VEHICLE_NO"::text)), '[^A-Z0-9]', '', 'g') LIKE '%' || $1 || '%'
         ORDER BY GM."GR_ID" DESC
         LIMIT 100;
       `;
@@ -333,7 +333,7 @@ router.get('/search-gr', async (req, res) => {
         lIdx++;
       }
       if (cleanVeh) {
-        localCond.push(`REGEXP_REPLACE(UPPER(TRIM(COALESCE(c.truck_number, ''))), '[^A-Z0-9]', '', 'g') LIKE '%' || $${lIdx} || '%'`);
+        localCond.push(`REGEXP_REPLACE(UPPER(TRIM(COALESCE(c.truck_number, '')::text)), '[^A-Z0-9]', '', 'g') LIKE '%' || $${lIdx} || '%'`);
         lParams.push(cleanVeh);
         lIdx++;
       }
@@ -341,7 +341,7 @@ router.get('/search-gr', async (req, res) => {
         SELECT 
           c.id::text as gr_id,
           c.job_id::text as cont_jo_id,
-          COALESCE(TRIM(c.truck_number), 'HR55AN2094') as vehicle_no,
+          COALESCE(TRIM(c.truck_number::text), 'HR55AN2094') as vehicle_no,
           'T40' as vh_type,
           CASE WHEN c.size_type LIKE '%20%' THEN '20' ELSE '40' END as vh_size,
           c.gr_number as gr_no,
@@ -440,7 +440,7 @@ router.post('/cancel-gr', async (req, res) => {
         await db.query(`
           UPDATE job_containers 
           SET gr_number = NULL, gr_date = NULL, truck_number = NULL, driver_name = NULL, driver_mobile = NULL
-          WHERE UPPER(TRIM(container_number)) = UPPER(TRIM($1))
+          WHERE UPPER(TRIM(container_number::text)) = UPPER(TRIM($1::text))
         `, [contNo]);
       } else if (grNo) {
         await db.query(`
@@ -665,7 +665,7 @@ router.post('/generate-gr', async (req, res) => {
       await db.query(`
         UPDATE spjlive."FLEET_CONT_JO_DTLS"
         SET "GR_ID" = $1
-        WHERE TRIM("CONT_NO") = TRIM($2) AND COALESCE("GR_ID", 0) = 0
+        WHERE TRIM("CONT_NO"::text) = TRIM($2::text) AND COALESCE("GR_ID", 0) = 0
       `, [finalGrId, actualContNo]);
     } catch (e) {
       console.warn('Could not insert spjlive.FLEET_GR_MAPPING:', e.message);
