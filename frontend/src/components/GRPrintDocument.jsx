@@ -1,6 +1,6 @@
 import React from 'react';
 import { Printer, X } from 'lucide-react';
-import spjLogo from '../assets/spj-logo.png';
+import spjLogo from '../assets/spjLogoBase64.js';
 
 export default function GRPrintDocument({ grData = {}, onClose }) {
   const d = grData;
@@ -305,3 +305,4 @@ export default function GRPrintDocument({ grData = {}, onClose }) {
     </div>
   );
 }
+

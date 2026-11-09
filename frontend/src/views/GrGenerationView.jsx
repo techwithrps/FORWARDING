@@ -20,7 +20,7 @@ import {
   FileText,
   ShieldCheck
 } from 'lucide-react';
-import spjLogo from '../assets/spj-logo.png';
+import spjLogo from '../assets/spjLogoBase64.js';
 import api from '../services/api.js';
 import GRPrintDocument from '../components/GRPrintDocument';
 

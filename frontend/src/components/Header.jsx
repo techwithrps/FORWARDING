@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import spjLogo from '../assets/spj-logo.png';
+import spjLogo from '../assets/spjLogoBase64.js';
 import {
   Search,
   Bell,

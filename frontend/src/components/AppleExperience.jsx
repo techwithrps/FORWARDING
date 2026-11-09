@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import spjLogo from '../assets/spj-logo.png';
+import spjLogo from '../assets/spjLogoBase64.js';
 import { HelloEffect } from '@/components/ui/hello-effect';
 import {
   LayoutDashboard,
