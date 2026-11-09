@@ -1,4 +1,18 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'https://territory-traveler-mistress-hostel.trycloudflare.com/api/v1';
+const getApiBase = () => {
+  if (import.meta.env.VITE_API_URL && !import.meta.env.VITE_API_URL.includes('trycloudflare.com')) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (typeof window !== 'undefined') {
+    const pathname = window.location.pathname;
+    if (pathname.toLowerCase().includes('/forwarder2.o') || pathname.toLowerCase().includes('/forwarder2.0')) {
+      return `${pathname.split('/')[1] ? '/' + pathname.split('/')[1] : ''}/api/v1`;
+    }
+    return '/api/v1';
+  }
+  return '/api/v1';
+};
+
+const API_BASE = getApiBase();
 
 // Helper for fetch with reasonable timeout and error handling
 async function request(endpoint, options = {}) {
