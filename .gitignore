@@ -6,6 +6,8 @@ node_modules
 # Build outputs
 dist/
 **/dist/
+!frontend/dist/
+!frontend/dist/**
 build/
 **/build/
 
