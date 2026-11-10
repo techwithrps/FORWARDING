@@ -801,6 +801,27 @@ export default function JobOrderWizardView({
     setTimeout(() => setQuickFillNotice(''), 2500);
   };
 
+  const formatDateForInput = (val) => {
+    if (!val) return getTodayDateStr();
+    if (typeof val === 'string') {
+      if (val.includes('T')) return val.split('T')[0];
+      if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+      const parts = val.split(/[-/]/);
+      if (parts.length === 3) {
+        if (parts[0].length === 4) {
+          return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+        } else if (parts[2].length === 4) {
+          return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        }
+      }
+    }
+    try {
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+    } catch (e) {}
+    return getTodayDateStr();
+  };
+
   // Load Previous Booking for Edit
   const handleLoadForEdit = (prevJob) => {
     const today = getTodayDateStr();
@@ -814,33 +835,33 @@ export default function JobOrderWizardView({
     }
     setForm({
       joNo: prevJob.joNo || prevJob.id || form.joNo,
-      joDate: prevJob.joDate || prevJob.date || today,
+      joDate: formatDateForInput(prevJob.joDate || prevJob.bookingDate || prevJob.date || today),
       joType: prevJob.joType || 'Export FCL',
       modeOfShipment: prevJob.modeOfShipment || 'Multimodal (Rail + Road)',
       servicesRequired: svcReq,
-      consignor: prevJob.customer || prevJob.consignor || prevJob.customerName || '',
-      consignee: prevJob.consignee || prevJob.consigneeName || consigneesList[0],
-      shippingLine: prevJob.shippingLine || prevJob.shippingLineName || prevJob.line || linesList[0],
-      lineBookingNo: prevJob.bookingNo || prevJob.lineBookingNo || '',
-      bookingDate: prevJob.bookingDate || prevJob.joDate || todayStr,
+      consignor: prevJob.consignor || prevJob.customer || prevJob.customerName || '',
+      consignee: prevJob.consignee || prevJob.consigneeName || '',
+      shippingLine: prevJob.shippingLine || prevJob.shippingLineName || prevJob.line || '',
+      lineBookingNo: prevJob.lineBookingNo || prevJob.bookingNo || '',
+      bookingDate: formatDateForInput(prevJob.bookingDate || prevJob.joDate || today),
       bookingValidity: prevJob.bookingValidity || '',
       bookingReValidity: prevJob.bookingReValidity || prevJob.bookingRevalidity || '',
-      emptyPickupLocation: prevJob.emptyPickupLocation || 'TRANSWORLD-DADRI',
-      fromLocation: prevJob.fromLocation || prevJob.origin || 'Dadri ICD (INICD6)',
-      toLocation: prevJob.toLocation || prevJob.podPort || 'Nhava Sheva-NSFT (INNSA1)',
-      handoverLocation: prevJob.handoverLocation || 'ADANI-PATLI',
-      pol: prevJob.pol || 'INNSA1',
-      pod: prevJob.podCode || prevJob.pod || 'AEJEA',
-      vesselName: prevJob.vesselName || prevJob.vessel || 'MAERSK COLOMBO',
-      voyage: prevJob.voyage || '2604W',
+      emptyPickupLocation: prevJob.emptyPickupLocation || '',
+      fromLocation: prevJob.fromLocation || prevJob.origin || '',
+      toLocation: prevJob.toLocation || prevJob.podPort || prevJob.pod || '',
+      handoverLocation: prevJob.handoverLocation || '',
+      pol: prevJob.pol || '',
+      pod: prevJob.podCode || prevJob.pod || '',
+      vesselName: prevJob.vesselName || prevJob.vessel || '',
+      voyage: prevJob.voyage || '',
       etdDate: prevJob.etdDate || '',
       etaDate: prevJob.etaDate || '',
       siCutDate: prevJob.siCutDate || '',
       portCutDate: prevJob.portCutDate || '',
       temperature: prevJob.temperature || '',
-      transporter: prevJob.transporter || 'AJINKYA TRANSPORT',
-      chaName: prevJob.chaName || '',
-      onAccount: prevJob.onAccount || '',
+      transporter: prevJob.transporter || '',
+      chaName: prevJob.chaName || prevJob.cha_name || '',
+      onAccount: prevJob.onAccount || prevJob.on_account || '',
       packageType: prevJob.packageType || 'Cartons',
       cartons: prevJob.cartons !== undefined && prevJob.cartons !== null ? String(prevJob.cartons) : '',
       cbm: prevJob.cbm !== undefined && prevJob.cbm !== null ? String(prevJob.cbm) : '',
@@ -854,6 +875,33 @@ export default function JobOrderWizardView({
       remarks: prevJob.remarks || ''
     });
 
+    // Restore Equipment Lines
+    if (prevJob.equipmentBreakdown && Array.isArray(prevJob.equipmentBreakdown) && prevJob.equipmentBreakdown.length > 0) {
+      setEquipmentLines(prevJob.equipmentBreakdown);
+    } else if (prevJob.containers && prevJob.containers.length > 0) {
+      // Reconstruct equipment lines from saved containers
+      const grouped = {};
+      prevJob.containers.forEach((c) => {
+        const size = c.size || (c.sizeType?.includes('20') ? '20' : '40');
+        const type = c.type || (c.sizeType?.includes('GP') ? 'GP' : 'HC');
+        const key = `${size}-${type}`;
+        if (!grouped[key]) {
+          grouped[key] = {
+            id: Object.keys(grouped).length + 1,
+            noOfCont: 0,
+            size: size,
+            type: type,
+            commodity: prevJob.commodity || '',
+            setTemp: prevJob.temperature || 'Ambient'
+          };
+        }
+        grouped[key].noOfCont += 1;
+      });
+      setEquipmentLines(Object.values(grouped));
+    } else {
+      setEquipmentLines([{ id: 1, noOfCont: 1, size: '' }]);
+    }
+
     if (prevJob.containers && prevJob.containers.length > 0) {
       setContainers(
         prevJob.containers.map((c, idx) => ({
@@ -862,13 +910,13 @@ export default function JobOrderWizardView({
           size: c.size || (c.sizeType?.includes('20') ? '20' : '40'),
           type: c.type || (c.sizeType?.includes('GP') ? 'GP' : 'HC'),
           tareWeight: c.tareWeight || c.tare || 3820,
-          cargoWeight: c.cargoWeight || c.cargo || '24500',
-          grossWeight: c.grossWeight || c.gross || '28320',
+          cargoWeight: c.cargoWeight || c.cargo || '',
+          grossWeight: c.grossWeight || c.gross || '',
           sealNo: c.sealNo || c.seal || '',
           agentSeal: c.agentSeal || c.customSeal || '',
           vehicleNo: c.truckNo || c.vehicleNo || c.truck || '',
           grNo: c.grNo || c.grNumber || c.gr || '',
-          grDate: c.grDate ? (typeof c.grDate === 'string' && c.grDate.includes('T') ? c.grDate.split('T')[0] : c.grDate) : todayStr,
+          grDate: c.grDate ? (typeof c.grDate === 'string' && c.grDate.includes('T') ? c.grDate.split('T')[0] : c.grDate) : today,
           remarks: c.remarks || c.grRemarks || ''
         }))
       );
@@ -1062,17 +1110,17 @@ export default function JobOrderWizardView({
       containers: containers.map((c, idx) => ({
         id: `C${idx + 1}`,
         sr: c.sr || idx + 1,
-        containerNo: c.contNo || `MSKU${Math.floor(1000000 + Math.random() * 9000000)}`,
-        sizeType: `${c.size}${c.type}`,
-        size: c.size,
-        type: c.type,
+        containerNo: c.contNo || '',
+        sizeType: `${c.size || '40'}${c.type || 'HC'}`,
+        size: c.size || '40',
+        type: c.type || 'HC',
         tareWeight: Number(c.tareWeight) || 3820,
-        cargoWeight: Number(c.cargoWeight) || 24500,
-        grossWeight: Number(c.grossWeight) || 28320,
-        sealNo: c.sealNo || `ML-IN-${Math.floor(100000 + Math.random() * 900000)}`,
-        agentSeal: c.agentSeal || `CS-${Math.floor(100000 + Math.random() * 900000)}`,
-        truckNo: c.vehicleNo || 'HR55AN2094',
-        grNo: c.grNo || `GR-2026-084${idx + 1}`
+        cargoWeight: Number(c.cargoWeight) || 0,
+        grossWeight: Number(c.grossWeight) || 0,
+        sealNo: c.sealNo || '',
+        agentSeal: c.agentSeal || '',
+        truckNo: c.vehicleNo || '',
+        grNo: c.grNo || ''
       }))
     };
 

@@ -49,8 +49,11 @@ router.get('/', async (req, res) => {
       return {
         id: job.id,
         joNo: job.job_number,
+        joDate: job.jo_date ? (typeof job.jo_date === 'string' && job.jo_date.includes('T') ? job.jo_date.split('T')[0] : job.jo_date) : (job.booking_date ? (typeof job.booking_date === 'string' && job.booking_date.includes('T') ? job.booking_date.split('T')[0] : job.booking_date) : (job.created_at ? new Date(job.created_at).toISOString().split('T')[0] : '')),
         joType: job.jo_type || 'Export FCL',
         modeOfShipment: job.mode_of_shipment || 'Multimodal (Rail + Road)',
+        servicesRequired: job.services_required || 'Transport, Clearance, Rail, Forwarding',
+        equipmentBreakdown: job.equipment_breakdown || [],
         bookingNo: job.booking_no,
         consignor: job.customer_name,
         customerName: job.customer_name,
@@ -67,12 +70,14 @@ router.get('/', async (req, res) => {
         pol: job.origin_port_code,
         pod: job.pod_port_code,
         vessel: job.vessel_name,
+        vesselName: job.vessel_name,
         voyage: job.voyage,
         commodity: job.commodity,
         temperature: job.temperature,
         bookingDate: job.booking_date || '',
         bookingValidity: job.booking_validity || '',
         bookingRevalidity: job.booking_revalidity || '',
+        bookingReValidity: job.booking_revalidity || '',
         etdDate: job.etd_date || '',
         etaDate: job.eta_date || '',
         portCutDate: job.port_cut_date || '',
@@ -123,82 +128,179 @@ router.get('/next-jo', async (req, res) => {
   }
 });
 
-// POST create a new Job Order with atomic container repeater rows
+// POST create or update a Job Order with atomic container repeater rows
 router.post('/', async (req, res) => {
   const client = await db.pool.connect();
   try {
     const b = req.body;
     await client.query('BEGIN');
 
-    // Get live next sequence from DB
-    const seqRes = await client.query('SELECT COALESCE(MAX("CONT_JO_ID"), 0) + 1 AS next_id FROM spjlive."FLEET_CONT_JO"');
-    const nextSeqId = Number(seqRes.rows[0]?.next_id || 94182);
-    const joNo = b.joNo || ('JO-' + nextSeqId);
-    const jobId = 'JOB-' + joNo;
+    // Check if an existing booking is being updated
+    const joNoGiven = b.joNo || b.id || '';
+    const existingCheck = await client.query(
+      'SELECT id, job_number FROM job_orders WHERE job_number = $1 OR id = $2 OR id = $3 LIMIT 1',
+      [joNoGiven, b.id || '', 'JOB-' + joNoGiven]
+    );
 
-    const jobQuery = `
-      INSERT INTO job_orders (
-        id, job_number, customer_name, consignee_name, shipping_line_name, booking_no,
-        origin_port_code, origin_port_name, pod_port_code, pod_port_name,
-        vessel_name, voyage, commodity, temperature, total_containers,
-        sell_freight, buy_freight, status, remarks,
-        cha_name, on_account, package_type, cartons, cbm, fpod, hbl_no, boe_no, boe_date,
-        jo_type, mode_of_shipment, transporter, booking_date, booking_validity, booking_revalidity,
-        empty_pickup_location, handover_location, etd_date, eta_date, si_cut_date, port_cut_date,
-        services_required, sell_rate, buy_rate
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
-        $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36,
-        $37, $38, $39, $40, $41, $42, $43
-      ) RETURNING *;
-    `;
-    const jobValues = [
-      jobId,
-      joNo,
-      b.consignor || b.customerName || b.customer || 'Fair Exports (India) Pvt Ltd',
-      b.consignee || b.consigneeName || 'ASIAN PERAL MYANMAR CO. LTD.',
-      b.shippingLine || b.shippingLineName || b.line || 'Maersk Line India Pvt Ltd',
-      b.bookingNo || b.lineBookingNo || ('BK-' + Date.now()),
-      b.pol || 'INICD6',
-      b.fromLocation || b.origin || 'Dadri ICD',
-      b.pod || b.podCode || 'AEJEA',
-      b.toLocation || 'Jebel Ali Port',
-      b.vessel || b.vesselName || 'MAERSK COLOMBO',
-      b.voyage || '2604W',
-      b.commodity || 'FROZEN BUFFALO BONELSS MEAT',
-      b.temperature || '-18°C',
-      Array.isArray(b.containers) ? b.containers.length : (Number(b.containersCount) || 1),
-      Number(b.sellFreight) || Number(b.sellRate) || 135000,
-      Number(b.buyFreight) || Number(b.buyRate) || 118000,
-      b.status || 'BOOKED',
-      b.remarks || '',
-      b.chaName || '',
-      b.onAccount || '',
-      b.packageType || 'Cartons',
-      Number(b.cartons) || 0,
-      Number(b.cbm) || 0,
-      b.fpod || '',
-      b.hblNo || '',
-      b.boeNo || '',
-      b.boeDate || null,
-      b.joType || 'Export FCL',
-      b.modeOfShipment || 'Multimodal (Rail + Road)',
-      b.transporter || 'AJINKYA TRANSPORT',
-      b.bookingDate || b.joDate || null,
-      b.bookingValidity || '',
-      b.bookingReValidity || b.bookingRevalidity || '',
-      b.emptyPickupLocation || 'TRANSWORLD-DADRI',
-      b.handoverLocation || 'ADANI-PATLI',
-      b.etdDate || '',
-      b.etaDate || '',
-      b.siCutDate || '',
-      b.portCutDate || '',
-      Array.isArray(b.servicesRequired) ? b.servicesRequired.join(', ') : (b.servicesRequired || 'Transport, Clearance, Rail, Forwarding'),
-      Number(b.sellRate) || Number(b.sellFreight) || 0,
-      Number(b.buyRate) || Number(b.buyFreight) || 0
-    ];
-    const jobRes = await client.query(jobQuery, jobValues);
-    const createdJob = jobRes.rows[0];
+    let jobId;
+    let joNo;
+    let isUpdate = false;
+
+    if (existingCheck.rows.length > 0) {
+      isUpdate = true;
+      jobId = existingCheck.rows[0].id;
+      joNo = existingCheck.rows[0].job_number;
+    } else {
+      let nextSeqId = 94182;
+      try {
+        const seqRes = await client.query('SELECT COALESCE(MAX("CONT_JO_ID"), 0) + 1 AS next_id FROM spjlive."FLEET_CONT_JO"');
+        nextSeqId = Number(seqRes.rows[0]?.next_id || 94182);
+      } catch (e) {}
+      joNo = b.joNo || ('JO-' + nextSeqId);
+      jobId = b.id || ('JOB-' + joNo);
+    }
+
+    const customerName = b.consignor || b.customerName || b.customer || '';
+    const consigneeName = b.consignee || b.consigneeName || '';
+    const shippingLineName = b.shippingLine || b.shippingLineName || b.line || '';
+    const bookingNo = b.bookingNo || b.lineBookingNo || '';
+    const polCode = b.pol || 'INNSA1';
+    const fromLoc = b.fromLocation || b.origin || '';
+    const podCode = b.pod || b.podCode || 'AEJEA';
+    const toLoc = b.toLocation || '';
+    const vesselName = b.vessel || b.vesselName || '';
+    const voyageNo = b.voyage || '';
+    const commodityVal = b.commodity || '';
+    const tempVal = b.temperature || '';
+    const totalConts = Array.isArray(b.containers) ? b.containers.length : (Number(b.containersCount) || 1);
+    const sellFreight = Number(b.sellFreight) || Number(b.sellRate) || 0;
+    const buyFreight = Number(b.buyFreight) || Number(b.buyRate) || 0;
+    const sellRate = Number(b.sellRate) || Number(b.sellFreight) || 0;
+    const buyRate = Number(b.buyRate) || Number(b.buyFreight) || 0;
+    const statusVal = b.status || 'BOOKED';
+    const remarksVal = b.remarks || '';
+    const chaVal = b.chaName || '';
+    const onAccountVal = b.onAccount || '';
+    const pkgType = b.packageType || 'Cartons';
+    const cartonsVal = Number(b.cartons) || 0;
+    const cbmVal = Number(b.cbm) || 0;
+    const fpodVal = b.fpod || '';
+    const hblVal = b.hblNo || '';
+    const boeVal = b.boeNo || '';
+    const boeDateVal = b.boeDate || null;
+    const joTypeVal = b.joType || 'Export FCL';
+    const modeShipVal = b.modeOfShipment || 'Multimodal (Rail + Road)';
+    const transporterVal = b.transporter || 'AJINKYA TRANSPORT';
+    const joDateVal = b.joDate || b.bookingDate || null;
+    const bookingDateVal = b.bookingDate || b.joDate || null;
+    const bkgValidity = b.bookingValidity || '';
+    const bkgRevalidity = b.bookingReValidity || b.bookingRevalidity || '';
+    const emptyPickup = b.emptyPickupLocation || '';
+    const handoverLoc = b.handoverLocation || '';
+    const etdVal = b.etdDate || '';
+    const etaVal = b.etaDate || '';
+    const siCutVal = b.siCutDate || '';
+    const portCutVal = b.portCutDate || '';
+    const servicesReq = Array.isArray(b.servicesRequired) ? b.servicesRequired.join(', ') : (b.servicesRequired || 'Transport, Clearance, Rail, Forwarding');
+    const eqBreakdown = b.equipmentBreakdown ? JSON.stringify(b.equipmentBreakdown) : null;
+
+    let savedJob;
+    if (isUpdate) {
+      const updateQuery = `
+        UPDATE job_orders SET
+          customer_name = $2,
+          consignee_name = $3,
+          shipping_line_name = $4,
+          booking_no = $5,
+          origin_port_code = $6,
+          origin_port_name = $7,
+          pod_port_code = $8,
+          pod_port_name = $9,
+          vessel_name = $10,
+          voyage = $11,
+          commodity = $12,
+          temperature = $13,
+          total_containers = $14,
+          sell_freight = $15,
+          buy_freight = $16,
+          status = $17,
+          remarks = $18,
+          cha_name = $19,
+          on_account = $20,
+          package_type = $21,
+          cartons = $22,
+          cbm = $23,
+          fpod = $24,
+          hbl_no = $25,
+          boe_no = $26,
+          boe_date = $27,
+          jo_type = $28,
+          mode_of_shipment = $29,
+          transporter = $30,
+          booking_date = $31,
+          booking_validity = $32,
+          booking_revalidity = $33,
+          empty_pickup_location = $34,
+          handover_location = $35,
+          etd_date = $36,
+          eta_date = $37,
+          si_cut_date = $38,
+          port_cut_date = $39,
+          services_required = $40,
+          sell_rate = $41,
+          buy_rate = $42,
+          equipment_breakdown = $43,
+          jo_date = $44,
+          updated_at = NOW()
+        WHERE id = $1
+        RETURNING *;
+      `;
+      const updateValues = [
+        jobId,
+        customerName, consigneeName, shippingLineName, bookingNo,
+        polCode, fromLoc, podCode, toLoc,
+        vesselName, voyageNo, commodityVal, tempVal, totalConts,
+        sellFreight, buyFreight, statusVal, remarksVal,
+        chaVal, onAccountVal, pkgType, cartonsVal, cbmVal, fpodVal, hblVal, boeVal, boeDateVal,
+        joTypeVal, modeShipVal, transporterVal, bookingDateVal, bkgValidity, bkgRevalidity,
+        emptyPickup, handoverLoc, etdVal, etaVal, siCutVal, portCutVal,
+        servicesReq, sellRate, buyRate, eqBreakdown, joDateVal
+      ];
+      const resUpdate = await client.query(updateQuery, updateValues);
+      savedJob = resUpdate.rows[0];
+
+      // Remove existing containers to replace atomically
+      await client.query('DELETE FROM job_containers WHERE job_id = $1', [jobId]);
+    } else {
+      const insertQuery = `
+        INSERT INTO job_orders (
+          id, job_number, customer_name, consignee_name, shipping_line_name, booking_no,
+          origin_port_code, origin_port_name, pod_port_code, pod_port_name,
+          vessel_name, voyage, commodity, temperature, total_containers,
+          sell_freight, buy_freight, status, remarks,
+          cha_name, on_account, package_type, cartons, cbm, fpod, hbl_no, boe_no, boe_date,
+          jo_type, mode_of_shipment, transporter, booking_date, booking_validity, booking_revalidity,
+          empty_pickup_location, handover_location, etd_date, eta_date, si_cut_date, port_cut_date,
+          services_required, sell_rate, buy_rate, equipment_breakdown, jo_date
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
+          $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36,
+          $37, $38, $39, $40, $41, $42, $43, $44, $45
+        ) RETURNING *;
+      `;
+      const insertValues = [
+        jobId, joNo, customerName, consigneeName, shippingLineName, bookingNo,
+        polCode, fromLoc, podCode, toLoc,
+        vesselName, voyageNo, commodityVal, tempVal, totalConts,
+        sellFreight, buyFreight, statusVal, remarksVal,
+        chaVal, onAccountVal, pkgType, cartonsVal, cbmVal, fpodVal, hblVal, boeVal, boeDateVal,
+        joTypeVal, modeShipVal, transporterVal, bookingDateVal, bkgValidity, bkgRevalidity,
+        emptyPickup, handoverLoc, etdVal, etaVal, siCutVal, portCutVal,
+        servicesReq, sellRate, buyRate, eqBreakdown, joDateVal
+      ];
+      const resInsert = await client.query(insertQuery, insertValues);
+      savedJob = resInsert.rows[0];
+    }
 
     // Insert containers
     const containersToInsert = Array.isArray(b.containers) && b.containers.length > 0
@@ -209,8 +311,8 @@ router.post('/', async (req, res) => {
           tareWeight: 4200,
           grossWeight: 28500,
           cargoWeight: 24300,
-          sealNo: 'ML-IN-' + Math.floor(100000 + Math.random() * 900000),
-          agentSeal: 'CUST-' + Math.floor(100000 + Math.random() * 900000)
+          sealNo: '',
+          agentSeal: ''
         }];
 
     const createdContainers = [];
@@ -235,11 +337,11 @@ router.post('/', async (req, res) => {
         jobId,
         c.containerNo || c.contNo || c.no || ('CONT-' + Math.floor(1000000 + Math.random() * 9000000)),
         c.sizeType || (c.size ? `${c.size}${c.type || 'HC'}` : '40HC'),
-        Number(c.tareWeight || c.tare) || 4200,
-        Number(c.grossWeight || c.gross) || 28500,
-        Number(c.cargoWeight || c.cargo) || 24300,
-        c.sealNo || c.seal || ('SL-' + Math.floor(100000 + Math.random() * 900000)),
-        c.agentSeal || c.customSeal || ('CS-' + Math.floor(100000 + Math.random() * 900000)),
+        Number(c.tareWeight || c.tare) || 3820,
+        Number(c.grossWeight || c.gross) || 0,
+        Number(c.cargoWeight || c.cargo) || 0,
+        c.sealNo || c.seal || '',
+        c.agentSeal || c.customSeal || '',
         c.status || 'ALLOTTED',
         JSON.stringify({ ALLOTTED: new Date().toISOString() }),
         c.truckNo || c.vehicleNo || c.truck || null,
@@ -255,9 +357,9 @@ router.post('/', async (req, res) => {
         c.workshop || '',
         c.cGr || '',
         c.grRemarks || c.remarks || '',
-        c.handoverLocation || b.handoverLocation || '',
-        c.fromLocation || b.fromLocation || '',
-        c.toLocation || b.toLocation || '',
+        c.handoverLocation || handoverLoc,
+        c.fromLocation || fromLoc,
+        c.toLocation || toLoc,
         c.licenseValidity || ''
       ];
       const cRes = await client.query(contQuery, contValues);
@@ -266,7 +368,7 @@ router.post('/', async (req, res) => {
 
     await client.query('COMMIT');
 
-    res.status(201).json({
+    res.status(isUpdate ? 200 : 201).json({
       success: true,
       data: {
         id: createdJob.id,
