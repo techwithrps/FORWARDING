@@ -28,6 +28,14 @@ pool.on('error', (err) => {
   console.error('Unexpected PostgreSQL Pool Error:', err);
 });
 
+// Auto-ensure required columns exist in production
+(async () => {
+  try {
+    await pool.query('ALTER TABLE job_orders ADD COLUMN IF NOT EXISTS equipment_breakdown JSONB;');
+    await pool.query('ALTER TABLE job_orders ADD COLUMN IF NOT EXISTS jo_date DATE;');
+  } catch (e) {}
+})();
+
 module.exports = {
   query: (text, params) => pool.query(text, params),
   pool
