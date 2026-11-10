@@ -158,6 +158,40 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
     setTimeout(() => setBatchNotice(''), 4000);
   };
 
+  // Enforce Physical Trailer Capacity: 1x 40ft (40*1) OR max 2x 20ft (20*2)
+  const handleToggleTripItem = (item) => {
+    const key = item.jobId + '-' + item.contIndex;
+    if (selectedItems.includes(key)) {
+      setSelectedItems(selectedItems.filter(k => k !== key));
+      return;
+    }
+
+    const currentSelected = filtered.filter(i => selectedItems.includes(i.jobId + '-' + i.contIndex));
+    const isNew20 = String(item.size || '').includes('20');
+    const isNew40 = String(item.size || '').includes('40') || String(item.size || '').includes('45');
+
+    // Rule 1: A 40ft container takes full vehicle/trailer capacity
+    if (isNew40) {
+      if (currentSelected.length > 0) {
+        alert('Trailer Capacity Exceeded!\n\n1 x 40ft container takes full vehicle trailer capacity (40*1).\nCannot combine with any other container on the same GR / Vehicle.');
+        return;
+      }
+    } else if (isNew20) {
+      const has40 = currentSelected.some(i => String(i.size || '').includes('40') || String(i.size || '').includes('45'));
+      if (has40) {
+        alert('Trailer Capacity Rule Violation!\n\nCannot mix 20ft and 40ft containers on the same vehicle / trailer!');
+        return;
+      }
+      const count20 = currentSelected.filter(i => String(i.size || '').includes('20')).length;
+      if (count20 >= 2) {
+        alert('Maximum Trailer Capacity Reached!\n\nOnly up to 2 x 20ft containers (20*2) can be allotted to a single vehicle / trailer.');
+        return;
+      }
+    }
+
+    setSelectedItems([...selectedItems, key]);
+  };
+
   const handleFieldChange = (key, field, val) => {
     setAllotmentData({
       ...allotmentData,
@@ -386,10 +420,7 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
                         <input
                           type="checkbox"
                           checked={selectedItems.includes(key)}
-                          onChange={(e) => {
-                            if (e.target.checked) setSelectedItems([...selectedItems, key]);
-                            else setSelectedItems(selectedItems.filter(k => k !== key));
-                          }}
+                          onChange={() => handleToggleTripItem(item)}
                           className="rounded border-slate-300 text-blue-600 cursor-pointer"
                         />
                       </td>

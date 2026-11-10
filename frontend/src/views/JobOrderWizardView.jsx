@@ -60,14 +60,7 @@ export default function JobOrderWizardView({
 
   // Dynamic Shippers from Local PostgreSQL (falls back to defaults)
   const shippersList = useMemo(() => {
-    if (liveConsignors.length > 0) return liveConsignors;
-    if (parties && parties.length > 0) {
-      const list = parties
-        .filter(p => !p.type || p.type === 'SHIPPER' || p.type === 'FORWARDER')
-        .map(p => p.name);
-      if (list.length > 0) return list;
-    }
-    return [
+    const defaultShippers = [
       'Fair Exports (India) Pvt Ltd',
       'SPJ CARGO PVT LTD.',
       'HMA FOOD EXPORT PVT LTD',
@@ -76,8 +69,15 @@ export default function JobOrderWizardView({
       'Allanasons Private Limited',
       'Al Sameer Exports Pvt Ltd',
       'Deepmala Foods',
-      'Deccan Edibles Pvt Ltd'
+      'Deccan Edibles Pvt Ltd',
+      'A.R.IMPEX',
+      '3PL LOGISTICS INDIA PRIVATE LIMITED'
     ];
+    let list = [];
+    if (parties && parties.length > 0) {
+      list = parties.map(p => p.name);
+    }
+    return Array.from(new Set([...defaultShippers, ...liveConsignors, ...list]));
   }, [liveConsignors, parties]);
 
   const consigneesList = useMemo(() => {
@@ -264,19 +264,22 @@ export default function JobOrderWizardView({
   const locationList = Array.from(new Set([...fromLocationList, ...toLocationList, ...handoverLocationList]));
 
   const chaList = useMemo(() => {
-    if (parties && parties.length > 0) {
-      const list = parties
-        .filter(p => p.type === 'CHA' || p.type === 'FORWARDER')
-        .map(p => p.name);
-      if (list.length > 0) return list;
-    }
-    return [
+    const defaultCha = [
+      'ASIAN PERAL MYANMAR CO. LTD.',
+      'A SAFFA FOOD PROCESSING LLC',
       'Jeena & Company (CHA)',
       'DHL Global Forwarding (CHA)',
       'Total Logistics (CHA)',
       'Fair Clear Services (CHA)'
     ];
-  }, [parties]);
+    let list = [];
+    if (parties && parties.length > 0) {
+      list = parties
+        .filter(p => p.type === 'CHA' || p.type === 'FORWARDER' || p.type === 'CONSIGNEE')
+        .map(p => p.name);
+    }
+    return Array.from(new Set([...defaultCha, ...list, ...consigneesList]));
+  }, [parties, consigneesList]);
 
   const linesList = [
     'ABM AVIATION AND LOGISTICS LLP',
@@ -900,14 +903,34 @@ export default function JobOrderWizardView({
     });
 
     // Restore Equipment Lines
-    if (prevJob.equipmentBreakdown && Array.isArray(prevJob.equipmentBreakdown) && prevJob.equipmentBreakdown.length > 0) {
-      setEquipmentLines(prevJob.equipmentBreakdown);
+    let restoredEq = null;
+    if (prevJob.equipmentBreakdown) {
+      const eq = typeof prevJob.equipmentBreakdown === 'string'
+        ? (() => { try { return JSON.parse(prevJob.equipmentBreakdown); } catch (e) { return null; } })()
+        : prevJob.equipmentBreakdown;
+      if (Array.isArray(eq) && eq.length > 0) {
+        restoredEq = eq.map((l, idx) => ({
+          id: l.id || idx + 1,
+          noOfCont: parseInt(l.noOfCont || l.count, 10) || 1,
+          size: String(l.size || '').includes('20') ? '20' : (String(l.size || '').includes('45') ? '45' : '40'),
+          commodity: l.commodity || prevJob.commodity || '',
+          setTemp: l.setTemp || l.temperature || prevJob.temperature || 'Ambient',
+          sellRate: l.sellRate || '',
+          buyRate: l.buyRate || ''
+        }));
+      }
+    }
+
+    if (restoredEq && restoredEq.length > 0) {
+      setEquipmentLines(restoredEq);
     } else if (prevJob.containers && prevJob.containers.length > 0) {
       // Reconstruct equipment lines from saved containers
       const grouped = {};
       prevJob.containers.forEach((c) => {
-        const size = c.size || (c.sizeType?.includes('20') ? '20' : '40');
-        const type = c.type || (c.sizeType?.includes('GP') ? 'GP' : 'HC');
+        const rawSize = String(c.size || c.sizeType || '40');
+        const size = rawSize.includes('20') ? '20' : (rawSize.includes('45') ? '45' : '40');
+        const rawType = String(c.type || c.sizeType || 'HC');
+        const type = rawType.includes('GP') ? 'GP' : 'HC';
         const key = `${size}-${type}`;
         if (!grouped[key]) {
           grouped[key] = {
@@ -915,7 +938,7 @@ export default function JobOrderWizardView({
             noOfCont: 0,
             size: size,
             type: type,
-            commodity: prevJob.commodity || '',
+            commodity: c.commodity || prevJob.commodity || '',
             setTemp: prevJob.temperature || 'Ambient'
           };
         }
@@ -923,26 +946,36 @@ export default function JobOrderWizardView({
       });
       setEquipmentLines(Object.values(grouped));
     } else {
-      setEquipmentLines([{ id: 1, noOfCont: 1, size: '' }]);
+      setEquipmentLines([{ id: 1, noOfCont: 1, size: '40', commodity: prevJob.commodity || '', setTemp: 'Ambient' }]);
     }
 
     if (prevJob.containers && prevJob.containers.length > 0) {
       setContainers(
-        prevJob.containers.map((c, idx) => ({
-          sr: idx + 1,
-          contNo: c.containerNo || c.contNo || c.no || '',
-          size: c.size || (c.sizeType?.includes('20') ? '20' : '40'),
-          type: c.type || (c.sizeType?.includes('GP') ? 'GP' : 'HC'),
-          tareWeight: c.tareWeight || c.tare || 3820,
-          cargoWeight: c.cargoWeight || c.cargo || '',
-          grossWeight: c.grossWeight || c.gross || '',
-          sealNo: c.sealNo || c.seal || '',
-          agentSeal: c.agentSeal || c.customSeal || '',
-          vehicleNo: c.truckNo || c.vehicleNo || c.truck || '',
-          grNo: c.grNo || c.grNumber || c.gr || '',
-          grDate: c.grDate ? (typeof c.grDate === 'string' && c.grDate.includes('T') ? c.grDate.split('T')[0] : c.grDate) : today,
-          remarks: c.remarks || c.grRemarks || ''
-        }))
+        prevJob.containers.map((c, idx) => {
+          const rawSize = String(c.size || c.sizeType || '40');
+          const cSize = rawSize.includes('20') ? '20' : '40';
+          const rawType = String(c.type || c.sizeType || 'HC');
+          const cType = rawType.includes('GP') ? 'GP' : 'HC';
+          const defaultTare = cSize === '20' ? 2280 : 3820;
+          const tare = Number(c.tareWeight || c.tare || defaultTare);
+          const cargo = Number(c.cargoWeight || c.cargo || 0);
+          const gross = Number(c.grossWeight || c.gross || (tare + cargo));
+          return {
+            sr: idx + 1,
+            contNo: c.containerNo || c.contNo || c.no || '',
+            size: cSize,
+            type: cType,
+            tareWeight: tare,
+            cargoWeight: cargo || '',
+            grossWeight: gross || '',
+            sealNo: c.sealNo || c.seal || '',
+            agentSeal: c.agentSeal || c.customSeal || '',
+            vehicleNo: c.truckNo || c.vehicleNo || c.truck || '',
+            grNo: c.grNo || c.grNumber || c.gr || '',
+            grDate: c.grDate ? (typeof c.grDate === 'string' && c.grDate.includes('T') ? c.grDate.split('T')[0] : c.grDate) : today,
+            remarks: c.remarks || c.grRemarks || ''
+          };
+        })
       );
     }
 
@@ -1538,6 +1571,9 @@ export default function JobOrderWizardView({
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.chaName)}`}
                 >
                   <option value="">-- Optional / Direct Shipper --</option>
+                  {form.chaName && !chaList.includes(form.chaName) && (
+                    <option value={form.chaName}>{form.chaName}</option>
+                  )}
                   {chaList.map((cha, i) => (
                     <option key={i} value={cha}>{cha}</option>
                   ))}
@@ -1554,6 +1590,9 @@ export default function JobOrderWizardView({
                   className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.onAccount)}`}
                 >
                   <option value="">-- Optional / Direct Shipper --</option>
+                  {form.onAccount && !shippersList.includes(form.onAccount) && (
+                    <option value={form.onAccount}>{form.onAccount}</option>
+                  )}
                   {shippersList.map((name, i) => (
                     <option key={i} value={name}>{name}</option>
                   ))}

@@ -674,29 +674,31 @@ export default function GrGenerationView({
   const handleVehicleChange = (truckNo) => {
     setFormError('');
     setForm((prev) => {
+      const cleanTruck = (truckNo || '').trim().toUpperCase();
       const updated = { ...prev, vehicleNo: truckNo };
-      const v = (liveVehicles || []).find(
-        (item) => (item.truckNo || item) === truckNo
-      );
+      const v = (liveVehicles || []).find((item) => {
+        const itemNo = typeof item === 'object' ? (item.truckNo || item.vehicleNo || '') : String(item);
+        return itemNo.trim().toUpperCase() === cleanTruck;
+      });
       if (v && typeof v === 'object') {
         if (v.driverName) {
           updated.driver = v.driverName;
-          updated.driverContactNo = v.driverMobile || '';
-          updated.licenseValidity = v.licenseValidity || '';
-        } else {
-          // Check if any driver has this vehicle assigned
-          const matchedDriver = (liveDrivers || []).find(
-            (d) => d.vehicle && d.vehicle.toUpperCase() === truckNo.toUpperCase()
-          );
-          if (matchedDriver) {
-            updated.driver = matchedDriver.name;
-            updated.driverContactNo = matchedDriver.phone || '';
-            updated.licenseValidity = matchedDriver.license || '';
-          }
+          updated.driverContactNo = v.driverMobile || updated.driverContactNo || '';
+          updated.licenseValidity = v.licenseValidity || updated.licenseValidity || '';
         }
         if (v.type) {
           updated.vehicleType = v.type;
         }
+      }
+      // Check if any driver has this vehicle assigned
+      const matchedDriver = (liveDrivers || []).find((d) => {
+        const dVeh = (d.vehicle || d.truck || '').trim().toUpperCase();
+        return dVeh && dVeh === cleanTruck;
+      });
+      if (matchedDriver) {
+        if (!updated.driver) updated.driver = matchedDriver.name;
+        if (!updated.driverContactNo) updated.driverContactNo = matchedDriver.phone || '';
+        if (!updated.licenseValidity) updated.licenseValidity = matchedDriver.license || '';
       }
       return updated;
     });
@@ -825,12 +827,24 @@ export default function GrGenerationView({
           <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 flex items-center gap-2">
             <span>GR Generation</span>
           </h1>
-          {form.grNo && (
-            <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-extrabold border border-blue-200 shadow-2xs">
-              {form.grNo}
-            </span>
-          )}
-          <span className="hidden lg:inline-block text-[11px] font-medium text-slate-500 border-l border-slate-200 pl-2">
+
+          {/* Locked Read-Only Top Badges */}
+          <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-extrabold border border-emerald-200 shadow-2xs flex items-center gap-1 select-none">
+            <span className="text-[10px] text-emerald-600 font-bold uppercase">GR No:</span>
+            <span>{form.grNo || 'Auto-Assign'}</span>
+          </span>
+
+          <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 font-extrabold border border-blue-200 shadow-2xs flex items-center gap-1 select-none">
+            <span className="text-[10px] text-blue-600 font-bold uppercase">JO No:</span>
+            <span>{form.joNo || '—'}</span>
+          </span>
+
+          <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-extrabold border border-slate-300 shadow-2xs flex items-center gap-1 select-none">
+            <span className="text-[10px] text-slate-500 font-bold uppercase">GR Date:</span>
+            <span>{form.grDate || todayDateStr}</span>
+          </span>
+
+          <span className="hidden xl:inline-block text-[11px] font-medium text-slate-500 border-l border-slate-200 pl-2">
             Goods Receipt generation &bull; Trip advance allotment
           </span>
         </div>
@@ -843,16 +857,18 @@ export default function GrGenerationView({
             </span>
           )}
 
-          {/* Print GR Old Application Format Button (Requirement 6) */}
-          <button
-            type="button"
-            onClick={() => setShowPrintModal(true)}
-            className="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-black active:scale-95 text-white font-extrabold text-[11px] flex items-center gap-1.5 border border-slate-800 shadow-2xs transition cursor-pointer select-none"
-            title="Print Goods Receipt in Classic Old Application Format"
-          >
-            <Printer className="w-3.5 h-3.5 text-cyan-300" />
-            <span>Print GR</span>
-          </button>
+          {/* Conditional Print GR Button: Only visible when saved or viewing existing GR */}
+          {(isSavedLocked || isEditing) && (
+            <button
+              type="button"
+              onClick={() => setShowPrintModal(true)}
+              className="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-black active:scale-95 text-white font-extrabold text-[11px] flex items-center gap-1.5 border border-slate-800 shadow-2xs transition cursor-pointer select-none"
+              title="Print Goods Receipt in Classic Old Application Format"
+            >
+              <Printer className="w-3.5 h-3.5 text-cyan-300" />
+              <span>Print GR</span>
+            </button>
+          )}
 
           {/* Clear / New GR Button (Requirement 4) */}
           <button
@@ -1070,93 +1086,85 @@ export default function GrGenerationView({
               </div>
             </div>
 
-            {/* Size/Type (Split/Multi-box) */}
+            {/* Size/Type (Split/Multi-box, Strictly Read-Only from JO) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Size/Type
+                Size/Type <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>
               </label>
               <div className="flex items-center gap-1.5">
                 <input
                   type="text"
-                  placeholder="Size (e.g. 40)"
+                  placeholder="Size"
                   value={form.size}
-                  onChange={(e) => setForm({ ...form, size: e.target.value })}
-                  className="w-1/2 px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all text-center"
+                  readOnly={true}
+                  className="w-1/2 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold outline-none bg-slate-50 border border-slate-200 text-slate-700 text-center select-none cursor-not-allowed"
                 />
                 <span className="text-slate-400 font-bold text-xs select-none">/</span>
                 <input
                   type="text"
-                  placeholder="Type (e.g. HC)"
+                  placeholder="Type"
                   value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value })}
-                  className="w-1/2 px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all text-center"
+                  readOnly={true}
+                  className="w-1/2 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold outline-none bg-slate-50 border border-slate-200 text-slate-700 text-center select-none cursor-not-allowed"
                 />
               </div>
             </div>
 
-            {/* Weight */}
+            {/* Weight (Strictly Read-Only from JO) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Weight
+                Weight <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>
               </label>
               <input
                 type="text"
                 placeholder="e.g. 24,500 kg"
                 value={form.weight}
-                onChange={(e) => setForm({ ...form, weight: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+                readOnly={true}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold outline-none bg-slate-50 border border-slate-200 text-slate-700 select-none cursor-not-allowed"
               />
             </div>
 
-            {/* Commodity */}
+            {/* Commodity (Strictly Read-Only from JO) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Commodity <span className="text-rose-500 font-bold">*</span>
+                Commodity <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  list="commodity-options"
-                  placeholder="e.g. Frozen Buffalo Meat"
-                  value={form.commodity}
-                  onChange={(e) => setForm({ ...form, commodity: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
-                />
-                <datalist id="commodity-options">
-                  {commodityList.map((item) => (
-                    <option key={item} value={item} />
-                  ))}
-                </datalist>
-              </div>
+              <input
+                type="text"
+                placeholder="e.g. Frozen Buffalo Meat"
+                value={form.commodity}
+                readOnly={true}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none bg-slate-50 border border-slate-200 text-slate-700 select-none cursor-not-allowed"
+              />
             </div>
           </div>
 
           {/* Row 2: Jo No, Jo Date, GR No, GR Date, C.GR */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-1.5 border-t border-slate-100">
-            {/* Jo No */}
+            {/* Jo No (Strictly Read-Only from JO) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Jo No
+                Jo No <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>
               </label>
               <input
                 type="text"
-                placeholder="JO-2026-XXXX"
+                placeholder="JO-XXXXX"
                 value={form.joNo}
-                onChange={(e) => setForm({ ...form, joNo: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+                readOnly={true}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold outline-none bg-slate-50 border border-slate-200 text-slate-700 select-none cursor-not-allowed"
               />
             </div>
 
-            {/* Jo Date */}
+            {/* Jo Date (Strictly Read-Only from JO) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Jo Date
+                Jo Date <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>
               </label>
               <input
-                type="date"
+                type="text"
                 value={form.joDate}
-                onChange={(e) => setForm({ ...form, joDate: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+                readOnly={true}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold outline-none bg-slate-50 border border-slate-200 text-slate-700 select-none cursor-not-allowed"
               />
             </div>
 
@@ -1169,21 +1177,26 @@ export default function GrGenerationView({
                 type="text"
                 placeholder="GR-2026-XXXX"
                 value={form.grNo}
+                readOnly={isSavedLocked || isEditing}
                 onChange={(e) => setForm({ ...form, grNo: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold outline-none bg-white border border-slate-200 text-blue-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold outline-none border transition-all ${
+                  isSavedLocked || isEditing
+                    ? 'bg-slate-50 border-slate-200 text-slate-700 cursor-not-allowed'
+                    : 'bg-white border-slate-200 text-blue-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-100'
+                }`}
               />
             </div>
 
-            {/* GR Date */}
+            {/* GR Date (Strictly Read-Only) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                GR Date
+                GR Date <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>
               </label>
               <input
                 type="date"
                 value={form.grDate}
-                onChange={(e) => setForm({ ...form, grDate: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+                readOnly={true}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold outline-none bg-slate-50 border border-slate-200 text-slate-700 select-none cursor-not-allowed"
               />
             </div>
 
@@ -1196,8 +1209,9 @@ export default function GrGenerationView({
                 type="text"
                 placeholder="Consignor / Customer GR"
                 value={form.cGr}
+                disabled={isSavedLocked}
                 onChange={(e) => setForm({ ...form, cGr: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all"
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
               />
             </div>
           </div>
@@ -1217,144 +1231,90 @@ export default function GrGenerationView({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {/* Consignor (Auto Search like Commodity) */}
+            {/* Consignor (Strictly Read-Only from JO) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Consignor
+                Consignor <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  list="live-consignor-list"
-                  placeholder="Type or select Consignor..."
-                  value={form.consignor}
-                  disabled={isSavedLocked}
-                  onChange={(e) => setForm({ ...form, consignor: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
-                />
-                <datalist id="live-consignor-list">
-                  {liveConsignors.map((c) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
-              </div>
+              <input
+                type="text"
+                placeholder="Consignor Shipper"
+                value={form.consignor}
+                readOnly={true}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none bg-slate-50 border border-slate-200 text-slate-700 select-none cursor-not-allowed"
+              />
             </div>
 
-            {/* Consignee (Auto Search like Commodity) */}
+            {/* Consignee (Strictly Read-Only from JO) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Consignee
+                Consignee <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  list="live-consignee-list"
-                  placeholder="Type or select Consignee..."
-                  value={form.consignee}
-                  disabled={isSavedLocked}
-                  onChange={(e) => setForm({ ...form, consignee: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
-                />
-                <datalist id="live-consignee-list">
-                  {liveConsignees.map((c) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
-              </div>
+              <input
+                type="text"
+                placeholder="Consignee Name"
+                value={form.consignee}
+                readOnly={true}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none bg-slate-50 border border-slate-200 text-slate-700 select-none cursor-not-allowed"
+              />
             </div>
 
-            {/* Transporter (Auto Search like Commodity) */}
+            {/* Transporter (Strictly Read-Only from JO) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Transporter
+                Transporter <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  list="live-transporter-list"
-                  placeholder="Type or select Transporter..."
-                  value={form.transporter}
-                  disabled={isSavedLocked}
-                  onChange={(e) => setForm({ ...form, transporter: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
-                />
-                <datalist id="live-transporter-list">
-                  {liveTransporters.map((t) => (
-                    <option key={t} value={t} />
-                  ))}
-                </datalist>
-              </div>
+              <input
+                type="text"
+                placeholder="Transporter Name"
+                value={form.transporter}
+                readOnly={true}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none bg-slate-50 border border-slate-200 text-slate-700 select-none cursor-not-allowed"
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1.5 border-t border-slate-100">
-            {/* From Location (Auto Search like Commodity) */}
+            {/* From Location (Strictly Read-Only from JO) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                From Location
+                From Location <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  list="live-from-list"
-                  placeholder="Type or select From Location..."
-                  value={form.fromLocation}
-                  disabled={isSavedLocked}
-                  onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
-                />
-                <datalist id="live-from-list">
-                  {fromLocationList.map((loc) => (
-                    <option key={loc} value={loc} />
-                  ))}
-                </datalist>
-              </div>
+              <input
+                type="text"
+                placeholder="From Location"
+                value={form.fromLocation}
+                readOnly={true}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none bg-slate-50 border border-slate-200 text-slate-700 select-none cursor-not-allowed"
+              />
             </div>
 
-            {/* To Location (Auto Search like Commodity) */}
+            {/* To Location (Strictly Read-Only from JO) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                To Location
+                To Location <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  list="live-to-list"
-                  placeholder="Type or select To Location..."
-                  value={form.toLocation}
-                  disabled={isSavedLocked}
-                  onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
-                />
-                <datalist id="live-to-list">
-                  {toLocationList.map((loc) => (
-                    <option key={loc} value={loc} />
-                  ))}
-                </datalist>
-              </div>
+              <input
+                type="text"
+                placeholder="To Location"
+                value={form.toLocation}
+                readOnly={true}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none bg-slate-50 border border-slate-200 text-slate-700 select-none cursor-not-allowed"
+              />
             </div>
 
-            {/* Handover Location (Auto Search like Commodity) */}
+            {/* Handover Location (Strictly Read-Only from JO) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                Handover Location
+                Handover Location <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  list="live-handover-list"
-                  placeholder="Type or select Handover Location..."
-                  value={form.handoverLocation}
-                  disabled={isSavedLocked}
-                  onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
-                />
-                <datalist id="live-handover-list">
-                  {handoverLocationList.map((loc) => (
-                    <option key={loc} value={loc} />
-                  ))}
-                </datalist>
-              </div>
+              <input
+                type="text"
+                placeholder="Handover Location"
+                value={form.handoverLocation}
+                readOnly={true}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none bg-slate-50 border border-slate-200 text-slate-700 select-none cursor-not-allowed"
+              />
             </div>
           </div>
         </div>
@@ -1436,17 +1396,16 @@ export default function GrGenerationView({
               />
             </div>
 
-            {/* License Validity */}
+            {/* License Validity (Strictly Read-Only, Auto from Master) */}
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
-                License Validity {form.driver && form.licenseValidity && <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto)</span>}
+                License Validity <span className="text-blue-600 font-mono text-[9px] font-bold">(Auto Locked)</span>
               </label>
               <input
                 type="date"
                 value={form.licenseValidity}
-                disabled={isSavedLocked}
-                onChange={(e) => setForm({ ...form, licenseValidity: e.target.value })}
-                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold outline-none bg-white border border-slate-200 text-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all ${isSavedLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`}
+                readOnly={true}
+                className="w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold outline-none bg-slate-50 border border-slate-200 text-slate-700 select-none cursor-not-allowed"
               />
             </div>
           </div>
@@ -1702,7 +1661,7 @@ export default function GrGenerationView({
           </div>
 
           <div className="flex items-center gap-2">
-            {form.grNo && (
+            {(isSavedLocked || isEditing) && form.grNo && (
               <button
                 type="button"
                 onClick={() => setShowPrintModal(true)}

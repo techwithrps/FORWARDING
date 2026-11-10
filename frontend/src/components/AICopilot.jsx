@@ -235,7 +235,7 @@ export default function AICopilot({
         onCreateBookingDirect(lastBookingPayload);
         return {
           title: '🚀 Booking PostgreSQL Database Mein Save Ho Gayi!',
-          text: `Booking **${lastBookingPayload.id || 'JO-2026-LIVE'}** successfully create & save ho chuki hai!\n\n• **Shipper:** ${lastBookingPayload.customer || lastBookingPayload.consignor}\n• **Containers:** ${lastBookingPayload.containersCount || 1}x 40' HC\n• **Status:** STUFFED & SEALED (Ready for Railhead Rake-Out)`,
+          text: `Booking **${lastBookingPayload.id || 'JO-94290'}** successfully create & save ho chuki hai!\n\n• **Shipper:** ${lastBookingPayload.customer || lastBookingPayload.consignor}\n• **Containers:** ${lastBookingPayload.containersCount || 1}x 40' HC\n• **Status:** STUFFED & SEALED (Ready for Railhead Rake-Out)`,
           action: { type: 'BOOKING_SAVED_DIRECT' },
           quickChips: ['Invoice generate karo', 'Status Cockpit kholo', 'Clear Form']
         };
@@ -323,9 +323,19 @@ export default function AICopilot({
       let voyage = '2604W';
       let consignee = 'Al Maya Trading LLC, Jebel Ali Free Zone, Dubai';
 
+      // Compute sequential JO Number (e.g. JO-94290)
+      const existingJoNums = (jobs || [])
+        .map(j => {
+          const m = String(j.joNo || j.id || '').match(/JO-(\d+)/);
+          return m ? parseInt(m[1], 10) : 0;
+        })
+        .filter(n => n > 90000);
+      const nextSeq = (existingJoNums.length > 0 ? Math.max(...existingJoNums) : 94289) + 1;
+      const nextSequentialJo = `JO-${nextSeq}`;
+
       const bookingPayload = {
-        id: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
-        joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
+        id: nextSequentialJo,
+        joNo: nextSequentialJo,
         customer: shipper || 'Fair Exports (India) Pvt Ltd',
         consignor: shipper || 'Fair Exports (India) Pvt Ltd',
         consignee: consignee,
@@ -363,7 +373,7 @@ export default function AICopilot({
           grNo: `GR-2026-084${idx + 1}`
         })),
         form: {
-          joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
+          joNo: nextSequentialJo,
           joType: 'Export FCL',
           modeOfShipment: 'Multimodal (Rail + Road)',
           consignor: shipper || 'Fair Exports (India) Pvt Ltd',
