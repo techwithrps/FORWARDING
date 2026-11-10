@@ -119,12 +119,17 @@ router.get('/', async (req, res) => {
 // GET Next sequential Job Order number from live DB sequence
 router.get('/next-jo', async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT COALESCE(MAX("CONT_JO_ID"), 0) + 1 AS next_id FROM spjlive."FLEET_CONT_JO"');
-    const nextId = Number(rows[0]?.next_id || 94182);
+    const { rows } = await db.query(`
+      SELECT GREATEST(
+        (SELECT COALESCE(MAX("CONT_JO_ID"), 0) FROM spjlive."FLEET_CONT_JO"),
+        (SELECT COALESCE(MAX(CAST(SUBSTRING(job_number FROM 4) AS INTEGER)), 0) FROM job_orders WHERE job_number ~ '^JO-[0-9]+$')
+      ) + 1 AS next_id
+    `);
+    const nextId = Number(rows[0]?.next_id || 94289);
     res.json({ success: true, nextJoNo: `JO-${nextId}`, rawId: nextId });
   } catch (err) {
     console.error('Error fetching next JO sequence:', err);
-    res.json({ success: true, nextJoNo: 'JO-94182', rawId: 94182 });
+    res.json({ success: true, nextJoNo: 'JO-94289', rawId: 94289 });
   }
 });
 
@@ -151,13 +156,23 @@ router.post('/', async (req, res) => {
       jobId = existingCheck.rows[0].id;
       joNo = existingCheck.rows[0].job_number;
     } else {
-      let nextSeqId = 94182;
+      let nextSeqId = 94289;
       try {
-        const seqRes = await client.query('SELECT COALESCE(MAX("CONT_JO_ID"), 0) + 1 AS next_id FROM spjlive."FLEET_CONT_JO"');
-        nextSeqId = Number(seqRes.rows[0]?.next_id || 94182);
+        const seqRes = await client.query(`
+          SELECT GREATEST(
+            (SELECT COALESCE(MAX("CONT_JO_ID"), 0) FROM spjlive."FLEET_CONT_JO"),
+            (SELECT COALESCE(MAX(CAST(SUBSTRING(job_number FROM 4) AS INTEGER)), 0) FROM job_orders WHERE job_number ~ '^JO-[0-9]+$')
+          ) + 1 AS next_id
+        `);
+        nextSeqId = Number(seqRes.rows[0]?.next_id || 94289);
       } catch (e) {}
-      joNo = b.joNo || ('JO-' + nextSeqId);
-      jobId = b.id || ('JOB-' + joNo);
+
+      if (!b.joNo || b.joNo.startsWith('JO-2026-')) {
+        joNo = 'JO-' + nextSeqId;
+      } else {
+        joNo = b.joNo;
+      }
+      jobId = b.id && !b.id.includes('JO-2026-') ? b.id : ('JOB-' + joNo);
     }
 
     const customerName = b.consignor || b.customerName || b.customer || '';

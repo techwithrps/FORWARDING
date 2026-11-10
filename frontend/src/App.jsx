@@ -472,9 +472,14 @@ export default function App() {
       const polCode = formData.pol || formData.originPort || 'INNSA1';
       const podCode = formData.pod || formData.podPort || 'AEJEA';
 
+      const cleanJoNo = (formData.joNo && !formData.joNo.startsWith('JO-2026-'))
+        ? formData.joNo
+        : (formData.id && !formData.id.includes('JO-2026-') ? formData.id : 'JO-94289');
+      const cleanId = formData.id && !formData.id.includes('JO-2026-') ? formData.id : cleanJoNo;
+
       const payload = {
-        id: formData.id || formData.joNo || `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
-        joNo: formData.joNo || formData.id || `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
+        id: cleanId,
+        joNo: cleanJoNo,
         joDate: formData.joDate || formData.bookingDate || '',
         joType: formData.joType || 'Export FCL',
         modeOfShipment: formData.modeOfShipment || 'Multimodal (Rail + Road)',

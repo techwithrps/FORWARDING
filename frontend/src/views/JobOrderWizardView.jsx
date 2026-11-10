@@ -341,10 +341,10 @@ export default function JobOrderWizardView({
 
   // Fresh Blank Form State
   const [form, setForm] = useState({
-    joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
+    joNo: '',
     joDate: todayStr,
-    joType: 'Export',
-    modeOfShipment: 'SEA Export',
+    joType: 'Export FCL',
+    modeOfShipment: 'Multimodal (Rail + Road)',
     servicesRequired: ['Transport', 'Clearance', 'Rail', 'Forwarding'],
     consignor: '',
     consignee: '',
@@ -430,10 +430,13 @@ export default function JobOrderWizardView({
     }
   }, [commodities]);
 
+  const [liveNextJoNo, setLiveNextJoNo] = useState('');
+
   // Live Next Sequential Job Order Number from PostgreSQL Sequence
   useEffect(() => {
     api.getNextJoNo().then(res => {
       if (res && res.nextJoNo) {
+        setLiveNextJoNo(res.nextJoNo);
         setForm(prev => {
           if (!prev.joNo || prev.joNo.startsWith('JO-2026-')) {
             return { ...prev, joNo: res.nextJoNo };
@@ -744,61 +747,81 @@ export default function JobOrderWizardView({
   // Clear Form for fresh blank entry
   const handleClearForm = () => {
     const today = getTodayDateStr();
-    setForm({
-      joNo: `JO-2026-${String(jobs.length + 1).padStart(4, '0')}`,
-      joDate: today,
-      joType: 'Export',
-      modeOfShipment: 'SEA Export',
-      servicesRequired: ['Transport', 'Clearance', 'Rail', 'Forwarding'],
-      consignor: '',
-      consignee: '',
-      shippingLine: '',
-      lineBookingNo: '',
-      bookingDate: today,
-      bookingValidity: '',
-      bookingReValidity: '',
-      emptyPickupLocation: '',
-      fromLocation: '',
-      toLocation: '',
-      pol: '',
-      pod: '',
-      vesselName: '',
-      voyage: '',
-      etdDate: '',
-      etaDate: '',
-      siCutDate: '',
-      portCutDate: '',
-      temperature: '',
-      transporter: '',
-      handoverLocation: '',
-      noOfCont: 1,
-      size: '',
-      type: '',
-      remarks: '',
-      sellRate: '',
-      buyRate: ''
-    });
-    setContainers([
-      {
-        sr: 1,
-        contNo: '',
+    const resetFields = (nextNo) => {
+      setForm({
+        joNo: nextNo,
+        joDate: today,
+        joType: 'Export FCL',
+        modeOfShipment: 'Multimodal (Rail + Road)',
+        servicesRequired: ['Transport', 'Clearance', 'Rail', 'Forwarding'],
+        consignor: '',
+        consignee: '',
+        shippingLine: '',
+        lineBookingNo: '',
+        bookingDate: today,
+        bookingValidity: '',
+        bookingReValidity: '',
+        emptyPickupLocation: '',
+        fromLocation: '',
+        toLocation: '',
+        pol: '',
+        pod: '',
+        vesselName: '',
+        voyage: '',
+        etdDate: '',
+        etaDate: '',
+        siCutDate: '',
+        portCutDate: '',
+        temperature: '',
+        transporter: '',
+        handoverLocation: '',
+        chaName: '',
+        onAccount: '',
+        packageType: 'Cartons',
+        cartons: '',
+        cbm: '',
+        fpod: '',
+        hblNo: '',
+        boeNo: '',
+        commodity: '',
+        noOfCont: 1,
         size: '',
         type: '',
-        tareWeight: '',
-        cargoWeight: '',
-        grossWeight: '',
-        sealNo: '',
-        vehicleNo: '',
-        grNo: '',
-        grDate: today,
-        remarks: ''
-      }
-    ]);
-    setEquipmentLines([{ id: 1, noOfCont: 1, size: '' }]);
-    setIsScheduleLocked(false);
-    setFormError('');
-    setQuickFillNotice('Form cleared for blank entry.');
-    setTimeout(() => setQuickFillNotice(''), 2500);
+        remarks: '',
+        sellRate: '',
+        buyRate: ''
+      });
+      setContainers([
+        {
+          sr: 1,
+          contNo: '',
+          size: '',
+          type: '',
+          tareWeight: '',
+          cargoWeight: '',
+          grossWeight: '',
+          sealNo: '',
+          vehicleNo: '',
+          grNo: '',
+          grDate: today,
+          remarks: ''
+        }
+      ]);
+      setEquipmentLines([{ id: 1, noOfCont: 1, size: '' }]);
+      setIsScheduleLocked(false);
+      setFormError('');
+      setQuickFillNotice('Form cleared for fresh booking entry.');
+      setTimeout(() => setQuickFillNotice(''), 2500);
+    };
+
+    api.getNextJoNo().then(res => {
+      const nextNo = res?.nextJoNo || liveNextJoNo || 'JO-94289';
+      setLiveNextJoNo(nextNo);
+      resetFields(nextNo);
+    }).catch(() => {
+      const nextNo = liveNextJoNo || 'JO-94289';
+      resetFields(nextNo);
+    });
   };
 
   const formatDateForInput = (val) => {
