@@ -139,6 +139,7 @@ export default function App() {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showInlinePartyModal, setShowInlinePartyModal] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState(null);
+  const [initialJobForWizard, setInitialJobForWizard] = useState(null);
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
 
   const handleDismissWelcome = () => {
@@ -850,9 +851,21 @@ export default function App() {
           {activeView === 'Dashboard' && (
             <DashboardView
               jobs={jobs}
+              onNavigate={(view) => setActiveView(view)}
               onSelectJob={(id) => setSelectedJobId(id)}
-              onNewBookingClick={() => setActiveView('ContainerBooking')}
-              onOpenShipmentStatus={() => setActiveView('ShipmentStatus')}
+              onNewBookingClick={() => {
+                setInitialJobForWizard(null);
+                setActiveView('ContainerBooking');
+              }}
+              onOpenShipmentStatus={(id) => {
+                if (id) setSelectedJobId(id);
+                setActiveView('ShipmentStatus');
+              }}
+              onEditJobInWizard={(job) => {
+                setSelectedJobId(job.id || job.joNo);
+                setInitialJobForWizard(job);
+                setActiveView('ContainerBooking');
+              }}
             />
           )}
 
@@ -909,6 +922,8 @@ export default function App() {
               copilotFillData={copilotFillData}
               onResetCopilotFill={() => setCopilotFillData(null)}
               copilotClearTrigger={copilotClearTrigger}
+              initialJobToEdit={initialJobForWizard}
+              onClearInitialJobToEdit={() => setInitialJobForWizard(null)}
             />
           )}
 

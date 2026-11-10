@@ -43,7 +43,9 @@ export default function JobOrderWizardView({
   onResetRecentDirectly,
   copilotFillData = null,
   onResetCopilotFill,
-  copilotClearTrigger = 0
+  copilotClearTrigger = 0,
+  initialJobToEdit = null,
+  onClearInitialJobToEdit
 }) {
   const getTodayDateStr = () => {
     const d = new Date();
@@ -665,6 +667,14 @@ export default function JobOrderWizardView({
       if (onResetRecentDirectly) onResetRecentDirectly();
     }
   }, [openRecentDirectly]);
+
+  // Load specific Job directly into form if passed from Dashboard or external view
+  useEffect(() => {
+    if (initialJobToEdit) {
+      handleLoadForEdit(initialJobToEdit);
+      if (onClearInitialJobToEdit) onClearInitialJobToEdit();
+    }
+  }, [initialJobToEdit]);
 
   // AI Copilot Live Form Fill Listener
   useEffect(() => {
