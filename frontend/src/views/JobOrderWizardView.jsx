@@ -417,6 +417,7 @@ export default function JobOrderWizardView({
   const [autoFilledToast, setAutoFilledToast] = useState(null);
   const [autoFilledFields, setAutoFilledFields] = useState({});
   const [isScheduleLocked, setIsScheduleLocked] = useState(false);
+  const [savedSuccessModal, setSavedSuccessModal] = useState(null);
 
   // Dynamic Commodities from PostgreSQL Database (Instant fallback bundled)
   const [dbCommodities, setDbCommodities] = useState(() => (commodities && commodities.length > 0 ? commodities : defaultCommodities));
@@ -1149,8 +1150,7 @@ export default function JobOrderWizardView({
 
     if (onCreateJob) {
       onCreateJob(newJobPayload);
-      setAutoFilledToast(`✅ Booking ${newJobPayload.id} Successfully Saved with complete route!`);
-      setTimeout(() => setAutoFilledToast(null), 4000);
+      setSavedSuccessModal(newJobPayload);
     }
   };
 
@@ -2255,6 +2255,114 @@ export default function JobOrderWizardView({
           <div>
             <div className="text-xs font-bold text-white">Sailing &amp; Dates Auto-Filled!</div>
             <div className="text-[11px] text-slate-300 font-mono">{autoFilledToast}</div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= BIG PROMINENT SAVE SUCCESS MODAL ================= */}
+      {savedSuccessModal && (
+        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in font-sans">
+          <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden text-center">
+            
+            {/* Top Decorative Gradient Line */}
+            <div className="h-3 w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-600" />
+            
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setSavedSuccessModal(null)}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer"
+              title="Close"
+            >
+              <X className="w-4 h-4 stroke-[2.5]" />
+            </button>
+
+            <div className="p-6 sm:p-8">
+              {/* Big Celebration Green Icon */}
+              <div className="w-20 h-20 rounded-full bg-emerald-50 border-4 border-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/10">
+                <CheckCircle2 className="w-12 h-12 stroke-[2.5]" />
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                Booking Saved Successfully!
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1.5 max-w-sm mx-auto">
+                All routing, stakeholder, equipment &amp; container manifest details are securely recorded in the database.
+              </p>
+
+              {/* High-End Enterprise Details Summary Box */}
+              <div className="mt-5 p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/90 text-left space-y-2.5 text-xs shadow-inner">
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-200">
+                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                    Allocated Job Order No
+                  </span>
+                  <span className="font-mono text-lg font-black text-blue-700 bg-blue-100/70 px-3 py-0.5 rounded-lg border border-blue-300 shadow-2xs">
+                    {savedSuccessModal.joNo || savedSuccessModal.id}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Consignor (Shipper):</span>
+                  <span className="font-bold text-slate-900 truncate max-w-[240px]">
+                    {savedSuccessModal.consignor || savedSuccessModal.customer || '—'}
+                  </span>
+                </div>
+
+                {savedSuccessModal.consignee && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-medium">Consignee:</span>
+                    <span className="font-semibold text-slate-800 truncate max-w-[240px]">
+                      {savedSuccessModal.consignee}
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Containers Count:</span>
+                  <span className="font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    {savedSuccessModal.containersCount || (savedSuccessModal.containers ? savedSuccessModal.containers.length : 1)} Units Total
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 font-medium">Route:</span>
+                  <span className="font-mono font-bold text-slate-800 text-[11px] truncate max-w-[240px]">
+                    {savedSuccessModal.fromLocation || savedSuccessModal.pol || 'Origin'} ➔ {savedSuccessModal.toLocation || savedSuccessModal.pod || 'POD'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-slate-500 font-medium">Status:</span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    {savedSuccessModal.status || 'BOOKED / STUFFED'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSavedSuccessModal(null);
+                    handleClearForm();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer transition transform active:scale-95"
+                >
+                  <span>OK, Start Next Booking</span>
+                  <ArrowRight className="w-4 h-4 stroke-[3]" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSavedSuccessModal(null)}
+                  className="w-full sm:w-auto py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-xs cursor-pointer transition"
+                >
+                  Keep Viewing
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
