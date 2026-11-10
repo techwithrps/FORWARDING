@@ -237,47 +237,16 @@ export default function DashboardView({
   return (
     <div className="space-y-6 w-full font-sans pb-10">
       {/* 1. Header with Direct Operational Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 font-heading">
-              Freight Operations Flow &amp; Booking Cockpit
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
-            Live interactive shipment lifecycle pipeline • Visual form completion readiness • Grid booking overview
-          </p>
+      <div className="border-b border-slate-200/80 pb-3">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 font-heading">
+            Freight Operations Flow &amp; Booking Cockpit
+          </h1>
         </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={() => onNavigate ? onNavigate('TripPendency') : null}
-            className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs border border-amber-200 flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
-          >
-            <Clock className="w-3.5 h-3.5 text-amber-600" />
-            <span>Trip Pendency</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onNavigate ? onNavigate('GrGeneration') : null}
-            className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold text-xs border border-emerald-200 flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
-          >
-            <Truck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>GR Generation</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onNewBookingClick}
-            className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-black text-xs flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-blue-200" />
-            <span>+ New Container Booking</span>
-          </button>
-        </div>
+        <p className="text-xs text-slate-500 mt-1 font-medium">
+          Live interactive shipment lifecycle pipeline • Visual form completion readiness • Grid booking overview
+        </p>
       </div>
 
       {/* 2. Simple, Crystal Clear Shipment Operational Lifecycle Flow */}
