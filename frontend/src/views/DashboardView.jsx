@@ -79,92 +79,68 @@ function calculateJobCompletion(job) {
 // 8 Operational Lifecycle Stages
 const PIPELINE_STAGES = [
   {
-    step: '01',
+    step: '1',
     id: 'vessel-plan',
-    title: 'Vessel Plan & Booking',
-    subtitle: 'Ocean line booking, schedules & cut-offs',
-    category: 'Planning',
+    title: 'Vessel Plan',
+    desc: 'Liner & Schedules',
     icon: Ship,
-    accent: 'blue',
-    targetView: 'VesselPlanDetails',
-    badgeText: 'Line Booking'
+    targetView: 'VesselPlanDetails'
   },
   {
-    step: '02',
+    step: '2',
     id: 'job-creation',
-    title: 'Job Order Creation',
-    subtitle: 'Shipper, consignee & equipment types',
-    category: 'Booking',
+    title: 'Job Booking',
+    desc: 'Equipment & Spec',
     icon: FileText,
-    accent: 'indigo',
-    targetView: 'ContainerBooking',
-    badgeText: 'Job Wizard'
+    targetView: 'ContainerBooking'
   },
   {
-    step: '03',
+    step: '3',
     id: 'trip-pendency',
     title: 'Trip Pendency',
-    subtitle: 'Vehicle trailer matching (40*1 or 20*2)',
-    category: 'Dispatch Queue',
+    desc: 'Trailer Matching (40/20)',
     icon: Clock,
-    accent: 'amber',
-    targetView: 'TripPendency',
-    badgeText: 'Capacity Check'
+    targetView: 'TripPendency'
   },
   {
-    step: '04',
+    step: '4',
     id: 'gr-generation',
-    title: 'GR Generation',
-    subtitle: 'Bilty, driver allotment & trip advances',
-    category: 'Lorry Receipt',
+    title: 'GR Bilty',
+    desc: 'Driver & Advances',
     icon: Truck,
-    accent: 'emerald',
-    targetView: 'GrGeneration',
-    badgeText: 'Goods Receipt'
+    targetView: 'GrGeneration'
   },
   {
-    step: '05',
+    step: '5',
     id: 'edi-customs',
-    title: 'EDI & Customs Filing',
-    subtitle: 'Shipping bill submission & LEO clearance',
-    category: 'Clearance',
+    title: 'EDI Customs',
+    desc: 'Shipping Bill & LEO',
     icon: FileCheck,
-    accent: 'cyan',
-    targetView: 'ShipmentStatus',
-    badgeText: 'Customs LEO'
+    targetView: 'ShipmentStatus'
   },
   {
-    step: '06',
+    step: '6',
     id: 'rail-out',
-    title: 'Rail Out Movement',
-    subtitle: 'ICD Dadri/Patli rake loading & transit',
-    category: 'Movement',
+    title: 'Rail Out',
+    desc: 'ICD Train Transit',
     icon: Train,
-    accent: 'purple',
-    targetView: 'ShipmentStatus',
-    badgeText: 'Rake Movement'
+    targetView: 'ShipmentStatus'
   },
   {
-    step: '07',
+    step: '7',
     id: 'sob-update',
-    title: 'Plan Change / SOB Update',
-    subtitle: 'Vessel delay shifts & Shipped On Board',
-    category: 'Gate & Ocean',
+    title: 'SOB Update',
+    desc: 'Shipped On Board',
     icon: Anchor,
-    accent: 'rose',
-    targetView: 'VesselPlanDetails',
-    badgeText: 'SOB Date'
+    targetView: 'VesselPlanDetails'
   },
   {
-    step: '08',
+    step: '8',
     id: 'documentation',
-    title: 'Docs & Invoicing',
-    subtitle: 'Bill of Lading, IRN & Sales Tax Invoicing',
-    category: 'Finance & Close',
+    title: 'Invoicing',
+    desc: 'Tax Invoices & Close',
     icon: Layers,
-    accent: 'teal',
-    targetView: 'Invoice',
-    badgeText: 'Tax Invoicing'
+    targetView: 'Invoice'
   }
 ];
 
@@ -290,28 +266,25 @@ export default function DashboardView({
         </div>
       </div>
 
-      {/* 2. Motion Graphics Operational Lifecycle Pipeline (8 Stages) */}
-      <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 p-4 sm:p-5 text-white shadow-xl border border-slate-700/60 relative overflow-hidden">
-        {/* Animated background ambient glow dots */}
-        <div className="absolute -right-16 -top-16 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3.5 border-b border-white/10 pb-3 relative z-10">
+      {/* 2. Simple, Crystal Clear Shipment Operational Lifecycle Flow */}
+      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-4 sm:p-5">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3.5 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-cyan-300">
-              <Activity className="w-4 h-4 animate-spin-slow" />
+            <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+              <Activity className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-black uppercase tracking-wider text-white">
-                  Interactive Freight Lifecycle Pipeline
+                <h2 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">
+                  Shipment Operational Lifecycle
                 </h2>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
-                  8 Operation Steps
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                  8 Step Flow
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300">
-                Click any operational stage to jump into that module or filter the shipments grid below
+              <p className="text-xs text-slate-500">
+                Step-by-step process &bull; Click any step to filter bookings or open module
               </p>
             </div>
           </div>
@@ -320,80 +293,83 @@ export default function DashboardView({
             <button
               type="button"
               onClick={() => setActiveStageFilter('ALL')}
-              className="text-[11px] font-bold text-amber-300 hover:text-white px-2.5 py-1 rounded bg-white/10 border border-amber-300/30 flex items-center gap-1 transition self-start cursor-pointer"
+              className="text-xs font-bold text-slate-600 hover:text-blue-600 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center gap-1.5 transition cursor-pointer self-start"
             >
-              <RotateCcw className="w-3 h-3" />
-              <span>Reset Stage Filter</span>
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Show All Bookings</span>
             </button>
           )}
         </div>
 
-        {/* Horizontal Motion Steps Track */}
-        <div className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-700">
-          <div className="flex items-stretch gap-2.5 min-w-[1040px] relative z-10">
+        {/* Stepper Flow Ribbon */}
+        <div className="overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-200">
+          <div className="flex items-center gap-1.5 min-w-[960px]">
             {PIPELINE_STAGES.map((st, idx) => {
               const IconComp = st.icon;
               const isSelected = activeStageFilter === st.id;
+              const isLast = idx === PIPELINE_STAGES.length - 1;
+
               return (
-                <motion.div
-                  key={st.id}
-                  whileHover={{ y: -3, scale: 1.01 }}
-                  transition={{ duration: 0.15 }}
-                  onClick={() => {
-                    setActiveStageFilter(activeStageFilter === st.id ? 'ALL' : st.id);
-                    setCurrentPage(1);
-                  }}
-                  className={`flex-1 min-w-[124px] p-2.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between relative group ${
-                    isSelected
-                      ? 'bg-blue-600/30 border-cyan-400 ring-2 ring-cyan-400/40 shadow-lg'
-                      : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/20'
-                  }`}
-                >
-                  {/* Step Number & Category Badge */}
-                  <div>
-                    <div className="flex items-center justify-between gap-1 mb-2">
-                      <span className="text-[10px] font-mono font-black text-cyan-300 bg-white/10 px-1.5 py-0.5 rounded">
+                <React.Fragment key={st.id}>
+                  <div
+                    onClick={() => {
+                      setActiveStageFilter(activeStageFilter === st.id ? 'ALL' : st.id);
+                      setCurrentPage(1);
+                    }}
+                    className={`flex-1 min-w-[105px] p-2.5 rounded-xl border transition-all cursor-pointer select-none group relative ${
+                      isSelected
+                        ? 'bg-blue-50/90 border-blue-500 ring-2 ring-blue-200 shadow-xs'
+                        : 'bg-slate-50/70 hover:bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-2xs'
+                    }`}
+                  >
+                    {/* Step Number + Icon Row */}
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className={`w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center font-mono ${
+                        isSelected ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700 group-hover:bg-blue-100 group-hover:text-blue-700'
+                      }`}>
                         {st.step}
                       </span>
-                      <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase truncate">
-                        {st.category}
-                      </span>
-                    </div>
 
-                    {/* Step Icon & Title */}
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${
-                        isSelected ? 'bg-cyan-400 text-slate-950 font-bold' : 'bg-white/10 text-cyan-300 group-hover:bg-cyan-500/20'
+                      <div className={`p-1 rounded-md ${
+                        isSelected ? 'text-blue-600 bg-blue-100' : 'text-slate-400 group-hover:text-blue-600'
                       }`}>
-                        <IconComp className="w-3.5 h-3.5" />
+                        <IconComp className="w-4 h-4" />
                       </div>
-                      <h3 className="text-xs font-black tracking-tight text-white group-hover:text-cyan-300 line-clamp-1">
-                        {st.title}
-                      </h3>
                     </div>
 
-                    <p className="text-[10px] text-slate-300 line-clamp-2 leading-relaxed">
-                      {st.subtitle}
-                    </p>
+                    {/* Title & Simple Descriptor */}
+                    <div className="text-xs font-bold text-slate-800 group-hover:text-blue-600 truncate">
+                      {st.title}
+                    </div>
+                    <div className="text-[10px] text-slate-400 group-hover:text-slate-600 truncate mt-0.5">
+                      {st.desc}
+                    </div>
+
+                    {/* Quick Jump Link on hover / active */}
+                    <div className="mt-2 pt-1.5 border-t border-slate-200/60 flex items-center justify-between text-[10px]">
+                      <span className={`font-semibold ${isSelected ? 'text-blue-700 font-bold' : 'text-slate-400'}`}>
+                        {isSelected ? 'Active' : 'Filter'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onNavigate) onNavigate(st.targetView);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 font-bold flex items-center gap-0.5 cursor-pointer"
+                        title={`Open ${st.title} Module`}
+                      >
+                        <span>Open</span>
+                        <ArrowUpRight className="w-2.5 h-2.5" />
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Jump Action */}
-                  <div className="pt-2 mt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-cyan-300">
-                    <span className="font-mono text-[9px] font-semibold opacity-80">{st.badgeText}</span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (onNavigate) onNavigate(st.targetView);
-                      }}
-                      className="hover:text-white flex items-center gap-0.5 underline font-bold cursor-pointer"
-                      title={`Open ${st.title} Module`}
-                    >
-                      <span>Open</span>
-                      <ArrowUpRight className="w-3 h-3 inline" />
-                    </button>
-                  </div>
-                </motion.div>
+                  {/* Connecting Chevron Arrow */}
+                  {!isLast && (
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                  )}
+                </React.Fragment>
               );
             })}
           </div>
