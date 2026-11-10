@@ -102,21 +102,25 @@ router.get('/pending-gr-containers', async (req, res) => {
           c.container_number AS cont_no,
           CASE WHEN c.size_type LIKE '%20%' THEN '20' ELSE '40' END AS size,
           CASE WHEN c.size_type LIKE '%GP%' THEN 'GP' ELSE 'HC' END AS type,
-          COALESCE(c.cargo_weight::text, '24500') AS weight,
+          COALESCE(NULLIF(c.cargo_weight::text, '0'), NULLIF(c.gross_weight::text, '0'), '24500') AS weight,
           j.job_number AS jo_no,
-          TO_CHAR(j.created_at, 'YYYY-MM-DD') AS jo_date,
-          COALESCE(j.customer_name, 'Fair Exports (India) Pvt Ltd') AS consignor,
-          COALESCE(j.consignee_name, 'ASIAN PERAL MYANMAR CO. LTD.') AS consignee,
-          'AJINKYA TRANSPORT' AS transporter,
-          COALESCE(j.origin_port_name, 'TRANSWORLD-DADRI') AS from_location,
-          COALESCE(j.pod_port_name, 'ADANI-PATLI') AS to_location,
-          'ADANI-PATLI' AS handover_location,
-          COALESCE(j.commodity, 'FROZEN BUFFALO BONELESS MEAT') AS commodity
+          TO_CHAR(COALESCE(j.jo_date, j.created_at), 'YYYY-MM-DD') AS jo_date,
+          COALESCE(NULLIF(j.customer_name, ''), 'Fair Exports (India) Pvt Ltd') AS consignor,
+          COALESCE(NULLIF(j.consignee_name, ''), 'ASIAN PERAL MYANMAR CO. LTD.') AS consignee,
+          COALESCE(NULLIF(j.transporter, ''), 'AJINKYA TRANSPORT') AS transporter,
+          COALESCE(NULLIF(c.from_location, ''), NULLIF(j.origin_port_name, ''), 'TRANSWORLD-DADRI') AS from_location,
+          COALESCE(NULLIF(c.to_location, ''), NULLIF(j.pod_port_name, ''), 'ADANI-PATLI') AS to_location,
+          COALESCE(NULLIF(c.handover_location, ''), NULLIF(j.handover_location, ''), 'ADANI-PATLI') AS handover_location,
+          COALESCE(NULLIF(c.commodity, ''), NULLIF(j.commodity, ''), 'FROZEN BUFFALO BONELESS MEAT') AS commodity,
+          COALESCE(c.truck_number, '') AS vehicle_no,
+          COALESCE(c.driver_name, '') AS driver,
+          COALESCE(c.driver_mobile, '') AS driver_contact_no,
+          COALESCE(j.shipping_line_name, '') AS shipping_line
         FROM job_containers c
         JOIN job_orders j ON c.job_id = j.id
         WHERE (c.gr_number IS NULL OR c.gr_number = '')
         ORDER BY c.created_at DESC
-        LIMIT 50;
+        LIMIT 100;
       `;
       const resLocal = await db.query(localQuery);
       localRows = resLocal.rows;

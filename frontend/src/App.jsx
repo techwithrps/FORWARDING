@@ -560,6 +560,15 @@ export default function App() {
               grDate: c.grDate || null,
               driverName: c.driverName || '',
               driverMobile: c.driverMobile || '',
+              commodity: c.commodity || formData.commodity || '',
+              handoverLocation: c.handoverLocation || formData.handoverLocation || '',
+              fromLocation: c.fromLocation || formData.fromLocation || formData.origin || '',
+              toLocation: c.toLocation || formData.toLocation || '',
+              transporter: c.transporter || formData.transporter || 'AJINKYA TRANSPORT',
+              consignor: customerName,
+              customer: customerName,
+              consignee: formData.consignee || '',
+              shippingLine: shippingLineName,
               status: c.status || 'ALLOTTED'
             }))
           : []
@@ -895,12 +904,16 @@ export default function App() {
                   selectedContainersList: list,
                   cont_no: list.map(c => c.contNo).join(', '),
                   cont_size: primary.size || '40',
-                  weight: list.reduce((sum, c) => sum + (Number(c.cargoWeight) || 24000), 0),
-                  customer: primary.customer,
+                  weight: list.reduce((sum, c) => sum + (Number(c.cargoWeight || c.weight) || 24000), 0),
+                  customer: primary.customer || primary.consignor,
+                  consignor: primary.consignor || primary.customer,
                   consignee: primary.consignee,
-                  shippingLine: primary.line,
-                  from_location: primary.origin,
-                  to_location: primary.pod,
+                  transporter: primary.transporter || 'AJINKYA TRANSPORT',
+                  shippingLine: primary.line || primary.shippingLine,
+                  from_location: primary.origin || primary.fromLocation,
+                  to_location: primary.pod || primary.toLocation,
+                  handoverLocation: primary.handoverLocation || primary.handover_location || '',
+                  commodity: primary.commodity || '',
                   jo_no: primary.joNo,
                   jo_date: primary.joDate
                 });

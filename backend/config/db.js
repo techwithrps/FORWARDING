@@ -33,6 +33,8 @@ pool.on('error', (err) => {
   try {
     await pool.query('ALTER TABLE job_orders ADD COLUMN IF NOT EXISTS equipment_breakdown JSONB;');
     await pool.query('ALTER TABLE job_orders ADD COLUMN IF NOT EXISTS jo_date DATE;');
+    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS commodity VARCHAR(255);');
+    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS handover_location VARCHAR(255);');
   } catch (e) {}
 })();
 

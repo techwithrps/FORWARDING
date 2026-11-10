@@ -33,6 +33,10 @@ router.get('/', async (req, res) => {
           vehicleNo: c.truck_number || '',
           driverName: c.driver_name || '',
           driverMobile: c.driver_mobile || '',
+          commodity: c.commodity || job.commodity || '',
+          handoverLocation: c.handover_location || job.handover_location || '',
+          fromLocation: c.from_location || job.origin_port_name || '',
+          toLocation: c.to_location || job.pod_port_name || '',
           advance: c.advance || 0,
           oilAdvance: c.oil_advance || 0,
           otherAdvance: c.other_advance || 0,
@@ -185,8 +189,11 @@ router.post('/', async (req, res) => {
     const toLoc = b.toLocation || '';
     const vesselName = b.vessel || b.vesselName || '';
     const voyageNo = b.voyage || '';
-    const commodityVal = b.commodity || '';
-    const tempVal = b.temperature || '';
+    const eqCommodities = Array.isArray(b.equipmentBreakdown)
+      ? b.equipmentBreakdown.map(l => l.commodity).filter(Boolean).join(', ')
+      : '';
+    const commodityVal = b.commodity || eqCommodities || '';
+    const tempVal = b.temperature || (Array.isArray(b.equipmentBreakdown) ? b.equipmentBreakdown.map(l => l.setTemp || l.temperature).filter(Boolean)[0] : '') || '';
     const totalConts = Array.isArray(b.containers) ? b.containers.length : (Number(b.containersCount) || 1);
     const sellFreight = Number(b.sellFreight) || Number(b.sellRate) || 0;
     const buyFreight = Number(b.buyFreight) || Number(b.buyRate) || 0;
@@ -340,13 +347,19 @@ router.post('/', async (req, res) => {
           cargo_weight, seal_number, agent_seal, current_status, milestone_dates,
           truck_number, driver_name, driver_mobile, gr_number, gr_date,
           advance, oil_advance, other_advance, slip_no, oil_vendor, workshop, c_gr, gr_remarks,
-          handover_location, from_location, to_location, license_validity
+          handover_location, from_location, to_location, license_validity, commodity
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
           $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24,
-          $25, $26, $27, $28
+          $25, $26, $27, $28, $29
         ) RETURNING *;
       `;
+      const cSize = c.size || (c.sizeType?.includes('20') ? '20' : '40');
+      const matchedEq = Array.isArray(b.equipmentBreakdown)
+        ? b.equipmentBreakdown.find(l => String(l.size).trim() === String(cSize).trim())
+        : null;
+      const contCommodity = c.commodity || matchedEq?.commodity || commodityVal || '';
+
       const contValues = [
         contId,
         jobId,
@@ -375,7 +388,8 @@ router.post('/', async (req, res) => {
         c.handoverLocation || handoverLoc,
         c.fromLocation || fromLoc,
         c.toLocation || toLoc,
-        c.licenseValidity || ''
+        c.licenseValidity || '',
+        contCommodity
       ];
       const cRes = await client.query(contQuery, contValues);
       createdContainers.push(cRes.rows[0]);

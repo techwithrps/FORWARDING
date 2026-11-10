@@ -1127,25 +1127,42 @@ export default function JobOrderWizardView({
       boeNo: form.boeNo || '',
       containersCount: totalContainersCount,
       equipmentBreakdown: equipmentLines,
+      commodity: form.commodity || equipmentLines.map(l => l.commodity).filter(Boolean).join(', ') || 'General Cargo',
+      temperature: form.temperature || equipmentLines.map(l => l.setTemp || l.temperature).filter(Boolean)[0] || 'Ambient',
       status: "STUFFED",
       sellFreight: totalSellVal,
       buyFreight: totalBuyVal,
       margin: totalMarginVal,
-      containers: containers.map((c, idx) => ({
-        id: `C${idx + 1}`,
-        sr: c.sr || idx + 1,
-        containerNo: c.contNo || '',
-        sizeType: `${c.size || '40'}${c.type || 'HC'}`,
-        size: c.size || '40',
-        type: c.type || 'HC',
-        tareWeight: Number(c.tareWeight) || 3820,
-        cargoWeight: Number(c.cargoWeight) || 0,
-        grossWeight: Number(c.grossWeight) || 0,
-        sealNo: c.sealNo || '',
-        agentSeal: c.agentSeal || '',
-        truckNo: c.vehicleNo || '',
-        grNo: c.grNo || ''
-      }))
+      containers: containers.map((c, idx) => {
+        const cSize = c.size || (c.sizeType?.includes('20') ? '20' : '40');
+        const matchedEq = equipmentLines.find(l => String(l.size).trim() === String(cSize).trim()) || equipmentLines[0] || {};
+        const contCommodity = c.commodity || matchedEq.commodity || form.commodity || 'General Cargo';
+        return {
+          id: `C${idx + 1}`,
+          sr: c.sr || idx + 1,
+          containerNo: c.contNo || '',
+          sizeType: `${c.size || '40'}${c.type || 'HC'}`,
+          size: c.size || '40',
+          type: c.type || 'HC',
+          tareWeight: Number(c.tareWeight) || 3820,
+          cargoWeight: Number(c.cargoWeight) || 0,
+          grossWeight: Number(c.grossWeight) || 0,
+          sealNo: c.sealNo || '',
+          agentSeal: c.agentSeal || '',
+          truckNo: c.vehicleNo || '',
+          vehicleNo: c.vehicleNo || '',
+          grNo: c.grNo || '',
+          commodity: contCommodity,
+          handoverLocation: form.handoverLocation || '',
+          fromLocation: form.fromLocation || '',
+          toLocation: form.toLocation || '',
+          transporter: form.transporter || 'AJINKYA TRANSPORT',
+          consignor: form.consignor || '',
+          customer: form.consignor || '',
+          consignee: form.consignee || '',
+          shippingLine: form.shippingLine || ''
+        };
+      })
     };
 
     if (onCreateJob) {

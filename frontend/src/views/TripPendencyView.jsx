@@ -75,6 +75,8 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
       driverName: r.driverName || '',
       driverPhone: r.driverMobile || '',
       transporter: r.transporter || 'AJINKYA TRANSPORT',
+      commodity: r.commodity || '',
+      handoverLocation: r.handoverLocation || r.handover_location || '',
       rawRecord: r
     });
   });
@@ -105,6 +107,8 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
           driverName: c.driverName || '',
           driverPhone: c.driverMobile || '',
           transporter: job.transporter || 'AJINKYA TRANSPORT',
+          commodity: c.commodity || (Array.isArray(job.equipmentBreakdown) ? job.equipmentBreakdown.find(l => String(l.size).trim() === String(c.size).trim())?.commodity : null) || job.commodity || '',
+          handoverLocation: c.handoverLocation || job.handoverLocation || '',
           rawRecord: c
         });
       }

@@ -58,12 +58,12 @@ export default function GrGenerationView({
           joDate: c.jo_date || todayDateStr,
           consignor: c.consignor || 'Fair Exports (India) Pvt Ltd',
           consignee: c.consignee || 'ASIAN PERAL MYANMAR CO. LTD.',
-          fromLocation: c.from_location || 'TRANSWORLD-DADRI',
-          toLocation: c.to_location || 'ADANI-PATLI',
+          fromLocation: c.from_location || c.fromLocation || 'TRANSWORLD-DADRI',
+          toLocation: c.to_location || c.toLocation || 'ADANI-PATLI',
           transporter: c.transporter || 'AJINKYA TRANSPORT',
-          vehicleNo: c.vehicle_no || '',
+          vehicleNo: c.vehicle_no || c.vehicleNo || '',
           commodity: c.commodity || 'FROZEN BUFFALO BONELESS MEAT',
-          handoverLocation: c.handover_location || 'ADANI-PATLI',
+          handoverLocation: c.handover_location || c.handoverLocation || '',
           grNo: c.gr_no || ''
         });
       }
@@ -75,22 +75,27 @@ export default function GrGenerationView({
         const cNo = c.no || c.contNo || c.containerNo || c.container_number;
         if (cNo && cNo !== 'TBA' && !seen.has(cNo.toUpperCase())) {
           seen.add(cNo.toUpperCase());
+          const cSize = c.size || (c.sizeType?.includes('20') ? '20' : '40') || '40';
+          const matchedEq = Array.isArray(job.equipmentBreakdown)
+            ? job.equipmentBreakdown.find(l => String(l.size).trim() === String(cSize).trim())
+            : null;
+          const contCommodity = c.commodity || matchedEq?.commodity || job.commodity || 'FROZEN BUFFALO BONELESS MEAT';
           list.push({
             contNo: cNo,
             displayLabel: `${cNo} - ${job.id || job.joNo || job.jobNumber || ''}`,
-            size: c.size || (c.sizeType?.includes('20') ? '20' : '40') || '40',
+            size: cSize,
             type: c.type || (c.sizeType?.includes('GP') ? 'GP' : 'HC') || 'HC',
             weight: String(c.cargoWeight || c.weight || c.cargo_weight || '24500'),
             joNo: job.id || job.joNo || job.jobNumber || job.job_number || '',
-            joDate: job.date || job.joDate || (job.createdAt ? job.createdAt.split('T')[0] : '') || todayDateStr,
+            joDate: job.joDate || job.date || (job.createdAt ? job.createdAt.split('T')[0] : '') || todayDateStr,
             consignor: job.customer || job.consignor || job.customerName || job.customer_name || '',
             consignee: job.consignee || job.consigneeName || job.consignee_name || '',
             fromLocation: job.fromLocation || job.origin || job.origin_port_name || '',
             toLocation: job.toLocation || job.pod || job.pod_port_name || '',
             transporter: job.transporter || 'AJINKYA TRANSPORT',
             vehicleNo: (c.truck && c.truck !== 'TBA' ? c.truck : '') || c.vehicleNo || c.truck_number || '',
-            commodity: job.commodity || 'FROZEN BUFFALO BONELESS MEAT',
-            handoverLocation: job.handoverLocation || 'ADANI-PATLI',
+            commodity: contCommodity,
+            handoverLocation: c.handoverLocation || job.handoverLocation || '',
             grNo: c.gr || c.grNo || c.gr_number || ''
           });
         }
@@ -207,8 +212,10 @@ export default function GrGenerationView({
         consignor: primary.customer || prev.consignor,
         consignee: primary.consignee || prev.consignee,
         transporter: primary.transporter || prev.transporter,
-        fromLocation: primary.origin || prev.fromLocation,
-        toLocation: primary.pod || prev.toLocation,
+        fromLocation: primary.origin || primary.fromLocation || prev.fromLocation,
+        toLocation: primary.pod || primary.toLocation || prev.toLocation,
+        handoverLocation: primary.handoverLocation || primary.handover_location || prev.handoverLocation,
+        commodity: primary.commodity || prev.commodity,
         joNo: primary.joNo || prev.joNo,
         joDate: primary.joDate || prev.joDate || todayDateStr,
         vehicleNo: primary.vehicleNo || prev.vehicleNo,
