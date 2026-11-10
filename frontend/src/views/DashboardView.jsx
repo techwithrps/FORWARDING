@@ -24,7 +24,8 @@ import {
   Check,
   Building2,
   Box,
-  RotateCcw
+  RotateCcw,
+  BarChart3
 } from 'lucide-react';
 
 // Form Completion Calculator: Evaluates how much of the operational form/lifecycle has been filled
@@ -39,14 +40,14 @@ function calculateJobCompletion(job) {
   const hasBkgNo = !!(job.bookingNo || job.lineBookingNo);
   const joPoints = (hasConsignor ? 7 : 0) + (hasLine ? 6 : 0) + (hasRoute ? 6 : 0) + (hasBkgNo ? 6 : 0);
   score += joPoints;
-  checks.push({ key: 'JO', label: 'Job Order Spec', complete: joPoints >= 19, weight: 25 });
+  checks.push({ key: 'JO', label: 'Job Order Spec', shortLabel: 'Job', complete: joPoints >= 19, weight: 25 });
 
   // 2. Equipment & Commodity (20 pts)
   const hasEquipment = Array.isArray(job.equipmentBreakdown) && job.equipmentBreakdown.length > 0;
   const hasCommodity = !!(job.commodity || (hasEquipment && job.equipmentBreakdown[0]?.commodity));
   const eqPoints = (hasEquipment ? 12 : 6) + (hasCommodity ? 8 : 4);
   score += eqPoints;
-  checks.push({ key: 'EQ', label: 'Equipment & Cargo', complete: eqPoints >= 15, weight: 20 });
+  checks.push({ key: 'EQ', label: 'Equipment & Cargo', shortLabel: 'Cargo', complete: eqPoints >= 15, weight: 20 });
 
   // 3. Container Allotment / Manifest (20 pts)
   const containers = job.containers || [];
@@ -54,7 +55,7 @@ function calculateJobCompletion(job) {
   const hasWeights = containers.length > 0 && containers.some(c => Number(c.grossWeight || c.gross || c.cargoWeight || c.cargo) > 0);
   const contPoints = (hasContainers ? 12 : 0) + (hasWeights ? 8 : 0);
   score += contPoints;
-  checks.push({ key: 'MF', label: 'Container Manifest', complete: contPoints >= 15, weight: 20 });
+  checks.push({ key: 'MF', label: 'Container Manifest', shortLabel: 'Cont', complete: contPoints >= 15, weight: 20 });
 
   // 4. Trip Pendency & GR Allotment (20 pts)
   const hasVehicle = containers.some(c => c.truckNo || c.vehicleNo || c.truck);
@@ -62,7 +63,7 @@ function calculateJobCompletion(job) {
   const hasGr = containers.some(c => c.grNo || c.grNumber || (c.gr && c.gr !== 'PENDING'));
   const grPoints = (hasVehicle ? 7 : 0) + (hasDriver ? 6 : 0) + (hasGr ? 7 : 0);
   score += grPoints;
-  checks.push({ key: 'GR', label: 'Vehicle & GR Allotment', complete: grPoints >= 14, weight: 20 });
+  checks.push({ key: 'GR', label: 'Vehicle & GR Allotment', shortLabel: 'GR Bilty', complete: grPoints >= 14, weight: 20 });
 
   // 5. Movement, SOB & Invoicing (15 pts)
   const isStuffed = job.status === 'STUFFED' || job.status === 'RAIL_OUT' || job.status === 'COMPLETED' || job.status === 'INVOICED';
@@ -70,10 +71,18 @@ function calculateJobCompletion(job) {
   const hasInvoice = !!(job.partyInvoiceNo || job.blNo || job.status === 'INVOICED');
   const movPoints = (isStuffed ? 6 : 0) + (hasSobOrVessel ? 4 : 0) + (hasInvoice ? 5 : 0);
   score += movPoints;
-  checks.push({ key: 'DOC', label: 'Movement & Docs', complete: movPoints >= 10, weight: 15 });
+  checks.push({ key: 'DOC', label: 'Movement & Docs', shortLabel: 'Invoice', complete: movPoints >= 10, weight: 15 });
 
   const percentage = Math.min(100, Math.max(15, Math.round(score)));
-  return { percentage, checks };
+
+  let nextAction = '✅ 100% Complete & Ready';
+  if (!checks[0].complete) nextAction = '👉 Complete Booking Details';
+  else if (!checks[1].complete) nextAction = '👉 Set Equipment & Cargo';
+  else if (!checks[2].complete) nextAction = '👉 Enter Container Numbers';
+  else if (!checks[3].complete) nextAction = '👉 Allot Vehicle & Generate GR';
+  else if (!checks[4].complete) nextAction = '👉 Update Rail Out & Invoice';
+
+  return { percentage, checks, nextAction };
 }
 
 // 8 Operational Lifecycle Stages
@@ -168,6 +177,11 @@ export default function DashboardView({
       };
     });
   }, [jobs]);
+
+  // Overall Form Completion Fleet Stats for Visual Distribution Graph
+  const draftCount = useMemo(() => enhancedJobs.filter(j => j.completion.percentage < 50).length, [enhancedJobs]);
+  const progressCount = useMemo(() => enhancedJobs.filter(j => j.completion.percentage >= 50 && j.completion.percentage < 80).length, [enhancedJobs]);
+  const readyCount = useMemo(() => enhancedJobs.filter(j => j.completion.percentage >= 80).length, [enhancedJobs]);
 
   // Filter based on search query, completion band, and pipeline stage
   const filteredJobs = useMemo(() => {
@@ -376,8 +390,80 @@ export default function DashboardView({
         </div>
       </div>
 
-      {/* 3. Grid Controls: Search, Filters & Completion Bands */}
+      {/* 3. Grid Controls: Search, Filters & Fleet Analytics Graph */}
       <div className="space-y-3">
+        {/* Fleet Form Completion Analytics Graph Bar */}
+        <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs font-bold">
+            <div className="flex items-center gap-1.5 text-slate-800">
+              <BarChart3 className="w-4 h-4 text-blue-600" />
+              <span>Form Completion Analytics Graph ({enhancedJobs.length} Bookings)</span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] font-mono flex-wrap">
+              <button
+                type="button"
+                onClick={() => { setCompletionFilter(completionFilter === 'INCOMPLETE' ? 'ALL' : 'INCOMPLETE'); setCurrentPage(1); }}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded border transition cursor-pointer ${
+                  completionFilter === 'INCOMPLETE'
+                    ? 'bg-amber-500 text-white border-amber-600 font-bold'
+                    : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                <span>Draft: {draftCount} ({Math.round((draftCount / Math.max(1, enhancedJobs.length)) * 100)}%)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setCompletionFilter(completionFilter === 'IN_TRANSIT' ? 'ALL' : 'IN_TRANSIT'); setCurrentPage(1); }}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded border transition cursor-pointer ${
+                  completionFilter === 'IN_TRANSIT'
+                    ? 'bg-blue-600 text-white border-blue-700 font-bold'
+                    : 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <span>In Progress: {progressCount} ({Math.round((progressCount / Math.max(1, enhancedJobs.length)) * 100)}%)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setCompletionFilter(completionFilter === 'READY' ? 'ALL' : 'READY'); setCurrentPage(1); }}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded border transition cursor-pointer ${
+                  completionFilter === 'READY'
+                    ? 'bg-emerald-600 text-white border-emerald-700 font-bold'
+                    : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span>Ready: {readyCount} ({Math.round((readyCount / Math.max(1, enhancedJobs.length)) * 100)}%)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Multi-Segment Stacked Progress Graph Bar */}
+          <div className="w-full h-3 rounded-full bg-slate-100 flex overflow-hidden shadow-inner cursor-pointer" title="Click any band to filter bookings">
+            <div
+              onClick={() => { setCompletionFilter(completionFilter === 'INCOMPLETE' ? 'ALL' : 'INCOMPLETE'); setCurrentPage(1); }}
+              title={`Draft (<50%): ${draftCount} bookings`}
+              style={{ width: `${(draftCount / Math.max(1, enhancedJobs.length)) * 100}%` }}
+              className="bg-amber-400 hover:bg-amber-500 transition-all h-full"
+            />
+            <div
+              onClick={() => { setCompletionFilter(completionFilter === 'IN_TRANSIT' ? 'ALL' : 'IN_TRANSIT'); setCurrentPage(1); }}
+              title={`In Progress (50-80%): ${progressCount} bookings`}
+              style={{ width: `${(progressCount / Math.max(1, enhancedJobs.length)) * 100}%` }}
+              className="bg-blue-500 hover:bg-blue-600 transition-all h-full"
+            />
+            <div
+              onClick={() => { setCompletionFilter(completionFilter === 'READY' ? 'ALL' : 'READY'); setCurrentPage(1); }}
+              title={`Ready (>80%): ${readyCount} bookings`}
+              style={{ width: `${(readyCount / Math.max(1, enhancedJobs.length)) * 100}%` }}
+              className="bg-emerald-500 hover:bg-emerald-600 transition-all h-full"
+            />
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
           {/* Search Box */}
           <div className="relative flex-1 max-w-md">
@@ -539,63 +625,58 @@ export default function DashboardView({
                     </div>
                   </div>
 
-                  {/* Form Completion Graph & Milestone Progress Ring */}
-                  <div className="p-2.5 rounded-lg bg-slate-50/80 border border-slate-200/80 space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      {/* SVG Circular Progress Ring */}
-                      <div className="relative w-11 h-11 shrink-0 flex items-center justify-center">
-                        <svg className="w-11 h-11 transform -rotate-90" viewBox="0 0 36 36">
-                          <path
-                            className="text-slate-200"
-                            strokeWidth="3.2"
-                            stroke="currentColor"
-                            fill="none"
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          />
-                          <path
-                            className={
-                              isHigh ? 'text-emerald-500' :
-                              isMed ? 'text-blue-500' : 'text-amber-500'
-                            }
-                            strokeDasharray={`${percentage}, 100`}
-                            strokeWidth="3.2"
-                            strokeLinecap="round"
-                            stroke="currentColor"
-                            fill="none"
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          />
-                        </svg>
-                        <span className="absolute text-[10px] font-mono font-black text-slate-800">
-                          {percentage}%
-                        </span>
+                  {/* Visual Form Completion Progress Graph */}
+                  <div className="p-2.5 rounded-xl bg-slate-50/90 border border-slate-200/90 space-y-2">
+                    {/* Graph Title & Percentage */}
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1 font-bold text-slate-700">
+                        <BarChart3 className="w-3.5 h-3.5 text-blue-600" />
+                        <span className="text-[11px]">Form Progress</span>
                       </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between text-[10px] font-bold">
-                          <span className="text-slate-600 uppercase">Form Filled</span>
-                          <span className={isHigh ? 'text-emerald-700' : isMed ? 'text-blue-700' : 'text-amber-700'}>
-                            {isHigh ? 'Ready' : isMed ? 'In Progress' : 'Incomplete'}
-                          </span>
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-mono truncate">
-                          {checks.filter(c => c.complete).length} of 5 Checks Pass
-                        </div>
-                      </div>
+                      <span className={`text-[11px] font-mono font-black px-2 py-0.5 rounded-md border ${
+                        isHigh ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        isMed ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                        'bg-amber-50 text-amber-800 border-amber-200'
+                      }`}>
+                        {percentage}%
+                      </span>
                     </div>
 
-                    {/* Segmented Milestone Progress Dots */}
-                    <div className="grid grid-cols-5 gap-1 pt-1 border-t border-slate-200/60">
+                    {/* Visual Horizontal Progress Bar Graph */}
+                    <div className="w-full h-2.5 bg-slate-200/80 rounded-full overflow-hidden p-0.5 shadow-inner">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          isHigh ? 'bg-gradient-to-r from-emerald-500 to-teal-400' :
+                          isMed ? 'bg-gradient-to-r from-blue-500 to-cyan-400' :
+                          'bg-gradient-to-r from-amber-500 to-orange-400'
+                        }`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+
+                    {/* 5 Milestone Steps Graph with Labels */}
+                    <div className="grid grid-cols-5 gap-0.5 pt-1 text-center">
                       {checks.map((chk) => (
-                        <div
-                          key={chk.key}
-                          title={`${chk.label}: ${chk.complete ? 'Completed' : 'Pending'}`}
-                          className={`h-1.5 rounded-full transition-all ${
+                        <div key={chk.key} className="flex flex-col items-center">
+                          <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-black mb-0.5 ${
                             chk.complete
-                              ? isHigh ? 'bg-emerald-500' : 'bg-blue-500'
-                              : 'bg-slate-200'
-                          }`}
-                        />
+                              ? 'bg-emerald-500 text-white shadow-2xs'
+                              : 'bg-slate-200 text-slate-400'
+                          }`}>
+                            {chk.complete ? '✓' : '•'}
+                          </span>
+                          <span className={`text-[8px] font-bold truncate max-w-[44px] ${
+                            chk.complete ? 'text-slate-800' : 'text-slate-400'
+                          }`}>
+                            {chk.shortLabel}
+                          </span>
+                        </div>
                       ))}
+                    </div>
+
+                    {/* Actionable Next Step Callout */}
+                    <div className="text-[10px] font-semibold text-slate-600 pt-1.5 border-t border-slate-200/70 truncate flex items-center gap-1">
+                      <span className="truncate">{j.completion.nextAction}</span>
                     </div>
                   </div>
 
