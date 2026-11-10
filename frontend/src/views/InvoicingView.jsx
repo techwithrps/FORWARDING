@@ -249,7 +249,7 @@ export default function InvoicingView({ jobs = [], job = null, triggerGenerateIn
             pos: currentJob.origin || 'Dadri ICD (INICD6)'
           }}
           shipment={{
-            jobNo: currentJob.id || currentJob.joNo || 'JOB-JO-2026-0001',
+            jobNo: currentJob.id || currentJob.joNo || 'JO-94280',
             origin: currentJob.origin || currentJob.fromLocation || 'Dadri ICD',
             pod: currentJob.pod || currentJob.toLocation || 'Jebel Ali (AEJEA)',
             line: currentJob.line || currentJob.shippingLine || 'Maersk Line India Pvt Ltd',

@@ -218,7 +218,7 @@ export default function TaxDocumentPdfView({
             <div className="grid grid-cols-3 gap-1">
               <span className="font-bold text-slate-600">Job No:</span>
               <span className="col-span-2 font-mono font-bold text-slate-900">
-                {shipment.jobNo || 'JOB-JO-2026-0001'}
+                {shipment.jobNo || 'JO-94280'}
               </span>
             </div>
             {isCreditDebit && origInvoiceNo && (

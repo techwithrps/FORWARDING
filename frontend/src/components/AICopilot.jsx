@@ -94,7 +94,7 @@ export default function AICopilot({
       quickChips: [
         'Invoice generate karo',
         'Fair Exports ➔ Jebel Ali 40HC Book karo',
-        'JOB-JO-2026-0001 ka Status',
+        'JO-94289 ka Status',
         'Create Customer Reliance'
       ]
     }

@@ -429,7 +429,7 @@ export default function CreditDebitNoteView({ jobs = [] }) {
                 pos: 'Dadri ICD (INICD6)'
               }}
               shipment={{
-                jobNo: 'JOB-JO-2026-0001',
+                jobNo: 'JO-94280',
                 origin: 'Dadri ICD',
                 pod: 'Jebel Ali (AEJEA)',
                 line: 'Maersk Line India Pvt Ltd',

@@ -173,8 +173,8 @@ export default function App() {
   // Default pre-saved booking with complete SPJ-2 route chain
   const defaultJobs = [
     {
-      id: 'JO-2026-0001',
-      joNo: 'JO-2026-0001',
+      id: 'JO-94280',
+      joNo: 'JO-94280',
       joType: 'Export FCL',
       modeOfShipment: 'Multimodal (Rail + Road)',
       customer: 'Fair Exports (India) Pvt Ltd',
