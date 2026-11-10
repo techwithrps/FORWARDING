@@ -456,27 +456,26 @@ export function AppleWelcomeModal({ isOpen, onClose }) {
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-xl animate-fade-in font-sans">
       <div className="fixed inset-0" onClick={onClose} />
 
-      <div className="relative apple-welcome-card apple-glass w-full max-w-lg rounded-3xl p-6 sm:p-8 text-center space-y-6 shadow-[0_30px_90px_rgba(0,0,0,0.22)] border border-white/80 overflow-hidden">
-        {/* Apple subtle ambient gradient glow */}
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 bg-gradient-to-br from-blue-400/20 via-indigo-400/20 to-purple-400/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative apple-welcome-card bg-white w-full max-w-lg rounded-3xl p-6 sm:p-8 text-center space-y-6 shadow-2xl border border-slate-100 overflow-hidden">
+        {/* Ambient subtle glow */}
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 bg-gradient-to-br from-blue-400/10 via-indigo-400/10 to-purple-400/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 w-7 h-7 rounded-full bg-black/5 hover:bg-black/10 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer"
+          className="absolute top-4 right-4 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer"
           title="Close"
         >
           <X className="w-4 h-4" />
         </button>
 
-        {/* Official SPJ Group of Companies Logo (Transparent & Prominent) */}
+        {/* Official SPJ Group of Companies Logo (Seamless & Clean) */}
         <div className="flex justify-center items-center pt-2 pb-1 relative z-10">
           <img
             src={spjLogo}
             alt="SPJ Group of Companies"
-            className="h-16 sm:h-20 md:h-24 w-auto max-w-[360px] sm:max-w-[420px] object-contain select-none"
-            style={{ mixBlendMode: 'multiply' }}
+            className="h-14 sm:h-16 w-auto max-w-[320px] object-contain select-none"
           />
         </div>
 

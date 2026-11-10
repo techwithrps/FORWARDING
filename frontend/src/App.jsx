@@ -140,7 +140,7 @@ export default function App() {
   const [showInlinePartyModal, setShowInlinePartyModal] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [initialJobForWizard, setInitialJobForWizard] = useState(null);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(true);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   const handleDismissWelcome = () => {
     setShowWelcomeModal(false);
