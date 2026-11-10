@@ -1273,42 +1273,32 @@ export default function JobOrderWizardView({
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Transporter <span className="text-rose-500 font-bold">*</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  list="live-job-transporter-list"
-                  placeholder="Type or select Transporter..."
-                  value={form.transporter}
-                  onChange={(e) => setForm({ ...form, transporter: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('transporter', false, form.transporter)}`}
-                />
-                <datalist id="live-job-transporter-list">
-                  {transportersList.map((t, i) => (
-                    <option key={i} value={t} />
-                  ))}
-                </datalist>
-              </div>
+              <select
+                value={form.transporter}
+                onChange={(e) => setForm({ ...form, transporter: e.target.value })}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('transporter', false, form.transporter)}`}
+              >
+                <option value="">-- Select Transporter --</option>
+                {transportersList.map((t, i) => (
+                  <option key={i} value={t}>{t}</option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 From Location <span className="text-rose-500 font-bold">*</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  list="live-job-from-list"
-                  placeholder="Type or select From Location..."
-                  value={form.fromLocation}
-                  onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('fromLocation', false, form.fromLocation)}`}
-                />
-                <datalist id="live-job-from-list">
-                  {fromLocationList.map((loc, i) => (
-                    <option key={i} value={loc} />
-                  ))}
-                </datalist>
-              </div>
+              <select
+                value={form.fromLocation}
+                onChange={(e) => setForm({ ...form, fromLocation: e.target.value })}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('fromLocation', false, form.fromLocation)}`}
+              >
+                <option value="">-- Select From Location --</option>
+                {fromLocationList.map((loc, i) => (
+                  <option key={i} value={loc}>{loc}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -1318,70 +1308,55 @@ export default function JobOrderWizardView({
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 To Location <span className="text-rose-500 font-bold">*</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  list="live-job-to-list"
-                  placeholder="Type or select To Location..."
-                  value={form.toLocation}
-                  onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('toLocation', false, form.toLocation)}`}
-                />
-                <datalist id="live-job-to-list">
-                  {toLocationList.map((loc, i) => (
-                    <option key={i} value={loc} />
-                  ))}
-                </datalist>
-              </div>
+              <select
+                value={form.toLocation}
+                onChange={(e) => setForm({ ...form, toLocation: e.target.value })}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('toLocation', false, form.toLocation)}`}
+              >
+                <option value="">-- Select To Location --</option>
+                {toLocationList.map((loc, i) => (
+                  <option key={i} value={loc}>{loc}</option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 Handover Location <span className="text-rose-500 font-bold">*</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  list="live-job-handover-list"
-                  placeholder="Type or select Handover Location..."
-                  value={form.handoverLocation}
-                  onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('handoverLocation', false, form.handoverLocation)}`}
-                />
-                <datalist id="live-job-handover-list">
-                  {handoverLocationList.map((loc, i) => (
-                    <option key={i} value={loc} />
-                  ))}
-                </datalist>
-              </div>
+              <select
+                value={form.handoverLocation}
+                onChange={(e) => setForm({ ...form, handoverLocation: e.target.value })}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('handoverLocation', false, form.handoverLocation)}`}
+              >
+                <option value="">-- Select Handover Location --</option>
+                {handoverLocationList.map((loc, i) => (
+                  <option key={i} value={loc}>{loc}</option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                 POL (Port of Loading) <span className="text-rose-500 font-bold">*</span>
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  list="live-job-pol-list"
-                  placeholder="Type or select POL..."
-                  value={form.pol}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setForm({ ...form, pol: val });
-                    setRouteFilterOnly(true);
-                    setSelectedCarrierFilter('ALL');
-                  }}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass('pol', true, form.pol)}`}
-                />
-                <datalist id="live-job-pol-list">
-                  {polList.map((p) => (
-                    <option key={p.code} value={p.code}>
-                      {p.flag} {p.name}
-                    </option>
-                  ))}
-                </datalist>
-              </div>
+              <select
+                value={form.pol}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setForm({ ...form, pol: val });
+                  setRouteFilterOnly(true);
+                  setSelectedCarrierFilter('ALL');
+                }}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none ${getFieldClass('pol', true, form.pol)}`}
+              >
+                <option value="">-- Select POL --</option>
+                {polList.map((p) => (
+                  <option key={p.code} value={p.code}>
+                    {p.flag} {p.name} ({p.code})
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -1407,23 +1382,18 @@ export default function JobOrderWizardView({
                   </span>
                 </button>
               </div>
-              <div className="relative">
-                <input
-                  type="text"
-                  list="live-job-pod-list"
-                  placeholder="Type or select POD..."
-                  value={form.pod}
-                  onChange={(e) => handlePodChange(e.target.value)}
-                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('pod', true, form.pod)}`}
-                />
-                <datalist id="live-job-pod-list">
-                  {podList.map((p) => (
-                    <option key={p.code} value={p.code}>
-                      {p.name}
-                    </option>
-                  ))}
-                </datalist>
-              </div>
+              <select
+                value={form.pod}
+                onChange={(e) => handlePodChange(e.target.value)}
+                className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none ${getFieldClass('pod', true, form.pod)}`}
+              >
+                <option value="">-- Select POD --</option>
+                {podList.map((p) => (
+                  <option key={p.code} value={p.code}>
+                    {p.name} ({p.code})
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -1492,82 +1462,62 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                   Consignor (Shipper) <span className="text-rose-500 font-bold">*</span>
                 </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    list="live-job-consignor-list"
-                    placeholder="Type or select Consignor..."
-                    value={form.consignor}
-                    onChange={(e) => handleConsignorChange(e.target.value)}
-                    className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate ${getFieldClass('consignor', true, form.consignor)}`}
-                  />
-                  <datalist id="live-job-consignor-list">
-                    {shippersList.map((name, i) => (
-                      <option key={i} value={name} />
-                    ))}
-                  </datalist>
-                </div>
+                <select
+                  value={form.consignor}
+                  onChange={(e) => handleConsignorChange(e.target.value)}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate ${getFieldClass('consignor', true, form.consignor)}`}
+                >
+                  <option value="">-- Select Consignor (Shipper) --</option>
+                  {shippersList.map((name, i) => (
+                    <option key={i} value={name}>{name}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">Consignee</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    list="live-job-consignee-list"
-                    placeholder="Type or select Consignee..."
-                    value={form.consignee}
-                    onChange={(e) => setForm({ ...form, consignee: e.target.value })}
-                    className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none truncate font-semibold ${getFieldClass(form.consignee)}`}
-                  />
-                  <datalist id="live-job-consignee-list">
-                    {consigneesList.map((name, i) => (
-                      <option key={i} value={name} />
-                    ))}
-                  </datalist>
-                </div>
+                <select
+                  value={form.consignee}
+                  onChange={(e) => setForm({ ...form, consignee: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs outline-none truncate font-semibold ${getFieldClass(form.consignee)}`}
+                >
+                  <option value="">-- Select Consignee --</option>
+                  {consigneesList.map((name, i) => (
+                    <option key={i} value={name}>{name}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                   Customs CHA Agent
                 </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    list="live-job-cha-list"
-                    placeholder="Optional / Direct Shipper"
-                    value={form.chaName || ''}
-                    onChange={(e) => setForm({ ...form, chaName: e.target.value })}
-                    className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.chaName)}`}
-                  />
-                  <datalist id="live-job-cha-list">
-                    {chaList.map((cha, i) => (
-                      <option key={i} value={cha} />
-                    ))}
-                  </datalist>
-                </div>
+                <select
+                  value={form.chaName || ''}
+                  onChange={(e) => setForm({ ...form, chaName: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.chaName)}`}
+                >
+                  <option value="">-- Optional / Direct Shipper --</option>
+                  {chaList.map((cha, i) => (
+                    <option key={i} value={cha}>{cha}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                   On Account Of (Third Party)
                 </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    list="live-job-onaccount-list"
-                    placeholder="Optional / Direct Shipper"
-                    value={form.onAccount || ''}
-                    onChange={(e) => setForm({ ...form, onAccount: e.target.value })}
-                    className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.onAccount)}`}
-                  />
-                  <datalist id="live-job-onaccount-list">
-                    {shippersList.map((name, i) => (
-                      <option key={i} value={name} />
-                    ))}
-                  </datalist>
-                </div>
+                <select
+                  value={form.onAccount || ''}
+                  onChange={(e) => setForm({ ...form, onAccount: e.target.value })}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-semibold outline-none truncate ${getFieldClass(form.onAccount)}`}
+                >
+                  <option value="">-- Optional / Direct Shipper --</option>
+                  {shippersList.map((name, i) => (
+                    <option key={i} value={name}>{name}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -1577,24 +1527,19 @@ export default function JobOrderWizardView({
                 <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                   Shipping Line <span className="text-rose-500 font-bold">*</span>
                 </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    list="live-job-shippingline-list"
-                    placeholder="Type or select Shipping Line..."
-                    value={form.shippingLine}
-                    onChange={(e) => {
-                      setForm({ ...form, shippingLine: e.target.value });
-                      setFormError('');
-                    }}
-                    className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate ${getFieldClass('shippingLine', true, form.shippingLine)}`}
-                  />
-                  <datalist id="live-job-shippingline-list">
-                    {linesList.map((name, i) => (
-                      <option key={i} value={name} />
-                    ))}
-                  </datalist>
-                </div>
+                <select
+                  value={form.shippingLine}
+                  onChange={(e) => {
+                    setForm({ ...form, shippingLine: e.target.value });
+                    setFormError('');
+                  }}
+                  className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-bold outline-none truncate ${getFieldClass('shippingLine', true, form.shippingLine)}`}
+                >
+                  <option value="">-- Select Shipping Line --</option>
+                  {linesList.map((name, i) => (
+                    <option key={i} value={name}>{name}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -1812,23 +1757,18 @@ export default function JobOrderWizardView({
                   <label className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider block mb-1">
                     Commodity <span className="text-blue-500 font-mono text-[9px]">({dbCommodities.length} in DB)</span>
                   </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      list={`live-commodity-list-${idx}`}
-                      placeholder="Type to search Commodity..."
-                      value={line.commodity || ''}
-                      onChange={(e) => handleEquipmentLineChange(idx, "commodity", e.target.value)}
-                      className={`w-full px-3 py-1.5 rounded-lg text-xs font-mono font-bold outline-none ${getFieldClass(line.commodity)}`}
-                    />
-                    <datalist id={`live-commodity-list-${idx}`}>
-                      {dbCommodities.map((cmd) => (
-                        <option key={cmd.id || cmd.code} value={cmd.name}>
-                          {cmd.requires_reefer ? '❄️ Reefer (-18°C)' : '📦 Dry Box'}
-                        </option>
-                      ))}
-                    </datalist>
-                  </div>
+                  <select
+                    value={line.commodity || ''}
+                    onChange={(e) => handleEquipmentLineChange(idx, "commodity", e.target.value)}
+                    className={`w-full px-3 py-1.5 rounded-lg text-xs font-mono font-bold outline-none ${getFieldClass(line.commodity)}`}
+                  >
+                    <option value="">-- Select Commodity --</option>
+                    {dbCommodities.map((cmd) => (
+                      <option key={cmd.id || cmd.code} value={cmd.name}>
+                        {cmd.name} {cmd.requires_reefer ? '(❄️ Reefer -18°C)' : ''}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="w-36 sm:w-40">
