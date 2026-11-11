@@ -1037,14 +1037,26 @@ router.get('/sob-update', async (req, res) => {
 router.post('/sob-update', async (req, res) => {
   try {
     const { containerId, sobDate } = req.body;
+    const finalDate = sobDate || new Date().toISOString().split('T')[0];
     const { rows } = await db.query(
       `UPDATE job_containers SET 
-         sob_date = COALESCE($1, CURRENT_DATE),
+         sob_date = COALESCE($1::date, CURRENT_DATE),
          current_status = 'SOB',
          updated_at = NOW()
        WHERE id = $2 OR container_number = $2 RETURNING *`,
-      [sobDate, containerId]
+      [finalDate, containerId]
     );
+
+    // Sync to spjlive."ALL_PARTY_ACCOUNT"
+    try {
+      await db.query(`
+        UPDATE spjlive."ALL_PARTY_ACCOUNT" SET
+          "SOB" = 'Y',
+          "SOB_DATE" = COALESCE($1::timestamp, CURRENT_TIMESTAMP)
+        WHERE "CONT_NO" = $2 OR "TRACK_ID"::text = $2
+      `, [finalDate, containerId]);
+    } catch (e) {}
+
     res.json({ success: true, data: rows[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

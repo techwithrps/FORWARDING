@@ -475,7 +475,7 @@ export function AppleWelcomeModal({ isOpen, onClose }) {
           <img
             src={spjLogo}
             alt="SPJ Group of Companies"
-            className="h-14 sm:h-16 w-auto max-w-[320px] object-contain select-none"
+            className="h-14 sm:h-16 w-auto max-w-[320px] object-contain select-none mix-blend-multiply"
           />
         </div>
 
