@@ -216,14 +216,6 @@ export const api = {
   getRunningPosition: () => request('/operations/running-position'),
   getTripClose: () => request('/operations/trip-close'),
   getEdiData: () => request('/operations/edi-update'),
-  getEdiRecords: (params) => {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return request(`/operations/edi-records${qs}`);
-  },
-  updateEdiRecords: (payload) => request('/operations/edi-records/update', {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  }),
   getRailOutData: () => request('/operations/rail-out'),
   getVesselPlanData: () => request('/operations/vessel-plan'),
   updateRunningPosition: (payload) => request('/operations/running-position', { method: 'POST', body: JSON.stringify(payload) }),

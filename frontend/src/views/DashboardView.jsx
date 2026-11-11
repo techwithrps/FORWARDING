@@ -125,7 +125,7 @@ const PIPELINE_STAGES = [
     title: 'EDI Customs',
     desc: 'Shipping Bill & LEO',
     icon: FileCheck,
-    targetView: 'EdiUpdate'
+    targetView: 'ShipmentStatus'
   },
   {
     step: '6',
