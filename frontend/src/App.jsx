@@ -19,6 +19,7 @@ import LoginView from './views/LoginView.jsx';
 import CommercialTariffView from './views/CommercialTariffView.jsx';
 import FleetMovementView from './views/FleetMovementView.jsx';
 import ShipmentLifecycleHubView from './views/ShipmentLifecycleHubView.jsx';
+import EdiUpdateView from './views/EdiUpdateView.jsx';
 import VesselIntelligenceHubView from './views/VesselIntelligenceHubView.jsx';
 import AICopilot from './components/AICopilot.jsx';
 import { AppleHelloPageTransition, AppleWelcomeModal } from './components/AppleExperience.jsx';
@@ -1001,8 +1002,16 @@ export default function App() {
             <VesselIntelligenceHubView initialTab="RADAR" />
           )}
 
-          {/* 24 to 34: Shipment Lifecycle & Customs Hub */}
-          {['EdiUpdate', 'RailOutStatus', 'SobUpdate', 'BlStatusUpdate', 'TelexStatusUpdate', 'TrUpdate', 'HandoverUpdate', 'EgmUpdate', 'ShipmentDischargeStatus'].includes(activeView) && (
+          {/* 24: Dedicated SPJ-2 Standard EDI Update & Customs Filing */}
+          {activeView === 'EdiUpdate' && (
+            <EdiUpdateView
+              jobs={jobs}
+              onNavigate={setActiveView}
+            />
+          )}
+
+          {/* 25 to 34: Shipment Lifecycle & Operations Hub */}
+          {['RailOutStatus', 'SobUpdate', 'BlStatusUpdate', 'TelexStatusUpdate', 'TrUpdate', 'HandoverUpdate', 'EgmUpdate', 'ShipmentDischargeStatus'].includes(activeView) && (
             <ShipmentLifecycleHubView
               jobs={jobs}
               initialSection={activeView}
