@@ -779,7 +779,7 @@ async function getLifecycleRows(extraWhere = '1=1') {
       c.cargo_weight, c.seal_number, c.gr_number, c.gr_date, c.truck_number,
       c.driver_name, c.driver_mobile, c.current_status,
       c.current_location, c.running_status, c.pod_received_by, c.trip_close_date,
-      c.edi_sb_status, c.edi_filing_date, c.train_no, c.wagon_no, c.rake_out_date,
+      c.edi_sb_status, c.edi_filing_date, c.train_no, c.wagon_no, c.deck_tier, c.rake_out_date,
       c.feeder_vessel, c.cut_off_date, c.berthing_date, c.sob_date, c.bl_stage,
       c.telex_released, c.telex_release_date, c.tr_no, c.tr_status, c.tr_date,
       c.handover_status, c.handover_date, c.egm_no, c.egm_date, c.discharge_date,
@@ -965,17 +965,31 @@ router.get('/rail-out', async (req, res) => {
 
 router.post('/rail-out', async (req, res) => {
   try {
-    const { containerId, trainNo, wagonNo, rakeOutDate } = req.body;
+    const { containerId, trainNo, wagonNo, deckTier, rakeOutDate } = req.body;
     const { rows } = await db.query(
       `UPDATE job_containers SET 
          train_no = COALESCE($1, train_no),
          wagon_no = COALESCE($2, wagon_no),
-         rake_out_date = COALESCE($3, CURRENT_DATE),
+         deck_tier = COALESCE($3, deck_tier),
+         rake_out_date = COALESCE($4::date, rake_out_date, CURRENT_DATE),
          current_status = 'RAIL_OUT',
          updated_at = NOW()
-       WHERE id = $4 OR container_number = $4 RETURNING *`,
-      [trainNo, wagonNo, rakeOutDate, containerId]
+       WHERE id = $5 OR container_number = $5 RETURNING *`,
+      [trainNo || null, wagonNo || null, deckTier || null, rakeOutDate || null, containerId]
     );
+
+    // Sync to spjlive."ALL_PARTY_ACCOUNT" if matched
+    try {
+      const wagonNum = wagonNo && !isNaN(wagonNo) ? Number(wagonNo) : null;
+      await db.query(`
+        UPDATE spjlive."ALL_PARTY_ACCOUNT" SET
+          "TRAIN_NO" = COALESCE($1, "TRAIN_NO"),
+          "WAGON_NO" = COALESCE($2, "WAGON_NO"),
+          "TRAIN_OUT_DATE" = COALESCE($3::timestamp, "TRAIN_OUT_DATE")
+        WHERE "CONT_NO" = $4 OR "TRACK_ID"::text = $4
+      `, [trainNo || null, wagonNum, rakeOutDate || null, containerId]);
+    } catch (e) {}
+
     res.json({ success: true, data: rows[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

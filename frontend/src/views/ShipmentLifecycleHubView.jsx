@@ -31,6 +31,12 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
   const [liveRows, setLiveRows] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Dedicated Rail Out state (Train, Wagon, Deck Tier, Departure Date)
+  const [railTrainNo, setRailTrainNo] = useState('');
+  const [railWagonNo, setRailWagonNo] = useState('');
+  const [railDeckTier, setRailDeckTier] = useState('LOWER');
+  const [railDepartureDate, setRailDepartureDate] = useState('');
+
   const loadLiveData = async () => {
     try {
       setLoading(true);
@@ -87,6 +93,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
       ediStatus: c.ediSbStatus || 'LEO_PASSED',
       trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
       wagonNo: c.wagonNo || 'CR-104928',
+      deckTier: c.deck_tier || c.deckTier || 'LOWER',
       rakeDate: c.rakeOutDate || '2026-10-29',
       feederVessel: c.feederVessel || c.vessel || 'MAERSK COLOMBO',
       cutOffDate: c.cutOffDate || '2026-11-03',
@@ -122,6 +129,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
           ediStatus: c.ediSbStatus || 'LEO_PASSED',
           trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
           wagonNo: c.wagonNo || 'CR-104928',
+          deckTier: c.deckTier || c.deck_tier || 'LOWER',
           rakeDate: c.rakeOutDate || '2026-10-29',
           feederVessel: c.feederVessel || j.vessel || 'MAERSK COLOMBO',
           cutOffDate: c.cutOffDate || '2026-11-03',
@@ -209,9 +217,17 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
         await api.updateEdi({ containerId: selectedCont.id, ediSbStatus: inputVal });
         selectedCont.ediStatus = inputVal;
       } else if (activeSection === 'RailOutStatus') {
-        await api.updateRailOut({ containerId: selectedCont.id, trainNo: inputVal, rakeOutDate: dateVal });
-        selectedCont.trainNo = inputVal;
-        selectedCont.rakeDate = dateVal;
+        await api.updateRailOut({
+          containerId: selectedCont.id || selectedCont.containerNo,
+          trainNo: railTrainNo,
+          wagonNo: railWagonNo,
+          deckTier: railDeckTier,
+          rakeOutDate: railDepartureDate
+        });
+        selectedCont.trainNo = railTrainNo;
+        selectedCont.wagonNo = railWagonNo;
+        selectedCont.deckTier = railDeckTier;
+        selectedCont.rakeDate = railDepartureDate;
       } else if (activeSection === 'VesselPlanDetails') {
         await api.updateVesselPlan({ containerId: selectedCont.id, feederVessel: inputVal, cutOffDate: dateVal });
         selectedCont.feederVessel = inputVal;
@@ -328,28 +344,58 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <input
-              type="text"
-              placeholder={`Enter ${activeMeta.title} value for all...`}
-              value={bulkVal}
-              onChange={(e) => setBulkVal(e.target.value)}
-              className="px-3 py-1.5 rounded-lg bg-white border border-blue-200 text-xs w-48 focus:outline-none focus:border-blue-500 font-sans"
-            />
+            {activeSection === 'RailOutStatus' ? (
+              <>
+                <span className="text-[11px] font-semibold text-blue-900 bg-blue-100/80 px-2 py-1 rounded">
+                  🚂 Train No & Departure apply honge (Deck/Wagon preserved):
+                </span>
+                <input
+                  type="text"
+                  placeholder="Train No (e.g. TR-8812)"
+                  value={bulkVal}
+                  onChange={(e) => setBulkVal(e.target.value)}
+                  className="px-3 py-1.5 rounded-lg bg-white border border-blue-200 text-xs w-44 focus:outline-none focus:border-blue-500 font-sans"
+                />
+                <input
+                  type="date"
+                  value={bulkDate}
+                  onChange={(e) => setBulkDate(e.target.value)}
+                  className="px-2 py-1.5 rounded-lg bg-white border border-blue-200 text-xs focus:outline-none focus:border-blue-500 font-sans"
+                />
+                <button
+                  type="button"
+                  onClick={handleBulkApply}
+                  className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs transition cursor-pointer"
+                >
+                  <span>⚡ Apply Train & Departure to Selected</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  placeholder={`Enter ${activeMeta.title} value for all...`}
+                  value={bulkVal}
+                  onChange={(e) => setBulkVal(e.target.value)}
+                  className="px-3 py-1.5 rounded-lg bg-white border border-blue-200 text-xs w-48 focus:outline-none focus:border-blue-500 font-sans"
+                />
 
-            <input
-              type="date"
-              value={bulkDate}
-              onChange={(e) => setBulkDate(e.target.value)}
-              className="px-2 py-1.5 rounded-lg bg-white border border-blue-200 text-xs focus:outline-none focus:border-blue-500 font-sans"
-            />
+                <input
+                  type="date"
+                  value={bulkDate}
+                  onChange={(e) => setBulkDate(e.target.value)}
+                  className="px-2 py-1.5 rounded-lg bg-white border border-blue-200 text-xs focus:outline-none focus:border-blue-500 font-sans"
+                />
 
-            <button
-              type="button"
-              onClick={handleBulkApply}
-              className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs transition cursor-pointer"
-            >
-              <span>⚡ Apply to All Selected</span>
-            </button>
+                <button
+                  type="button"
+                  onClick={handleBulkApply}
+                  className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs transition cursor-pointer"
+                >
+                  <span>⚡ Apply to All Selected</span>
+                </button>
+              </>
+            )}
 
             <button
               type="button"
@@ -385,7 +431,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                 <th className="py-2.5 px-3">Line &amp; Vessel</th>
                 <th className="py-2.5 px-3 font-bold text-blue-700">
                   {activeSection === 'EdiUpdate' && 'EDI Icegate Status'}
-                  {activeSection === 'RailOutStatus' && 'Train Rake / Wagon'}
+                  {activeSection === 'RailOutStatus' && 'Train, Wagon, Deck & Departure'}
                   {activeSection === 'VesselPlanDetails' && 'Plan Vessel & Cut-off'}
                   {activeSection === 'SobUpdate' && 'SOB Date'}
                   {activeSection === 'DocumentUpdate' && 'SB No & Date'}
@@ -440,9 +486,22 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                         </span>
                       )}
                       {activeSection === 'RailOutStatus' && (
-                        <div className="font-mono">
-                          <div className="font-bold text-slate-800">{r.trainNo}</div>
-                          <div className="text-[11px] text-slate-500">Wagon: {r.wagonNo} &bull; {r.rakeDate}</div>
+                        <div className="font-mono space-y-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-bold text-slate-800 text-xs">{r.trainNo || 'Pending Train'}</span>
+                            {r.deckTier === 'UPPER' ? (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                ▲ Upper Deck
+                              </span>
+                            ) : (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
+                                ▼ Lower Deck
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-500">
+                            <span className="font-medium text-slate-600">Wagon:</span> {r.wagonNo || '—'} &bull; <span className="font-medium text-slate-600">Dep:</span> {r.rakeDate || '—'}
+                          </div>
                         </div>
                       )}
                       {activeSection === 'VesselPlanDetails' && (
@@ -498,6 +557,12 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                           setSelectedCont(r);
                           setInputVal('');
                           setDateVal('');
+                          if (activeSection === 'RailOutStatus') {
+                            setRailTrainNo(r.trainNo || '');
+                            setRailWagonNo(r.wagonNo || '');
+                            setRailDeckTier(r.deckTier || 'LOWER');
+                            setRailDepartureDate(r.rakeDate || '');
+                          }
                           setModalOpen(true);
                         }}
                         className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] shadow-xs cursor-pointer"
@@ -525,27 +590,95 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
             </div>
 
             <form onSubmit={handleUpdateAction} className="space-y-3 text-xs">
-              <div className="space-y-1">
-                <label className="text-slate-700 font-medium">Status / Reference Value *</label>
-                <input
-                  type="text"
-                  required
-                  value={inputVal}
-                  onChange={(e) => setInputVal(e.target.value)}
-                  placeholder={`Enter updated ${activeMeta.title} value`}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-blue-500 font-sans"
-                />
-              </div>
+              {activeSection === 'RailOutStatus' ? (
+                <>
+                  <div className="space-y-1">
+                    <label className="text-slate-700 font-medium">Train No *</label>
+                    <input
+                      type="text"
+                      required
+                      value={railTrainNo}
+                      onChange={(e) => setRailTrainNo(e.target.value)}
+                      placeholder="e.g. TR-8812 / CONCOR DFC RAKE #9182"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-blue-500 font-sans"
+                    />
+                  </div>
 
-              <div className="space-y-1">
-                <label className="text-slate-700 font-medium">Date (if applicable)</label>
-                <input
-                  type="date"
-                  value={dateVal}
-                  onChange={(e) => setDateVal(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-blue-500 font-sans"
-                />
-              </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-700 font-medium">Wagon No</label>
+                    <input
+                      type="text"
+                      value={railWagonNo}
+                      onChange={(e) => setRailWagonNo(e.target.value)}
+                      placeholder="e.g. CR-104928 / WAG-5502"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-blue-500 font-sans"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-slate-700 font-medium block">Deck Position (Tier)</label>
+                    <div className="grid grid-cols-2 gap-2 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setRailDeckTier('LOWER')}
+                        className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                          railDeckTier === 'LOWER'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        ▼ Lower Deck
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRailDeckTier('UPPER')}
+                        className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                          railDeckTier === 'UPPER'
+                            ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        ▲ Upper Deck
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-slate-700 font-medium">Departure Date (Rake Out) *</label>
+                    <input
+                      type="date"
+                      required
+                      value={railDepartureDate}
+                      onChange={(e) => setRailDepartureDate(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-blue-500 font-sans"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-1">
+                    <label className="text-slate-700 font-medium">Status / Reference Value *</label>
+                    <input
+                      type="text"
+                      required
+                      value={inputVal}
+                      onChange={(e) => setInputVal(e.target.value)}
+                      placeholder={`Enter updated ${activeMeta.title} value`}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-blue-500 font-sans"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-slate-700 font-medium">Date (if applicable)</label>
+                    <input
+                      type="date"
+                      value={dateVal}
+                      onChange={(e) => setDateVal(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-blue-500 font-sans"
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setModalOpen(false)} className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 cursor-pointer">Cancel</button>

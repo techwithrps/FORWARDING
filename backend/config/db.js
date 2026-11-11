@@ -35,6 +35,7 @@ pool.on('error', (err) => {
     await pool.query('ALTER TABLE job_orders ADD COLUMN IF NOT EXISTS jo_date DATE;');
     await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS commodity VARCHAR(255);');
     await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS handover_location VARCHAR(255);');
+    await pool.query("ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS deck_tier VARCHAR(20) DEFAULT 'LOWER';");
   } catch (e) {}
 })();
 
