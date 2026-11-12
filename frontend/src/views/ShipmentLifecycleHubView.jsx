@@ -815,7 +815,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
 
                   <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-medium flex items-center gap-1.5">
                     <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>Real-time sync to PostgreSQL and spjlive."ALL_PARTY_ACCOUNT" (SOB = 'Y')</span>
+                    <span>Real-time sync to PostgreSQL Database (Container Status: SOB Confirmed ✓)</span>
                   </div>
 
                   <div className="pt-1">

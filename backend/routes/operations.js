@@ -978,18 +978,6 @@ router.post('/rail-out', async (req, res) => {
       [trainNo || null, wagonNo || null, deckTier || null, rakeOutDate || null, containerId]
     );
 
-    // Sync to spjlive."ALL_PARTY_ACCOUNT" if matched
-    try {
-      const wagonNum = wagonNo && !isNaN(wagonNo) ? Number(wagonNo) : null;
-      await db.query(`
-        UPDATE spjlive."ALL_PARTY_ACCOUNT" SET
-          "TRAIN_NO" = COALESCE($1, "TRAIN_NO"),
-          "WAGON_NO" = COALESCE($2, "WAGON_NO"),
-          "TRAIN_OUT_DATE" = COALESCE($3::timestamp, "TRAIN_OUT_DATE")
-        WHERE "CONT_NO" = $4 OR "TRACK_ID"::text = $4
-      `, [trainNo || null, wagonNum, rakeOutDate || null, containerId]);
-    } catch (e) {}
-
     res.json({ success: true, data: rows[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1046,16 +1034,6 @@ router.post('/sob-update', async (req, res) => {
        WHERE id = $2 OR container_number = $2 RETURNING *`,
       [finalDate, containerId]
     );
-
-    // Sync to spjlive."ALL_PARTY_ACCOUNT"
-    try {
-      await db.query(`
-        UPDATE spjlive."ALL_PARTY_ACCOUNT" SET
-          "SOB" = 'Y',
-          "SOB_DATE" = COALESCE($1::timestamp, CURRENT_TIMESTAMP)
-        WHERE "CONT_NO" = $2 OR "TRACK_ID"::text = $2
-      `, [finalDate, containerId]);
-    } catch (e) {}
 
     res.json({ success: true, data: rows[0] });
   } catch (err) {
