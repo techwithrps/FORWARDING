@@ -85,18 +85,10 @@ function calculateJobCompletion(job) {
   return { percentage, checks, nextAction };
 }
 
-// 8 Operational Lifecycle Stages
+// 7 Operational Lifecycle Stages (Job Booking to Invoicing)
 const PIPELINE_STAGES = [
   {
     step: '1',
-    id: 'vessel-plan',
-    title: 'Vessel Plan',
-    desc: 'Liner & Schedules',
-    icon: Ship,
-    targetView: 'VesselPlanDetails'
-  },
-  {
-    step: '2',
     id: 'job-creation',
     title: 'Job Booking',
     desc: 'Equipment & Spec',
@@ -104,7 +96,7 @@ const PIPELINE_STAGES = [
     targetView: 'ContainerBooking'
   },
   {
-    step: '3',
+    step: '2',
     id: 'trip-pendency',
     title: 'Trip Pendency',
     desc: 'Trailer Matching (40/20)',
@@ -112,7 +104,7 @@ const PIPELINE_STAGES = [
     targetView: 'TripPendency'
   },
   {
-    step: '4',
+    step: '3',
     id: 'gr-generation',
     title: 'GR Bilty',
     desc: 'Driver & Advances',
@@ -120,31 +112,31 @@ const PIPELINE_STAGES = [
     targetView: 'GrGeneration'
   },
   {
-    step: '5',
+    step: '4',
     id: 'edi-customs',
     title: 'EDI Customs',
     desc: 'Shipping Bill & LEO',
     icon: FileCheck,
-    targetView: 'ShipmentStatus'
+    targetView: 'EdiUpdate'
   },
   {
-    step: '6',
+    step: '5',
     id: 'rail-out',
     title: 'Rail Out',
     desc: 'ICD Train Transit',
     icon: Train,
-    targetView: 'ShipmentStatus'
+    targetView: 'RailOutStatus'
   },
   {
-    step: '7',
+    step: '6',
     id: 'sob-update',
     title: 'SOB Update',
     desc: 'Shipped On Board',
     icon: Anchor,
-    targetView: 'VesselPlanDetails'
+    targetView: 'SobUpdate'
   },
   {
-    step: '8',
+    step: '7',
     id: 'documentation',
     title: 'Invoicing',
     desc: 'Tax Invoices & Close',
@@ -205,10 +197,10 @@ export default function DashboardView({
 
       // 3. Stage Filter
       if (activeStageFilter !== 'ALL') {
-        if (activeStageFilter === 'vessel-plan' && (!j.vessel || j.vessel === 'Vessel TBA')) return false;
         if (activeStageFilter === 'job-creation' && !j.consignor) return false;
         if (activeStageFilter === 'trip-pendency' && (!j.containers || j.containers.length === 0)) return false;
         if (activeStageFilter === 'gr-generation' && !(j.containers || []).some(c => c.grNo || c.grNumber)) return false;
+        if (activeStageFilter === 'edi-customs' && !j.sbNo) return false;
         if (activeStageFilter === 'rail-out' && j.status !== 'RAIL_OUT' && j.status !== 'STUFFED') return false;
         if (activeStageFilter === 'sob-update' && !j.sobDate) return false;
         if (activeStageFilter === 'documentation' && !j.partyInvoiceNo) return false;
@@ -263,7 +255,7 @@ export default function DashboardView({
                   Shipment Operational Lifecycle
                 </h2>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                  8 Step Flow
+                  {PIPELINE_STAGES.length} Step Flow
                 </span>
               </div>
               <p className="text-xs text-slate-500">
@@ -348,9 +340,15 @@ export default function DashboardView({
                     </div>
                   </div>
 
-                  {/* Connecting Chevron Arrow */}
+                  {/* Animated Connecting Flow Arrow */}
                   {!isLast && (
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                    <div className="flex items-center justify-center px-1.5 shrink-0 select-none" title="Next Operational Stage">
+                      <div className="flex items-center -space-x-1.5 py-1 text-blue-600">
+                        <div className="w-2.5 h-[2px] bg-gradient-to-r from-blue-300 via-blue-500 to-indigo-600 rounded-full" />
+                        <ChevronRight className="w-4 h-4 text-blue-400 flow-arrow-anim shrink-0" />
+                        <ChevronRight className="w-4 h-4 text-blue-600 flow-arrow-delay shrink-0 -ml-2" />
+                      </div>
+                    </div>
                   )}
                 </React.Fragment>
               );
@@ -578,19 +576,14 @@ export default function DashboardView({
                       </h4>
                     </div>
 
-                    {/* Route: POL ➔ POD */}
-                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-500 mb-2 truncate">
+                    {/* Route: POL ➔ POD with Animated Flow Arrow */}
+                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-500 mb-1.5 truncate">
                       <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
                       <span className="truncate">{j.origin || j.fromLocation || 'Dadri ICD'}</span>
-                      <ArrowRight className="w-3 h-3 text-slate-400 shrink-0" />
+                      <span className="inline-flex items-center px-0.5 text-blue-600">
+                        <ArrowRight className="w-3.5 h-3.5 text-blue-500 flow-arrow-anim shrink-0" />
+                      </span>
                       <span className="font-bold text-slate-700 truncate">{j.pod || j.toLocation || 'Jebel Ali'}</span>
-                    </div>
-
-                    {/* Vessel & Voyage */}
-                    <div className="flex items-center gap-1 text-[10px] text-slate-500 font-mono bg-slate-50 p-1.5 rounded-lg border border-slate-100">
-                      <Ship className="w-3 h-3 text-blue-500 shrink-0" />
-                      <span className="truncate font-semibold text-slate-700">{j.vessel || 'MAERSK COLOMBO'}</span>
-                      <span>({j.voyage || '2604W'})</span>
                     </div>
                   </div>
 

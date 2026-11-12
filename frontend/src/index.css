@@ -166,3 +166,34 @@
 .apple-hello-card {
   animation: appleHelloFade 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Animated Pipeline Chevrons & Flow Arrow */
+@keyframes flowArrow {
+  0% {
+    transform: translateX(-3px);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateX(3px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-3px);
+    opacity: 0.35;
+  }
+}
+
+.flow-arrow-anim {
+  animation: flowArrow 1.3s ease-in-out infinite;
+}
+
+.flow-arrow-delay {
+  animation: flowArrow 1.3s ease-in-out infinite;
+  animation-delay: 0.25s;
+}
+
+.flow-arrow-delay-2 {
+  animation: flowArrow 1.3s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+

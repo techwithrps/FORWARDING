@@ -429,7 +429,7 @@ export default function Header({
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
         </button>
 
-        {/* Compact Vessel Button */}
+        {/* Compact Vessel Plan Button */}
         <button
           type="button"
           onClick={onVesselClick}
@@ -437,7 +437,7 @@ export default function Header({
           title="Open Vessel Plan & Gateway Tracking"
         >
           <Ship className="w-3.5 h-3.5 text-cyan-300" />
-          <span>Vessel</span>
+          <span>Vessel Plan</span>
         </button>
 
 
