@@ -26,7 +26,9 @@ import {
   RefreshCw,
   Eye,
   Radio,
-  Sparkles
+  Sparkles,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 export default function ShipmentLifecycleHubView({ jobs = [], initialSection = 'EdiUpdate', onUpdateJob }) {
@@ -42,6 +44,8 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
   const [bulkDate, setBulkDate] = useState('');
   const [liveRows, setLiveRows] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 25;
 
   // Dedicated Rail Out state (Train, Wagon, Deck Tier, Departure Date)
   const [railTrainNo, setRailTrainNo] = useState('');
@@ -103,115 +107,120 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
     { containerNo: 'FBIU5296090', size: '40RF', customer: 'IFF INDIA FROZEN FOODS', jobNo: 'JO-94296', origin: 'TRANSWORLD-DADRI', destination: 'SINGAPORE', line: 'WAN HAI GROUP', vessel: 'WAN HAI 502', voyageNo: 'W108', sbNo: 'SB-981031', sbDate: '2026-11-03', trainNo: 'CONCOR DFC #9186', wagonNo: 'CR-104935', deckTier: 'LOWER', rakeDate: '2026-11-03', sobDate: '2026-11-08', plannedSobDate: '2026-11-08', delayDays: 0, isDelayed: false }
   ];
 
-  // Flatten containers from live PostgreSQL + local jobs + fallback seeds
-  const seenCnos = new Set();
-  const rows = [];
+  // Flatten containers from live PostgreSQL + local jobs + fallback seeds (Memoized for high performance)
+  const rows = useMemo(() => {
+    const seenCnos = new Set();
+    const result = [];
 
-  liveRows.forEach((c, idx) => {
-    const cno = (c.containerNo || c.container_number || '').trim();
-    if (cno) seenCnos.add(cno.toUpperCase());
+    liveRows.forEach((c, idx) => {
+      const cno = (c.containerNo || c.container_number || '').trim();
+      if (cno) seenCnos.add(cno.toUpperCase());
 
-    const isDelayedItem = simulatedSobDiff || (idx % 3 === 0);
-    const plannedDate = c.cutOffDate || '2026-11-06';
-    const revisedDate = isDelayedItem ? (idx % 3 === 0 ? '2026-11-13' : '2026-11-10') : (c.sobDate || plannedDate);
-    const delay = isDelayedItem ? (idx % 3 === 0 ? 5 : 4) : 0;
+      // Realistic delayed variance (only first few or every 20th container to prevent GPU lag)
+      const isDelayedItem = simulatedSobDiff ? (idx < 6 || idx % 20 === 0) : false;
+      const plannedDate = c.cutOffDate || '2026-11-06';
+      const revisedDate = isDelayedItem ? (idx % 2 === 0 ? '2026-11-13' : '2026-11-10') : (c.sobDate || plannedDate);
+      const delay = isDelayedItem ? (idx % 2 === 0 ? 5 : 4) : 0;
 
-    rows.push({
-      id: c.id,
-      containerNo: cno || 'TBA',
-      size: c.sizeType || '40HC',
-      jobNo: c.jobNo || c.job_number || 'JO-94289',
-      customer: c.customer || c.shipper || 'Fair Exports (India) Pvt Ltd',
-      origin: c.origin || 'Dadri ICD',
-      destination: c.destination || 'Jebel Ali',
-      line: c.shippingLine || 'Maersk Line',
-      vessel: c.vessel || 'MAERSK COLOMBO',
-      voyageNo: c.voyageNo || (idx % 2 === 0 ? '0UW4RW1MA' : '245E'),
-      sbNo: c.sbNo || 'SB-981024',
-      sbDate: c.sbDate || '2026-10-28',
-      blNo: c.blNo || 'MSK-2026-98124',
-      ediStatus: c.ediSbStatus || 'LEO_PASSED',
-      trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
-      wagonNo: c.wagonNo || 'CR-104928',
-      deckTier: c.deck_tier || c.deckTier || 'LOWER',
-      rakeDate: c.rakeOutDate || '2026-10-29',
-      feederVessel: c.feederVessel || c.vessel || 'MAERSK COLOMBO',
-      cutOffDate: c.cutOffDate || '2026-11-03',
-      sobDate: c.sobDate || '',
-      plannedSobDate: plannedDate,
-      revisedSobDate: revisedDate,
-      delayDays: delay,
-      isDelayed: isDelayedItem && (!c.sobDate || c.sobDate !== plannedDate),
-      blStage: c.blStage || 'DRAFT_BL_APPROVED',
-      telexReleased: Boolean(c.telexReleased),
-      trNo: c.trNo || 'TR-2026-DAD-881',
-      trStatus: c.trStatus || 'APPROVED',
-      handoverStatus: c.handoverStatus || 'COMPLETED',
-      egmNo: c.egmNo || 'EGM-2026-JNPT-0192',
-      dischargeDate: c.dischargeDate || '2026-11-12'
+      result.push({
+        id: c.id,
+        containerNo: cno || 'TBA',
+        size: c.sizeType || '40HC',
+        jobNo: c.jobNo || c.job_number || 'JO-94289',
+        customer: c.customer || c.shipper || 'Fair Exports (India) Pvt Ltd',
+        origin: c.origin || 'Dadri ICD',
+        destination: c.destination || 'Jebel Ali',
+        line: c.shippingLine || 'Maersk Line',
+        vessel: c.vessel || 'MAERSK COLOMBO',
+        voyageNo: c.voyageNo || (idx % 2 === 0 ? '0UW4RW1MA' : '245E'),
+        sbNo: c.sbNo || 'SB-981024',
+        sbDate: c.sbDate || '2026-10-28',
+        blNo: c.blNo || 'MSK-2026-98124',
+        ediStatus: c.ediSbStatus || 'LEO_PASSED',
+        trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
+        wagonNo: c.wagonNo || 'CR-104928',
+        deckTier: c.deck_tier || c.deckTier || 'LOWER',
+        rakeDate: c.rakeOutDate || '2026-10-29',
+        feederVessel: c.feederVessel || c.vessel || 'MAERSK COLOMBO',
+        cutOffDate: c.cutOffDate || '2026-11-03',
+        sobDate: c.sobDate || '',
+        plannedSobDate: plannedDate,
+        revisedSobDate: revisedDate,
+        delayDays: delay,
+        isDelayed: isDelayedItem && (!c.sobDate || c.sobDate !== plannedDate),
+        blStage: c.blStage || 'DRAFT_BL_APPROVED',
+        telexReleased: Boolean(c.telexReleased),
+        trNo: c.trNo || 'TR-2026-DAD-881',
+        trStatus: c.trStatus || 'APPROVED',
+        handoverStatus: c.handoverStatus || 'COMPLETED',
+        egmNo: c.egmNo || 'EGM-2026-JNPT-0192',
+        dischargeDate: c.dischargeDate || '2026-11-12'
+      });
     });
-  });
 
-  jobs.forEach((j) => {
-    (j.containers || []).forEach((c, idx) => {
-      const cno = (c.no || c.containerNo || '').trim();
-      if (cno && !seenCnos.has(cno.toUpperCase())) {
-        seenCnos.add(cno.toUpperCase());
-        const isDelayedItem = simulatedSobDiff || (idx % 2 === 0);
-        const plannedDate = c.cutOffDate || '2026-11-08';
-        const revisedDate = isDelayedItem ? '2026-11-13' : (c.sobDate || plannedDate);
+    jobs.forEach((j) => {
+      (j.containers || []).forEach((c, idx) => {
+        const cno = (c.no || c.containerNo || '').trim();
+        if (cno && !seenCnos.has(cno.toUpperCase())) {
+          seenCnos.add(cno.toUpperCase());
+          const isDelayedItem = simulatedSobDiff ? (idx === 0) : false;
+          const plannedDate = c.cutOffDate || '2026-11-08';
+          const revisedDate = isDelayedItem ? '2026-11-13' : (c.sobDate || plannedDate);
 
-        rows.push({
-          id: c.id,
-          containerNo: cno || 'MSKU-TBA',
-          size: c.size || c.sizeType || '40HC',
-          jobNo: j.id || j.joNo,
-          customer: j.customer || j.consignor || 'Fair Exports (India)',
-          origin: j.origin || j.fromLocation || 'Dadri ICD',
-          destination: j.pod || j.toLocation || 'Jebel Ali',
-          line: j.line || j.shippingLine || 'Maersk Line',
-          vessel: j.vessel || 'MAERSK COLOMBO',
-          voyageNo: '245E',
-          sbNo: j.sbNo || 'SB-981024',
-          sbDate: j.sbDate || '2026-10-28',
-          blNo: j.blNo || 'MSK-2026-98124',
-          ediStatus: c.ediSbStatus || 'LEO_PASSED',
-          trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
-          wagonNo: c.wagonNo || 'CR-104928',
-          deckTier: c.deckTier || c.deck_tier || 'LOWER',
-          rakeDate: c.rakeOutDate || '2026-10-29',
-          feederVessel: c.feederVessel || j.vessel || 'MAERSK COLOMBO',
-          cutOffDate: c.cutOffDate || '2026-11-03',
-          sobDate: c.sobDate || '',
-          plannedSobDate: plannedDate,
-          revisedSobDate: revisedDate,
-          delayDays: isDelayedItem ? 5 : 0,
-          isDelayed: isDelayedItem && (!c.sobDate || c.sobDate !== plannedDate),
-          blStage: c.blStage || 'DRAFT_BL_APPROVED',
-          telexReleased: c.telexReleased || false,
-          trNo: c.trNo || 'TR-2026-DAD-881',
-          trStatus: c.trStatus || 'APPROVED',
-          handoverStatus: c.handoverStatus || 'COMPLETED',
-          egmNo: c.egmNo || 'EGM-2026-JNPT-0192',
-          dischargeDate: c.dischargeDate || '2026-11-12'
-        });
-      }
+          result.push({
+            id: c.id,
+            containerNo: cno || 'MSKU-TBA',
+            size: c.size || c.sizeType || '40HC',
+            jobNo: j.id || j.joNo,
+            customer: j.customer || j.consignor || 'Fair Exports (India)',
+            origin: j.origin || j.fromLocation || 'Dadri ICD',
+            destination: j.pod || j.toLocation || 'Jebel Ali',
+            line: j.line || j.shippingLine || 'Maersk Line',
+            vessel: j.vessel || 'MAERSK COLOMBO',
+            voyageNo: '245E',
+            sbNo: j.sbNo || 'SB-981024',
+            sbDate: j.sbDate || '2026-10-28',
+            blNo: j.blNo || 'MSK-2026-98124',
+            ediStatus: c.ediSbStatus || 'LEO_PASSED',
+            trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
+            wagonNo: c.wagonNo || 'CR-104928',
+            deckTier: c.deckTier || c.deck_tier || 'LOWER',
+            rakeDate: c.rakeOutDate || '2026-10-29',
+            feederVessel: c.feederVessel || j.vessel || 'MAERSK COLOMBO',
+            cutOffDate: c.cutOffDate || '2026-11-03',
+            sobDate: c.sobDate || '',
+            plannedSobDate: plannedDate,
+            revisedSobDate: revisedDate,
+            delayDays: isDelayedItem ? 5 : 0,
+            isDelayed: isDelayedItem && (!c.sobDate || c.sobDate !== plannedDate),
+            blStage: c.blStage || 'DRAFT_BL_APPROVED',
+            telexReleased: c.telexReleased || false,
+            trNo: c.trNo || 'TR-2026-DAD-881',
+            trStatus: c.trStatus || 'APPROVED',
+            handoverStatus: c.handoverStatus || 'COMPLETED',
+            egmNo: c.egmNo || 'EGM-2026-JNPT-0192',
+            dischargeDate: c.dischargeDate || '2026-11-12'
+          });
+        }
+      });
     });
-  });
 
-  // If list is small, add default rich seeds so UI is full of live operations
-  if (rows.length < 5) {
-    defaultContSeeds.forEach((s) => {
-      if (!seenCnos.has(s.containerNo.toUpperCase())) {
-        seenCnos.add(s.containerNo.toUpperCase());
-        rows.push({
-          id: s.containerNo,
-          ...s,
-          isDelayed: simulatedSobDiff ? s.isDelayed : false
-        });
-      }
-    });
-  }
+    // If list is small, add default rich seeds so UI is full of live operations
+    if (result.length < 5) {
+      defaultContSeeds.forEach((s) => {
+        if (!seenCnos.has(s.containerNo.toUpperCase())) {
+          seenCnos.add(s.containerNo.toUpperCase());
+          result.push({
+            id: s.containerNo,
+            ...s,
+            isDelayed: simulatedSobDiff ? s.isDelayed : false
+          });
+        }
+      });
+    }
+
+    return result;
+  }, [liveRows, jobs, simulatedSobDiff]);
 
   const activeMeta = sections.find((s) => s.id === activeSection) || sections[0];
 
@@ -349,67 +358,78 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
     };
   }, [rows]);
 
-  // Filtering Logic
-  const filtered = rows.filter((r) => {
-    if (activeSection === 'SobUpdate') {
-      if (sobFilterPill === 'DELAYED' && !r.isDelayed) return false;
-      if (sobFilterPill === 'CONFIRMED' && (!r.sobDate || String(r.sobDate).trim() === '')) return false;
-      if (sobFilterPill === 'PENDING' && (r.sobDate && String(r.sobDate).trim() !== '')) return false;
+  // Reset pagination on filter or section switch
+  useEffect(() => {
+    setPage(1);
+  }, [activeSection, searchTerm, sobFilterPill, sobPolFilter, sobPodFilter, sobLineFilter, sobStatusFilter]);
 
-      if (sobPolFilter !== 'ALL' && r.origin !== sobPolFilter) return false;
-      if (sobPodFilter !== 'ALL' && r.destination !== sobPodFilter) return false;
-      if (sobLineFilter !== 'ALL' && r.line !== sobLineFilter) return false;
-      if (sobStatusFilter === 'PENDING' && (r.sobDate && String(r.sobDate).trim() !== '')) return false;
-      if (sobStatusFilter === 'CONFIRMED' && (!r.sobDate || String(r.sobDate).trim() === '')) return false;
+  // Filtering Logic (Memoized for zero-lag responsiveness)
+  const filtered = useMemo(() => {
+    return rows.filter((r) => {
+      if (activeSection === 'SobUpdate') {
+        if (sobFilterPill === 'DELAYED' && !r.isDelayed) return false;
+        if (sobFilterPill === 'CONFIRMED' && (!r.sobDate || String(r.sobDate).trim() === '')) return false;
+        if (sobFilterPill === 'PENDING' && (r.sobDate && String(r.sobDate).trim() !== '')) return false;
 
-      if (searchTerm.trim()) {
-        const q = searchTerm.toLowerCase();
-        const match = (r.containerNo || '').toLowerCase().includes(q) ||
-          (r.customer || '').toLowerCase().includes(q) ||
-          (r.jobNo || '').toLowerCase().includes(q) ||
-          (r.origin || '').toLowerCase().includes(q) ||
-          (r.destination || '').toLowerCase().includes(q) ||
-          (r.line || '').toLowerCase().includes(q) ||
-          (r.vessel || '').toLowerCase().includes(q) ||
-          (r.sbNo || '').toLowerCase().includes(q);
-        if (!match) return false;
+        if (sobPolFilter !== 'ALL' && r.origin !== sobPolFilter) return false;
+        if (sobPodFilter !== 'ALL' && r.destination !== sobPodFilter) return false;
+        if (sobLineFilter !== 'ALL' && r.line !== sobLineFilter) return false;
+        if (sobStatusFilter === 'PENDING' && (r.sobDate && String(r.sobDate).trim() !== '')) return false;
+        if (sobStatusFilter === 'CONFIRMED' && (!r.sobDate || String(r.sobDate).trim() === '')) return false;
+
+        if (searchTerm.trim()) {
+          const q = searchTerm.toLowerCase();
+          const match = (r.containerNo || '').toLowerCase().includes(q) ||
+            (r.customer || '').toLowerCase().includes(q) ||
+            (r.jobNo || '').toLowerCase().includes(q) ||
+            (r.origin || '').toLowerCase().includes(q) ||
+            (r.destination || '').toLowerCase().includes(q) ||
+            (r.line || '').toLowerCase().includes(q) ||
+            (r.vessel || '').toLowerCase().includes(q) ||
+            (r.sbNo || '').toLowerCase().includes(q);
+          if (!match) return false;
+        }
+        return true;
       }
-      return true;
-    }
 
-    if (!searchTerm.trim()) return true;
-    const q = searchTerm.toLowerCase();
-    return (
-      (r.containerNo || '').toLowerCase().includes(q) ||
-      (r.customer || '').toLowerCase().includes(q) ||
-      (r.jobNo || '').toLowerCase().includes(q) ||
-      (r.origin || '').toLowerCase().includes(q) ||
-      (r.destination || '').toLowerCase().includes(q) ||
-      (r.line || '').toLowerCase().includes(q) ||
-      (r.vessel || '').toLowerCase().includes(q) ||
-      (r.sbNo || '').toLowerCase().includes(q)
-    );
-  });
+      if (!searchTerm.trim()) return true;
+      const q = searchTerm.toLowerCase();
+      return (
+        (r.containerNo || '').toLowerCase().includes(q) ||
+        (r.customer || '').toLowerCase().includes(q) ||
+        (r.jobNo || '').toLowerCase().includes(q) ||
+        (r.origin || '').toLowerCase().includes(q) ||
+        (r.destination || '').toLowerCase().includes(q) ||
+        (r.line || '').toLowerCase().includes(q) ||
+        (r.vessel || '').toLowerCase().includes(q) ||
+        (r.sbNo || '').toLowerCase().includes(q)
+      );
+    });
+  }, [rows, activeSection, sobFilterPill, sobPolFilter, sobPodFilter, sobLineFilter, sobStatusFilter, searchTerm]);
+
+  // High performance pagination (renders 25 rows instead of 2500+ at once!)
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pagedRows = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, safePage, pageSize]);
 
   return (
     <div className="space-y-4 font-sans">
-      {/* Blinking Alert Keyframes */}
+      {/* Lightweight GPU-accelerated Blinking Keyframes (No heavy box-shadow repaints) */}
       <style>{`
         @keyframes blink-glow-red {
           0%, 100% {
             opacity: 1;
-            transform: scale(1);
-            box-shadow: 0 0 0 rgba(225, 29, 72, 0);
           }
           50% {
-            opacity: 0.32;
-            transform: scale(1.05);
-            background-color: rgba(225, 29, 72, 0.32);
-            box-shadow: 0 0 18px rgba(225, 29, 72, 0.85);
+            opacity: 0.38;
           }
         }
         .blink-alert-etd {
-          animation: blink-glow-red 1.05s infinite ease-in-out;
+          animation: blink-glow-red 1.2s infinite ease-in-out;
+          will-change: opacity;
         }
       `}</style>
 
@@ -814,7 +834,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((r, idx) => (
+                    pagedRows.map((r, idx) => (
                       <tr
                         key={r.id || idx}
                         onClick={() => {
@@ -1006,6 +1026,41 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                 </tbody>
               </table>
             </div>
+
+            {/* High-Speed Pagination Toolbar */}
+            {filtered.length > 0 && (
+              <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div className="text-slate-500 font-mono text-[11px]">
+                  Showing <strong className="text-slate-800">{(safePage - 1) * pageSize + 1}</strong> to <strong className="text-slate-800">{Math.min(safePage * pageSize, filtered.length)}</strong> of <strong className="text-slate-900">{filtered.length}</strong> containers
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={safePage <= 1}
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-slate-700 flex items-center gap-1 cursor-pointer transition shadow-2xs text-xs"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Prev</span>
+                  </button>
+
+                  <span className="px-3 py-1 rounded-lg bg-white border border-slate-200 font-mono font-bold text-blue-700 text-xs shadow-2xs">
+                    Page {safePage} / {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    disabled={safePage >= totalPages}
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-slate-700 flex items-center gap-1 cursor-pointer transition shadow-2xs text-xs"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1145,7 +1200,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((r, idx) => (
+                    pagedRows.map((r, idx) => (
                       <tr
                         key={idx}
                         onClick={() => {
@@ -1270,6 +1325,41 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                 </tbody>
               </table>
             </div>
+
+            {/* High-Speed Pagination Toolbar */}
+            {filtered.length > 0 && (
+              <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div className="text-slate-500 font-mono text-[11px]">
+                  Showing <strong className="text-slate-800">{(safePage - 1) * pageSize + 1}</strong> to <strong className="text-slate-800">{Math.min(safePage * pageSize, filtered.length)}</strong> of <strong className="text-slate-900">{filtered.length}</strong> containers
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={safePage <= 1}
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-slate-700 flex items-center gap-1 cursor-pointer transition shadow-2xs text-xs"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Prev</span>
+                  </button>
+
+                  <span className="px-3 py-1 rounded-lg bg-white border border-slate-200 font-mono font-bold text-blue-700 text-xs shadow-2xs">
+                    Page {safePage} / {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    disabled={safePage >= totalPages}
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-slate-700 flex items-center gap-1 cursor-pointer transition shadow-2xs text-xs"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}
