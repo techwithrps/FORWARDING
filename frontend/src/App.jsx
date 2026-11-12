@@ -1006,6 +1006,7 @@ export default function App() {
             <ShipmentLifecycleHubView
               jobs={jobs}
               initialSection={activeView}
+              onUpdateJob={handleUpdateJob}
             />
           )}
 
