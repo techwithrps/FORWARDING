@@ -574,11 +574,28 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                 </tr>
               ) : (
                 filtered.map((r, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/80 transition">
+                  <tr
+                    key={idx}
+                    onClick={() => {
+                      setSelectedCont(r);
+                      setInputVal('');
+                      setDateVal(r.sobDate || new Date().toISOString().split('T')[0]);
+                      if (activeSection === 'RailOutStatus') {
+                        setRailTrainNo(r.trainNo || '');
+                        setRailWagonNo(r.wagonNo || '');
+                        setRailDeckTier(r.deckTier || 'LOWER');
+                        setRailDepartureDate(r.rakeDate || '');
+                      }
+                      setModalOpen(true);
+                    }}
+                    className="hover:bg-blue-50/70 transition cursor-pointer group"
+                    title="Click to view full container details & update status"
+                  >
                     <td className="py-3 px-3">
                       <input
                         type="checkbox"
                         checked={selectedContIds.includes(r.id || r.containerNo)}
+                        onClick={(e) => e.stopPropagation()}
                         onChange={(e) => {
                           const cid = r.id || r.containerNo;
                           if (e.target.checked) setSelectedContIds([...selectedContIds, cid]);
@@ -688,7 +705,8 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                       {activeSection === 'SobUpdate' && (
                         <button
                           type="button"
-                          onClick={async () => {
+                          onClick={async (e) => {
+                            e.stopPropagation();
                             const todayStr = new Date().toISOString().split('T')[0];
                             try {
                               await api.updateSob({
@@ -711,7 +729,9 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                         </button>
                       )}
                       <button
-                        onClick={() => {
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedCont(r);
                           setInputVal('');
                           setDateVal(r.sobDate || new Date().toISOString().split('T')[0]);
@@ -723,9 +743,9 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                           }
                           setModalOpen(true);
                         }}
-                        className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] shadow-xs cursor-pointer"
+                        className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] shadow-xs cursor-pointer whitespace-nowrap"
                       >
-                        Update &rarr;
+                        Details &amp; Update &rarr;
                       </button>
                     </td>
                   </tr>
@@ -796,6 +816,32 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                   <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-medium flex items-center gap-1.5">
                     <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>Real-time sync to PostgreSQL and spjlive."ALL_PARTY_ACCOUNT" (SOB = 'Y')</span>
+                  </div>
+
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const todayStr = new Date().toISOString().split('T')[0];
+                        try {
+                          await api.updateSob({
+                            containerId: selectedCont.id || selectedCont.containerNo,
+                            sobDate: todayStr
+                          });
+                          selectedCont.sobDate = todayStr;
+                          setNotice(`⚓ Container ${selectedCont.containerNo} marked Shipped on Board (SOB Today: ${todayStr})!`);
+                          setTimeout(() => setNotice(''), 3000);
+                          setModalOpen(false);
+                          loadLiveData();
+                        } catch (e) {
+                          alert('Error updating SOB: ' + e.message);
+                        }
+                      }}
+                      className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition cursor-pointer"
+                    >
+                      <Zap className="w-3.5 h-3.5 text-amber-300" />
+                      <span>⚓ 1-Click Mark SOB Today ({new Date().toISOString().split('T')[0]})</span>
+                    </button>
                   </div>
                 </>
               ) : activeSection === 'RailOutStatus' ? (

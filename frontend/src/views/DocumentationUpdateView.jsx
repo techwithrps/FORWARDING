@@ -29,6 +29,354 @@ export default function DocumentationUpdateView({ jobs = [], onUpdateJob }) {
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [docRows, setDocRows] = useState([]);
   const [selectedDossierIndex, setSelectedDossierIndex] = useState(0);
+  const [modalDossier, setModalDossier] = useState(null);
+
+  // Close modal on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setModalDossier(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+  
+  const renderDossierSheet = (dossier) => {
+    if (!dossier) return null;
+    return (
+<div
+            id="a4-printable-dossier"
+            className="bg-white p-6 sm:p-9 rounded-2xl border border-slate-300 shadow-xl max-w-[210mm] mx-auto text-slate-900 font-sans print:p-0 print:border-none print:shadow-none print:max-w-none print:w-full"
+          >
+            {/* 1. Official Header */}
+            <div className="border-b-2 border-slate-900 pb-3 flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <img
+                  src={spjLogo}
+                  alt="SPJ Group of Companies"
+                  className="h-12 w-auto object-contain select-none mix-blend-multiply"
+                />
+                <div>
+                  <h1 className="text-lg font-black tracking-tight text-slate-900 uppercase">
+                    SPJ GROUP OF COMPANIES
+                  </h1>
+                  <p className="text-[10px] text-slate-600 font-medium leading-tight">
+                    Multi-Modal Logistics Operating System &bull; Licensed Customs Broker (CHA) &bull; DTO / MTO Fleet
+                  </p>
+                  <p className="text-[9px] text-slate-500 font-mono mt-0.5">
+                    Regd Hub: ICD Dadri, Gautam Buddha Nagar, UP-203207 &bull; Nhava Sheva Sea Port, Maharashtra
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-right font-mono text-[10px] space-y-0.5 shrink-0">
+                <div className="font-extrabold text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                  DOSSIER DOCKET: #{dossier.jobId}-{dossier.contNo}
+                </div>
+                <div className="text-slate-600 font-semibold">
+                  AUDIT DATE: {new Date().toLocaleDateString('en-GB')}
+                </div>
+                <div className="text-slate-500">
+                  STATUS: <strong className="text-emerald-700">PRE-SAILING VERIFIED</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Title Banner */}
+            <div className="my-3 py-1.5 px-3 bg-slate-900 text-white rounded text-center">
+              <h2 className="text-xs sm:text-sm font-black tracking-widest uppercase">
+                MASTER SHIPMENT VERIFICATION DOSSIER &bull; COMPREHENSIVE OPERATIONAL RECORD
+              </h2>
+              <p className="text-[9px] text-slate-300 uppercase tracking-wider">
+                Cross-Check Audit Sheet for Physical Forms, ICEGATE Shipping Bill &amp; Bill of Lading Finalization
+              </p>
+            </div>
+
+            {/* 2. Structured 6-Lifecycle Sections Grid */}
+            <div className="space-y-3 text-[11px]">
+              {/* SECTION 1: Booking & Commercial Contracting */}
+              <div className="border border-slate-300 rounded-lg overflow-hidden">
+                <div className="bg-slate-100 px-3 py-1 border-b border-slate-300 font-black text-slate-800 text-[10.5px] uppercase flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Building className="w-3.5 h-3.5 text-blue-700" />
+                    1. Booking &amp; Commercial Contracting Details
+                  </span>
+                  <span className="font-mono text-[9.5px] text-slate-500">Form 01 &bull; Booking Wizard</span>
+                </div>
+                <div className="p-2.5 grid grid-cols-2 sm:grid-cols-3 gap-2 bg-white">
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-bold">Job Order (JO) No</span>
+                    <span className="font-mono font-bold text-blue-800">{dossier.jobId}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-bold">Booking Date</span>
+                    <span className="font-mono font-semibold">{dossier.jobDate}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-bold">Shipper (Consignor)</span>
+                    <span className="font-bold text-slate-900 truncate block">{dossier.shipper}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-bold">Foreign Consignee (Buyer)</span>
+                    <span className="font-medium text-slate-800 truncate block">{dossier.consignee}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-bold">Customs Broker (CHA)</span>
+                    <span className="font-medium text-slate-800 truncate block">{dossier.cha}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-bold">Transporter / Fleet</span>
+                    <span className="font-medium text-slate-800 truncate block">{dossier.transporter}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: Equipment & Cargo Specification */}
+              <div className="border border-slate-300 rounded-lg overflow-hidden">
+                <div className="bg-slate-100 px-3 py-1 border-b border-slate-300 font-black text-slate-800 text-[10.5px] uppercase flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
+                    2. Container Equipment &amp; Cargo Specifications
+                  </span>
+                  <span className="font-mono text-[9.5px] text-slate-500">Form 02 &bull; Container Allotment</span>
+                </div>
+                <div className="p-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white font-mono">
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Container Number</span>
+                    <span className="font-bold text-blue-800 text-xs">{dossier.contNo}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Size &amp; Type</span>
+                    <span className="font-bold text-slate-900">{dossier.size}ft {dossier.type}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Container Tare Wt</span>
+                    <span>{dossier.tareWeight}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Cargo Gross Weight (VGM)</span>
+                    <span className="font-bold text-slate-900">{dossier.grossWeight}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">High Security Seal No</span>
+                    <span className="font-bold text-emerald-800">{dossier.sealNo}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Commodity Description</span>
+                    <span className="font-sans font-semibold text-slate-900 truncate block">{dossier.commodity}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Reefer Temp / Vent</span>
+                    <span className="font-bold text-cyan-800">{dossier.tempSetting}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: Road Movement & Bilty (GR) */}
+              <div className="border border-slate-300 rounded-lg overflow-hidden">
+                <div className="bg-slate-100 px-3 py-1 border-b border-slate-300 font-black text-slate-800 text-[10.5px] uppercase flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Truck className="w-3.5 h-3.5 text-blue-700" />
+                    3. Road Transit &amp; Goods Receipt (Bilty / GR)
+                  </span>
+                  <span className="font-mono text-[9.5px] text-slate-500">Page 17 &bull; GR Generation</span>
+                </div>
+                <div className="p-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white font-mono">
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Goods Receipt (GR) No</span>
+                    <span className="font-bold text-slate-900">{dossier.grNo}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">GR Issue Date</span>
+                    <span>{dossier.grDate}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Vehicle / Trailer No</span>
+                    <span className="font-bold text-blue-800">{dossier.truckNo}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Driver Name &amp; Contact</span>
+                    <span className="font-sans text-[10.5px] font-semibold text-slate-800">{dossier.driverName} ({dossier.driverMobile})</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 4: Customs ICEGATE Clearance & EDI */}
+              <div className="border border-slate-300 rounded-lg overflow-hidden">
+                <div className="bg-slate-100 px-3 py-1 border-b border-slate-300 font-black text-slate-800 text-[10.5px] uppercase flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-blue-700" />
+                    4. Customs ICEGATE Clearance &amp; Shipping Bill EDI
+                  </span>
+                  <span className="font-mono text-[9.5px] text-slate-500">Page 24 &bull; EDI Transmission</span>
+                </div>
+                <div className="p-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white font-mono">
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Shipping Bill (SB) No</span>
+                    <span className="font-bold text-blue-800 text-xs">{dossier.sbNo}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Shipping Bill Date</span>
+                    <span className="font-semibold">{dossier.sbDate}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Exporter Invoice No</span>
+                    <span className="font-bold text-slate-900">{dossier.invoiceNo}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Invoice Date &amp; FOB</span>
+                    <span className="font-semibold text-slate-800">{dossier.invoiceDate}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">LEO (Let Export Order) Status</span>
+                    <span className="font-bold text-emerald-800 font-sans">{dossier.leoDate}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">ICEGATE Transmission</span>
+                    <span className="font-bold text-blue-700 font-sans">{dossier.ediStatus}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 5: Rail Out & Terminal Movement */}
+              <div className="border border-slate-300 rounded-lg overflow-hidden">
+                <div className="bg-slate-100 px-3 py-1 border-b border-slate-300 font-black text-slate-800 text-[10.5px] uppercase flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Train className="w-3.5 h-3.5 text-blue-700" />
+                    5. Rail Out &amp; Corridor Terminal Movement
+                  </span>
+                  <span className="font-mono text-[9.5px] text-slate-500">Page 25 &bull; Rail Out Status</span>
+                </div>
+                <div className="p-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white font-mono">
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Train / Rake Number</span>
+                    <span className="font-bold text-slate-900">{dossier.trainNo}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Wagon Number</span>
+                    <span className="font-bold text-slate-900">{dossier.wagonNo}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Deck Position (Tier)</span>
+                    <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${dossier.deckTier === 'UPPER' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
+                      {dossier.deckTier === 'UPPER' ? '▲ UPPER DECK' : '▼ LOWER DECK'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Rail Departure Date</span>
+                    <span className="font-bold text-blue-800">{dossier.railDate}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 6: Ocean Vessel & Shipped On Board (SOB) */}
+              <div className="border border-slate-300 rounded-lg overflow-hidden">
+                <div className="bg-slate-100 px-3 py-1 border-b border-slate-300 font-black text-slate-800 text-[10.5px] uppercase flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Ship className="w-3.5 h-3.5 text-blue-700" />
+                    6. Ocean Vessel Schedule &amp; Shipped On Board (SOB)
+                  </span>
+                  <span className="font-mono text-[9.5px] text-slate-500">Page 26 &bull; Vessel Plan &amp; Page 27 &bull; SOB</span>
+                </div>
+                <div className="p-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white font-mono">
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Shipping Line</span>
+                    <span className="font-sans font-bold text-slate-900 truncate block">{dossier.line}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Ocean Vessel &amp; Voyage</span>
+                    <span className="font-bold text-slate-900">{dossier.planVessel} ({dossier.voyage})</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Port of Loading (POL)</span>
+                    <span className="font-bold text-slate-800">{dossier.pol}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Port of Discharge (POD)</span>
+                    <span className="font-bold text-blue-800">{dossier.pod}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Port Cut-off Deadline</span>
+                    <span className="text-slate-700">{dossier.portCutDate}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Vessel Sailing ETD</span>
+                    <span className="font-bold text-slate-900">{dossier.etd}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Shipped On Board (SOB) Confirmed</span>
+                    <span className="font-bold text-emerald-800 text-xs">
+                      ⚓ SOB DATE: {dossier.sobDate} (VERIFIED ON BOARD)
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Document Audit Verification Checklist */}
+            <div className="mt-3.5 p-3 rounded-lg border border-slate-300 bg-slate-50/70 text-[10.5px]">
+              <div className="font-bold text-slate-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                <CheckSquare className="w-3.5 h-3.5 text-emerald-700" />
+                <span>Verification &amp; Cross-Check Audit Criteria</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 font-medium text-slate-700">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-emerald-700 font-bold">✓</span>
+                  <span>Commercial Invoice &amp; Packing List matched with ICEGATE SB</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-emerald-700 font-bold">✓</span>
+                  <span>Container Tare, Gross &amp; VGM matched with weighbridge ticket</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-emerald-700 font-bold">✓</span>
+                  <span>Customs LEO (Let Export Order) cleared on ICEGATE portal</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-emerald-700 font-bold">✓</span>
+                  <span>Rail Out train departure confirmed by CONCOR / DFC Terminal</span>
+                </div>
+                <div className="flex items-center gap-1.5 sm:col-span-2">
+                  <span className="text-emerald-700 font-bold">✓</span>
+                  <span>Shipping Line draft B/L approved &amp; SOB confirmed by carrier notice</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Official Sign-off & Stamp Section */}
+            <div className="mt-4 pt-3 border-t-2 border-slate-300 grid grid-cols-3 gap-4 text-center text-[10px]">
+              <div className="space-y-6">
+                <div className="text-slate-500 uppercase font-bold">Prepared By</div>
+                <div className="border-b border-slate-400 w-3/4 mx-auto"></div>
+                <div className="font-semibold text-slate-700">Documentation Executive</div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="text-slate-500 uppercase font-bold">Verified By</div>
+                <div className="border-b border-slate-400 w-3/4 mx-auto"></div>
+                <div className="font-semibold text-slate-700">Operations Controller / CHA Lead</div>
+              </div>
+
+              <div className="p-2 border-2 border-dashed border-slate-400 rounded-lg space-y-1">
+                <div className="font-extrabold text-blue-900 uppercase text-[9.5px]">
+                  SPJ GROUP OF COMPANIES
+                </div>
+                <div className="text-[8.5px] text-emerald-800 font-bold uppercase tracking-wider">
+                  ★ APPROVED FOR B/L RELEASE ★
+                </div>
+                <div className="text-[8px] text-slate-400 font-mono">
+                  OPERATIONAL CLEARANCE STAMP
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Footer Note */}
+            <div className="mt-3 text-center text-[8.5px] text-slate-400 font-mono border-t border-slate-200 pt-1.5">
+              CONFIDENTIAL &bull; GENERATED BY SPJ eLOGIFREIGHT OPERATING SYSTEM &bull; VALID WITHOUT HANDWRITTEN SIGNATURE IF DIGITALLY APPROVED
+            </div>
+          </div>
+    );
+  };
+
+  return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Quick Stamping States
   const [quickSb, setQuickSb] = useState('');
@@ -511,7 +859,7 @@ export default function DocumentationUpdateView({ jobs = [], onUpdateJob }) {
                     </tr>
                   ) : (
                     filteredRows.map((r, idx) => (
-                      <tr key={r.id} className="hover:bg-slate-50/70 transition-colors font-sans">
+                      <tr key={r.id} onClick={() => setModalDossier(r)} className="hover:bg-blue-50/70 transition-colors font-sans cursor-pointer group" title="Click to open complete A4 Verification Form / Dossier">
                         <td className="p-2 text-center text-slate-500 font-mono">{idx + 1}</td>
                         <td className="p-2 font-medium text-[rgb(25,40,57)]">{r.shipper}</td>
                         <td className="p-2 font-mono font-bold text-blue-700">{r.contNo || 'TBA'}</td>
@@ -520,6 +868,7 @@ export default function DocumentationUpdateView({ jobs = [], onUpdateJob }) {
                             type="text"
                             placeholder="e.g. INV-1049"
                             value={r.invoiceNo || ''}
+                            onClick={(e) => e.stopPropagation()}
                             onChange={(e) => handleFieldChange(r.id, 'invoiceNo', e.target.value)}
                             className="w-full px-2 py-1 rounded border border-slate-200 text-xs font-mono focus:outline-none focus:border-blue-500"
                           />
@@ -528,6 +877,7 @@ export default function DocumentationUpdateView({ jobs = [], onUpdateJob }) {
                           <input
                             type="date"
                             value={r.invoiceDate || ''}
+                            onClick={(e) => e.stopPropagation()}
                             onChange={(e) => handleFieldChange(r.id, 'invoiceDate', e.target.value)}
                             className="w-full px-1.5 py-1 rounded border border-slate-200 text-xs focus:outline-none focus:border-blue-500"
                           />
@@ -537,6 +887,7 @@ export default function DocumentationUpdateView({ jobs = [], onUpdateJob }) {
                             type="text"
                             placeholder="e.g. SB-9281720"
                             value={r.sbNo || ''}
+                            onClick={(e) => e.stopPropagation()}
                             onChange={(e) => handleFieldChange(r.id, 'sbNo', e.target.value)}
                             className="w-full px-2 py-1 rounded border border-slate-200 text-xs font-mono focus:outline-none focus:border-blue-500"
                           />
@@ -545,6 +896,7 @@ export default function DocumentationUpdateView({ jobs = [], onUpdateJob }) {
                           <input
                             type="date"
                             value={r.sbDate || ''}
+                            onClick={(e) => e.stopPropagation()}
                             onChange={(e) => handleFieldChange(r.id, 'sbDate', e.target.value)}
                             className="w-full px-1.5 py-1 rounded border border-slate-200 text-xs focus:outline-none focus:border-blue-500"
                           />
@@ -557,6 +909,7 @@ export default function DocumentationUpdateView({ jobs = [], onUpdateJob }) {
                         <td className="p-2">
                           <select
                             value={r.docType || 'Checklist Approved'}
+                            onClick={(e) => e.stopPropagation()}
                             onChange={(e) => handleFieldChange(r.id, 'docType', e.target.value)}
                             className="w-full px-2 py-1 rounded border border-slate-200 text-xs focus:outline-none focus:border-blue-500 cursor-pointer"
                           >
@@ -570,14 +923,15 @@ export default function DocumentationUpdateView({ jobs = [], onUpdateJob }) {
                         <td className="p-2 text-right">
                           <button
                             type="button"
-                            onClick={() => {
-                              setSelectedDossierIndex(idx);
-                              setActiveTab('collective');
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setModalDossier(r);
                             }}
-                            className="px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[10.5px] font-bold flex items-center gap-1 cursor-pointer"
+                            className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition whitespace-nowrap"
+                            title="Open complete A4 Verification Form / Dossier"
                           >
-                            <Eye className="w-3 h-3" />
-                            <span>View Dossier &rarr;</span>
+                            <FileText className="w-3.5 h-3.5 text-blue-200" />
+                            <span>📄 Open A4 Form &rarr;</span>
                           </button>
                         </td>
                       </tr>
@@ -634,336 +988,79 @@ export default function DocumentationUpdateView({ jobs = [], onUpdateJob }) {
           {/* ===================================================================== */}
           {/* THE MASTER A4 PRINTABLE VERIFICATION DOSSIER SHEET                   */}
           {/* ===================================================================== */}
-          <div
-            id="a4-printable-dossier"
-            className="bg-white p-6 sm:p-9 rounded-2xl border border-slate-300 shadow-xl max-w-[210mm] mx-auto text-slate-900 font-sans print:p-0 print:border-none print:shadow-none print:max-w-none print:w-full"
-          >
-            {/* 1. Official Header */}
-            <div className="border-b-2 border-slate-900 pb-3 flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <img
-                  src={spjLogo}
-                  alt="SPJ Group of Companies"
-                  className="h-12 w-auto object-contain select-none mix-blend-multiply"
-                />
-                <div>
-                  <h1 className="text-lg font-black tracking-tight text-slate-900 uppercase">
-                    SPJ GROUP OF COMPANIES
-                  </h1>
-                  <p className="text-[10px] text-slate-600 font-medium leading-tight">
-                    Multi-Modal Logistics Operating System &bull; Licensed Customs Broker (CHA) &bull; DTO / MTO Fleet
-                  </p>
-                  <p className="text-[9px] text-slate-500 font-mono mt-0.5">
-                    Regd Hub: ICD Dadri, Gautam Buddha Nagar, UP-203207 &bull; Nhava Sheva Sea Port, Maharashtra
-                  </p>
-                </div>
-              </div>
+          {renderDossierSheet(currentDossier)}
+        </div>
+      )}
 
-              <div className="text-right font-mono text-[10px] space-y-0.5 shrink-0">
-                <div className="font-extrabold text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                  DOSSIER DOCKET: #{currentDossier.jobId}-{currentDossier.contNo}
+      {/* ========================================================================= */}
+      {/* POPUP MODAL: COMPLETE A4 VERIFICATION FORM / DOSSIER                     */}
+      {/* ========================================================================= */}
+      {modalDossier && (
+        <div className="fixed inset-0 z-[120] bg-slate-900/85 backdrop-blur-xs overflow-y-auto flex flex-col items-center p-3 sm:p-6 animate-fade-in">
+          {/* Floating Control Toolbar */}
+          <div className="no-print sticky top-2 z-[130] w-full max-w-[215mm] mb-4 bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white shadow-xs text-xs">
+                A4
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-extrabold text-blue-300 text-sm">{modalDossier.contNo}</span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] border border-slate-700">
+                    {modalDossier.size}ft {modalDossier.type}
+                  </span>
                 </div>
-                <div className="text-slate-600 font-semibold">
-                  AUDIT DATE: {new Date().toLocaleDateString('en-GB')}
-                </div>
-                <div className="text-slate-500">
-                  STATUS: <strong className="text-emerald-700">PRE-SAILING VERIFIED</strong>
+                <div className="text-[11px] text-slate-300 truncate max-w-xs">
+                  {modalDossier.shipper} &bull; JO #{modalDossier.jobId}
                 </div>
               </div>
             </div>
 
-            {/* Title Banner */}
-            <div className="my-3 py-1.5 px-3 bg-slate-900 text-white rounded text-center">
-              <h2 className="text-xs sm:text-sm font-black tracking-widest uppercase">
-                MASTER SHIPMENT VERIFICATION DOSSIER &bull; COMPREHENSIVE OPERATIONAL RECORD
-              </h2>
-              <p className="text-[9px] text-slate-300 uppercase tracking-wider">
-                Cross-Check Audit Sheet for Physical Forms, ICEGATE Shipping Bill &amp; Bill of Lading Finalization
-              </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const idx = filteredRows.findIndex(r => r.id === modalDossier.id);
+                  const prev = idx > 0 ? filteredRows[idx - 1] : filteredRows[filteredRows.length - 1];
+                  if (prev) setModalDossier(prev);
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 cursor-pointer"
+              >
+                &larr; Prev
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const idx = filteredRows.findIndex(r => r.id === modalDossier.id);
+                  const next = idx < filteredRows.length - 1 ? filteredRows[idx + 1] : filteredRows[0];
+                  if (next) setModalDossier(next);
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 cursor-pointer"
+              >
+                Next &rarr;
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md cursor-pointer transition"
+              >
+                <Printer className="w-4 h-4 text-emerald-100" />
+                <span>🖨️ Print / Save A4 PDF</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalDossier(null)}
+                className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white flex items-center justify-center font-bold text-sm cursor-pointer transition"
+                title="Close (ESC)"
+              >
+                ✕
+              </button>
             </div>
+          </div>
 
-            {/* 2. Structured 6-Lifecycle Sections Grid */}
-            <div className="space-y-3 text-[11px]">
-              {/* SECTION 1: Booking & Commercial Contracting */}
-              <div className="border border-slate-300 rounded-lg overflow-hidden">
-                <div className="bg-slate-100 px-3 py-1 border-b border-slate-300 font-black text-slate-800 text-[10.5px] uppercase flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Building className="w-3.5 h-3.5 text-blue-700" />
-                    1. Booking &amp; Commercial Contracting Details
-                  </span>
-                  <span className="font-mono text-[9.5px] text-slate-500">Form 01 &bull; Booking Wizard</span>
-                </div>
-                <div className="p-2.5 grid grid-cols-2 sm:grid-cols-3 gap-2 bg-white">
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-bold">Job Order (JO) No</span>
-                    <span className="font-mono font-bold text-blue-800">{currentDossier.jobId}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-bold">Booking Date</span>
-                    <span className="font-mono font-semibold">{currentDossier.jobDate}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-bold">Shipper (Consignor)</span>
-                    <span className="font-bold text-slate-900 truncate block">{currentDossier.shipper}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-bold">Foreign Consignee (Buyer)</span>
-                    <span className="font-medium text-slate-800 truncate block">{currentDossier.consignee}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-bold">Customs Broker (CHA)</span>
-                    <span className="font-medium text-slate-800 truncate block">{currentDossier.cha}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-bold">Transporter / Fleet</span>
-                    <span className="font-medium text-slate-800 truncate block">{currentDossier.transporter}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 2: Equipment & Cargo Specification */}
-              <div className="border border-slate-300 rounded-lg overflow-hidden">
-                <div className="bg-slate-100 px-3 py-1 border-b border-slate-300 font-black text-slate-800 text-[10.5px] uppercase flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
-                    2. Container Equipment &amp; Cargo Specifications
-                  </span>
-                  <span className="font-mono text-[9.5px] text-slate-500">Form 02 &bull; Container Allotment</span>
-                </div>
-                <div className="p-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white font-mono">
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Container Number</span>
-                    <span className="font-bold text-blue-800 text-xs">{currentDossier.contNo}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Size &amp; Type</span>
-                    <span className="font-bold text-slate-900">{currentDossier.size}ft {currentDossier.type}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Container Tare Wt</span>
-                    <span>{currentDossier.tareWeight}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Cargo Gross Weight (VGM)</span>
-                    <span className="font-bold text-slate-900">{currentDossier.grossWeight}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">High Security Seal No</span>
-                    <span className="font-bold text-emerald-800">{currentDossier.sealNo}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Commodity Description</span>
-                    <span className="font-sans font-semibold text-slate-900 truncate block">{currentDossier.commodity}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Reefer Temp / Vent</span>
-                    <span className="font-bold text-cyan-800">{currentDossier.tempSetting}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 3: Road Movement & Bilty (GR) */}
-              <div className="border border-slate-300 rounded-lg overflow-hidden">
-                <div className="bg-slate-100 px-3 py-1 border-b border-slate-300 font-black text-slate-800 text-[10.5px] uppercase flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Truck className="w-3.5 h-3.5 text-blue-700" />
-                    3. Road Transit &amp; Goods Receipt (Bilty / GR)
-                  </span>
-                  <span className="font-mono text-[9.5px] text-slate-500">Page 17 &bull; GR Generation</span>
-                </div>
-                <div className="p-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white font-mono">
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Goods Receipt (GR) No</span>
-                    <span className="font-bold text-slate-900">{currentDossier.grNo}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">GR Issue Date</span>
-                    <span>{currentDossier.grDate}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Vehicle / Trailer No</span>
-                    <span className="font-bold text-blue-800">{currentDossier.truckNo}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Driver Name &amp; Contact</span>
-                    <span className="font-sans text-[10.5px] font-semibold text-slate-800">{currentDossier.driverName} ({currentDossier.driverMobile})</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 4: Customs ICEGATE Clearance & EDI */}
-              <div className="border border-slate-300 rounded-lg overflow-hidden">
-                <div className="bg-slate-100 px-3 py-1 border-b border-slate-300 font-black text-slate-800 text-[10.5px] uppercase flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <FileText className="w-3.5 h-3.5 text-blue-700" />
-                    4. Customs ICEGATE Clearance &amp; Shipping Bill EDI
-                  </span>
-                  <span className="font-mono text-[9.5px] text-slate-500">Page 24 &bull; EDI Transmission</span>
-                </div>
-                <div className="p-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white font-mono">
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Shipping Bill (SB) No</span>
-                    <span className="font-bold text-blue-800 text-xs">{currentDossier.sbNo}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Shipping Bill Date</span>
-                    <span className="font-semibold">{currentDossier.sbDate}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Exporter Invoice No</span>
-                    <span className="font-bold text-slate-900">{currentDossier.invoiceNo}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Invoice Date &amp; FOB</span>
-                    <span className="font-semibold text-slate-800">{currentDossier.invoiceDate}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">LEO (Let Export Order) Status</span>
-                    <span className="font-bold text-emerald-800 font-sans">{currentDossier.leoDate}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">ICEGATE Transmission</span>
-                    <span className="font-bold text-blue-700 font-sans">{currentDossier.ediStatus}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 5: Rail Out & Terminal Movement */}
-              <div className="border border-slate-300 rounded-lg overflow-hidden">
-                <div className="bg-slate-100 px-3 py-1 border-b border-slate-300 font-black text-slate-800 text-[10.5px] uppercase flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Train className="w-3.5 h-3.5 text-blue-700" />
-                    5. Rail Out &amp; Corridor Terminal Movement
-                  </span>
-                  <span className="font-mono text-[9.5px] text-slate-500">Page 25 &bull; Rail Out Status</span>
-                </div>
-                <div className="p-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white font-mono">
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Train / Rake Number</span>
-                    <span className="font-bold text-slate-900">{currentDossier.trainNo}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Wagon Number</span>
-                    <span className="font-bold text-slate-900">{currentDossier.wagonNo}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Deck Position (Tier)</span>
-                    <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${currentDossier.deckTier === 'UPPER' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
-                      {currentDossier.deckTier === 'UPPER' ? '▲ UPPER DECK' : '▼ LOWER DECK'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Rail Departure Date</span>
-                    <span className="font-bold text-blue-800">{currentDossier.railDate}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 6: Ocean Vessel & Shipped On Board (SOB) */}
-              <div className="border border-slate-300 rounded-lg overflow-hidden">
-                <div className="bg-slate-100 px-3 py-1 border-b border-slate-300 font-black text-slate-800 text-[10.5px] uppercase flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Ship className="w-3.5 h-3.5 text-blue-700" />
-                    6. Ocean Vessel Schedule &amp; Shipped On Board (SOB)
-                  </span>
-                  <span className="font-mono text-[9.5px] text-slate-500">Page 26 &bull; Vessel Plan &amp; Page 27 &bull; SOB</span>
-                </div>
-                <div className="p-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white font-mono">
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Shipping Line</span>
-                    <span className="font-sans font-bold text-slate-900 truncate block">{currentDossier.line}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Ocean Vessel &amp; Voyage</span>
-                    <span className="font-bold text-slate-900">{currentDossier.planVessel} ({currentDossier.voyage})</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Port of Loading (POL)</span>
-                    <span className="font-bold text-slate-800">{currentDossier.pol}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Port of Discharge (POD)</span>
-                    <span className="font-bold text-blue-800">{currentDossier.pod}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Port Cut-off Deadline</span>
-                    <span className="text-slate-700">{currentDossier.portCutDate}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Vessel Sailing ETD</span>
-                    <span className="font-bold text-slate-900">{currentDossier.etd}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold">Shipped On Board (SOB) Confirmed</span>
-                    <span className="font-bold text-emerald-800 text-xs">
-                      ⚓ SOB DATE: {currentDossier.sobDate} (VERIFIED ON BOARD)
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 3. Document Audit Verification Checklist */}
-            <div className="mt-3.5 p-3 rounded-lg border border-slate-300 bg-slate-50/70 text-[10.5px]">
-              <div className="font-bold text-slate-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                <CheckSquare className="w-3.5 h-3.5 text-emerald-700" />
-                <span>Verification &amp; Cross-Check Audit Criteria</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 font-medium text-slate-700">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-emerald-700 font-bold">✓</span>
-                  <span>Commercial Invoice &amp; Packing List matched with ICEGATE SB</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-emerald-700 font-bold">✓</span>
-                  <span>Container Tare, Gross &amp; VGM matched with weighbridge ticket</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-emerald-700 font-bold">✓</span>
-                  <span>Customs LEO (Let Export Order) cleared on ICEGATE portal</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-emerald-700 font-bold">✓</span>
-                  <span>Rail Out train departure confirmed by CONCOR / DFC Terminal</span>
-                </div>
-                <div className="flex items-center gap-1.5 sm:col-span-2">
-                  <span className="text-emerald-700 font-bold">✓</span>
-                  <span>Shipping Line draft B/L approved &amp; SOB confirmed by carrier notice</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 4. Official Sign-off & Stamp Section */}
-            <div className="mt-4 pt-3 border-t-2 border-slate-300 grid grid-cols-3 gap-4 text-center text-[10px]">
-              <div className="space-y-6">
-                <div className="text-slate-500 uppercase font-bold">Prepared By</div>
-                <div className="border-b border-slate-400 w-3/4 mx-auto"></div>
-                <div className="font-semibold text-slate-700">Documentation Executive</div>
-              </div>
-
-              <div className="space-y-6">
-                <div className="text-slate-500 uppercase font-bold">Verified By</div>
-                <div className="border-b border-slate-400 w-3/4 mx-auto"></div>
-                <div className="font-semibold text-slate-700">Operations Controller / CHA Lead</div>
-              </div>
-
-              <div className="p-2 border-2 border-dashed border-slate-400 rounded-lg space-y-1">
-                <div className="font-extrabold text-blue-900 uppercase text-[9.5px]">
-                  SPJ GROUP OF COMPANIES
-                </div>
-                <div className="text-[8.5px] text-emerald-800 font-bold uppercase tracking-wider">
-                  ★ APPROVED FOR B/L RELEASE ★
-                </div>
-                <div className="text-[8px] text-slate-400 font-mono">
-                  OPERATIONAL CLEARANCE STAMP
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Footer Note */}
-            <div className="mt-3 text-center text-[8.5px] text-slate-400 font-mono border-t border-slate-200 pt-1.5">
-              CONFIDENTIAL &bull; GENERATED BY SPJ eLOGIFREIGHT OPERATING SYSTEM &bull; VALID WITHOUT HANDWRITTEN SIGNATURE IF DIGITALLY APPROVED
-            </div>
+          {/* Master A4 Sheet Container */}
+          <div className="w-full max-w-[215mm] pb-12">
+            {renderDossierSheet(modalDossier)}
           </div>
         </div>
       )}
