@@ -42,6 +42,11 @@ pool.on('error', (err) => {
     await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS invoice_date DATE;');
     await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS consignee_name VARCHAR(255);');
     await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS item_description TEXT;');
+    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS customs_dossier JSONB;');
+    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS net_weight NUMERIC;');
+    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS dbk_code VARCHAR(50);');
+    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS trade_scheme VARCHAR(100);');
+    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS producer_plant VARCHAR(255);');
   } catch (e) {}
 })();
 

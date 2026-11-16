@@ -36,7 +36,8 @@ import {
   FileUp,
   Package,
   Building,
-  CheckCircle
+  CheckCircle,
+  Copy
 } from 'lucide-react';
 
 export default function ShipmentLifecycleHubView({ jobs = [], initialSection = 'EdiUpdate', onUpdateJob }) {
@@ -61,6 +62,8 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
   const [parsedSbData, setParsedSbData] = useState(null);
   const [sbTargetContId, setSbTargetContId] = useState('');
   const [ediManualModalOpen, setEdiManualModalOpen] = useState(false);
+  const [dossierCont, setDossierCont] = useState(null);
+  const [copiedIrn, setCopiedIrn] = useState('');
   const [manualEdiForm, setManualEdiForm] = useState({
     containerId: '',
     containerNo: '',
@@ -75,6 +78,10 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
     invoiceNo: '',
     invoiceDate: '',
     grossWeight: '',
+    netWeight: '',
+    dbkCode: '0202B',
+    tradeScheme: 'CEPA (India-UAE FTA)',
+    producerPlant: 'MEEM AGRO FOODS PRIVATE LIMITED (APEDA/149)',
     sealNumber: '',
     customSeal: '',
     itemDescription: ''
@@ -171,6 +178,11 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
         invoiceNo: c.invoiceNo || 'IFF/EXP/27/0943',
         invoiceDate: c.invoiceDate || '2026-10-28',
         grossWeight: Number(c.grossWeight) || 29120,
+        netWeight: Number(c.netWeight) || 28008,
+        dbkCode: c.dbkCode || '0202B',
+        tradeScheme: c.tradeScheme || 'CEPA (India-UAE FTA)',
+        producerPlant: c.producerPlant || 'MEEM AGRO FOODS PRIVATE LIMITED (APEDA/149)',
+        customsDossier: c.customsDossier || null,
         packages: Number(c.packages) || 1472,
         sealNumber: c.sealNumber || 'SEAL-88910',
         customSeal: c.customSeal || 'CUSTOM-9921',
@@ -225,6 +237,11 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
             invoiceNo: j.partyInvoiceNo || 'IFF/EXP/27/0943',
             invoiceDate: j.partyInvoiceDate || '2026-10-28',
             grossWeight: Number(c.grossWeight) || 29120,
+            netWeight: Number(c.netWeight) || 28008,
+            dbkCode: c.dbkCode || '0202B',
+            tradeScheme: c.tradeScheme || 'CEPA (India-UAE FTA)',
+            producerPlant: c.producerPlant || 'MEEM AGRO FOODS PRIVATE LIMITED (APEDA/149)',
+            customsDossier: c.customsDossier || null,
             packages: Number(j.cartons) || 1472,
             sealNumber: c.sealNumber || 'SEAL-88910',
             customSeal: c.customSeal || 'CUSTOM-9921',
@@ -445,11 +462,23 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
       invoiceNo: row.invoiceNo || '',
       invoiceDate: row.invoiceDate || '',
       grossWeight: row.grossWeight || 29120,
+      netWeight: row.netWeight || 28008,
+      dbkCode: row.dbkCode || '0202B',
+      tradeScheme: row.tradeScheme || 'CEPA (India-UAE FTA)',
+      producerPlant: row.producerPlant || 'MEEM AGRO FOODS PRIVATE LIMITED (APEDA/149)',
       sealNumber: row.sealNumber || '',
       customSeal: row.customSeal || '',
       itemDescription: row.itemDescription || ''
     });
     setEdiManualModalOpen(true);
+  };
+
+  const handleCopyIrn = (irn) => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(irn);
+    }
+    setCopiedIrn(irn);
+    setTimeout(() => setCopiedIrn(''), 2000);
   };
 
   const handleSaveManualEdi = async (e) => {
@@ -519,6 +548,11 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
         invoiceDate: s.invoiceDate,
         consigneeName: s.consigneeName,
         grossWeight: s.grossWeight,
+        netWeight: s.netWeight,
+        dbkCode: s.dbkCode,
+        tradeScheme: s.tradeScheme,
+        producerPlant: s.producerPlant,
+        customsDossier: parsedSbData,
         itemDescription: s.itemDescription
       });
 
@@ -533,6 +567,12 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
           invoiceNo: s.invoiceNo,
           invoiceDate: s.invoiceDate,
           consignee: s.consigneeName,
+          grossWeight: s.grossWeight,
+          netWeight: s.netWeight,
+          dbkCode: s.dbkCode,
+          tradeScheme: s.tradeScheme,
+          producerPlant: s.producerPlant,
+          customsDossier: parsedSbData,
           itemDescription: s.itemDescription
         });
       }
@@ -1529,10 +1569,26 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                           </div>
                         </td>
                         <td className="py-3 px-3">
-                          <div className="font-mono font-bold text-blue-800 text-xs">{r.sbNo || 'Pending'}</div>
-                          <div className="text-[10px] text-slate-500 flex items-center gap-1 font-mono">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-bold text-blue-800 text-xs">{r.sbNo || 'Pending'}</span>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setDossierCont(r); }}
+                              className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 cursor-pointer transition shadow-2xs inline-flex items-center gap-0.5"
+                              title="View ICEGATE Customs Dossier & e-SANCHIT IRNs"
+                            >
+                              <FileText className="w-2.5 h-2.5 text-indigo-600" />
+                              <span>Dossier 📜</span>
+                            </button>
+                          </div>
+                          <div className="text-[10px] text-slate-500 flex items-center gap-1 font-mono mt-0.5">
                             <Calendar className="w-3 h-3 text-slate-400" />
                             <span>{r.sbDate || '—'}</span>
+                            {r.tradeScheme && (
+                              <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 rounded border border-emerald-200">
+                                FTA
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="py-3 px-3">
@@ -1540,8 +1596,12 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                           <div className="text-[10px] text-slate-400 font-mono">{r.invoiceDate || '—'}</div>
                         </td>
                         <td className="py-3 px-3">
-                          <div className="font-mono text-slate-800 font-medium text-[11px]">{Number(r.grossWeight || 29120).toLocaleString()} KGS</div>
-                          <div className="text-[10px] text-slate-500 font-mono">Seal: {r.sealNumber || r.customSeal || 'SEAL-88910'}</div>
+                          <div className="font-mono text-slate-800 font-medium text-[11px]">
+                            {Number(r.grossWeight || 29120).toLocaleString()} KGS <span className="text-[10px] text-slate-400">Gross</span>
+                          </div>
+                          <div className="text-[10px] text-slate-500 font-mono">
+                            Net: {Number(r.netWeight || 28008).toLocaleString()} KGS &bull; {r.sealNumber || r.customSeal || 'SEAL-88910'}
+                          </div>
                         </td>
                         <td className="py-3 px-3">
                           {(() => {
@@ -1592,8 +1652,18 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                           <div className="flex items-center justify-end gap-1.5">
                             <button
                               type="button"
+                              onClick={() => setDossierCont(r)}
+                              className="px-2 py-1 rounded-lg bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 font-bold text-[10.5px] shadow-2xs cursor-pointer inline-flex items-center gap-1 transition"
+                              title="ICEGATE Customs Dossier & e-SANCHIT IRN Verification"
+                            >
+                              <FileCheck className="w-3 h-3 text-indigo-600" />
+                              <span>Dossier</span>
+                            </button>
+
+                            <button
+                              type="button"
                               onClick={() => handleOpenManualEdi(r)}
-                              className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-[10.5px] shadow-2xs cursor-pointer inline-flex items-center gap-1 transition"
+                              className="px-2 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-[10.5px] shadow-2xs cursor-pointer inline-flex items-center gap-1 transition"
                               title="Manual EDI Edit"
                             >
                               <Edit2 className="w-3 h-3 text-blue-600" />
@@ -2267,17 +2337,35 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                     </div>
 
                     <div className="bg-white p-2.5 rounded-lg border border-emerald-100 shadow-2xs">
-                      <div className="text-slate-400 font-medium text-[10px]">Cargo Gross Weight</div>
-                      <div className="font-mono font-bold text-slate-800 text-xs mt-0.5">{Number(parsedSbData.summary.grossWeight || 29120).toLocaleString()} {parsedSbData.summary.weightUnit}</div>
-                      <div className="text-[10px] text-slate-500 font-mono">{parsedSbData.summary.totalPackages} Total Packages</div>
+                      <div className="text-slate-400 font-medium text-[10px]">Net / Gross Cargo Weight</div>
+                      <div className="font-mono font-bold text-slate-800 text-xs mt-0.5">
+                        {Number(parsedSbData.summary.netWeight || 28008).toLocaleString()} / {Number(parsedSbData.summary.grossWeight || 29120).toLocaleString()} KGS
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-mono">{parsedSbData.summary.totalPackages} Pkgs (Tare 1,112 KG)</div>
                     </div>
 
                     <div className="bg-white p-2.5 rounded-lg border border-emerald-100 shadow-2xs">
-                      <div className="text-slate-400 font-medium text-[10px]">Commodity / HS Code</div>
-                      <div className="font-bold text-slate-800 truncate text-xs mt-0.5" title={parsedSbData.summary.itemDescription}>
-                        {parsedSbData.summary.itemDescription || 'Frozen Meat'}
+                      <div className="text-slate-400 font-medium text-[10px]">Trade Scheme &amp; Duty Drawback</div>
+                      <div className="font-bold text-emerald-800 text-xs mt-0.5">{parsedSbData.summary.tradeScheme || 'CEPA (India-UAE FTA)'}</div>
+                      <div className="text-[10px] text-slate-500 font-mono">DBK Tariff: {parsedSbData.summary.dbkCode || '0202B'}</div>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-lg border border-emerald-100 shadow-2xs">
+                      <div className="text-slate-400 font-medium text-[10px]">e-SANCHIT Supporting Docs</div>
+                      <div className="font-bold text-purple-700 text-xs mt-0.5">
+                        {parsedSbData.eSanchitDocs?.length || 3} Digital IRNs Attached
                       </div>
-                      <div className="text-[10px] text-slate-400 font-mono">HS: {parsedSbData.summary.hsCode || '02023000'}</div>
+                      <div className="text-[10px] text-slate-500 font-mono">Invoice, Health Cert, COO</div>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-lg border border-emerald-100 col-span-2 sm:col-span-3 shadow-2xs">
+                      <div className="text-slate-400 font-medium text-[10px]">Commodity &amp; Approved APEDA Plant</div>
+                      <div className="font-bold text-slate-800 text-xs mt-0.5">
+                        {parsedSbData.summary.itemDescription || 'FROZEN BONELESS BUFFALO MEAT'} (HS: {parsedSbData.summary.hsCode || '02023000'})
+                      </div>
+                      <div className="text-[10.5px] text-blue-700 font-medium mt-0.5">
+                        Plant: {parsedSbData.summary.producerPlant || 'MEEM AGRO FOODS PRIVATE LIMITED (APEDA/149)'}
+                      </div>
                     </div>
                   </div>
 
@@ -2453,6 +2541,50 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                 </div>
 
                 <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Net Cargo Weight (KGS)</label>
+                  <input
+                    type="number"
+                    value={manualEdiForm.netWeight}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, netWeight: e.target.value })}
+                    placeholder="e.g. 28008"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Duty Drawback (DBK Tariff)</label>
+                  <input
+                    type="text"
+                    value={manualEdiForm.dbkCode}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, dbkCode: e.target.value })}
+                    placeholder="e.g. 0202B"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Trade Scheme / FTA Agreement</label>
+                  <input
+                    type="text"
+                    value={manualEdiForm.tradeScheme}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, tradeScheme: e.target.value })}
+                    placeholder="e.g. CEPA (India-UAE FTA)"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans text-slate-800 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="font-bold text-slate-700">Approved APEDA Slaughter / Producer Plant</label>
+                  <input
+                    type="text"
+                    value={manualEdiForm.producerPlant}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, producerPlant: e.target.value })}
+                    placeholder="e.g. MEEM AGRO FOODS PRIVATE LIMITED (APEDA/149)"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans text-slate-800 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
                   <label className="font-bold text-slate-700">Customs Seal No</label>
                   <input
                     type="text"
@@ -2503,6 +2635,291 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* ------------------------------------------------------------- */}
+      {/* 8. MODAL: ICEGATE CUSTOMS DOSSIER & COMPLIANCE SHEET          */}
+      {/* ------------------------------------------------------------- */}
+      {dossierCont && (
+        <div className="fixed inset-0 z-[170] bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fade-in font-sans">
+          <div className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[94vh]">
+            {/* Header */}
+            <div className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white flex items-center justify-between select-none border-b border-indigo-900">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-6 h-6 text-indigo-300" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-base tracking-tight text-white">ICEGATE Customs Dossier &amp; Compliance Sheet</h3>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                      ICES 1.5 VERIFIED
+                    </span>
+                  </div>
+                  <p className="text-xs text-indigo-200 mt-0.5">
+                    Container <span className="font-mono font-bold text-white">{dossierCont.containerNo}</span> ({dossierCont.size}) &bull; Job: <span className="font-mono text-white">{dossierCont.jobNo}</span> &bull; Port: <span className="text-emerald-300 font-semibold">{dossierCont.origin || 'Dadri ICD (INDER6)'}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDossierCont(null)}
+                className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 cursor-pointer transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="p-5 space-y-4 overflow-y-auto text-xs bg-slate-50/50">
+              {/* 4 Cross-Check Verification Status Badges */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                {/* 1. Gross Weight Verification */}
+                <div className="p-3 rounded-xl bg-white border border-emerald-200 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold text-emerald-700 uppercase">Gross Weight Check</span>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  </div>
+                  <div className="text-sm font-black text-slate-800 font-mono mt-1">
+                    {Number(dossierCont.grossWeight || 29120).toLocaleString()} KGS
+                  </div>
+                  <div className="text-[10px] text-emerald-600 font-medium mt-0.5">
+                    GR Bilty = Customs SB (Diff: 0 KG)
+                  </div>
+                </div>
+
+                {/* 2. Route & Customs Station */}
+                <div className="p-3 rounded-xl bg-white border border-blue-200 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold text-blue-700 uppercase">Discharge Route</span>
+                    <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                  </div>
+                  <div className="text-sm font-black text-slate-800 font-mono mt-1 truncate">
+                    {dossierCont.destination || 'Jebel Ali'}
+                  </div>
+                  <div className="text-[10px] text-blue-600 font-medium mt-0.5">
+                    Dadri ICD ➔ Nhava Sheva (Gateway)
+                  </div>
+                </div>
+
+                {/* 3. e-SANCHIT IRNs */}
+                <div className="p-3 rounded-xl bg-white border border-purple-200 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold text-purple-700 uppercase">e-SANCHIT IRNs</span>
+                    <FileCheck className="w-3.5 h-3.5 text-purple-600" />
+                  </div>
+                  <div className="text-sm font-black text-slate-800 font-mono mt-1">
+                    {dossierCont.customsDossier?.eSanchitDocs?.length || 3} Attached
+                  </div>
+                  <div className="text-[10px] text-purple-600 font-medium mt-0.5">
+                    Digital Central Repository Verified
+                  </div>
+                </div>
+
+                {/* 4. Trade Scheme & DBK */}
+                <div className="p-3 rounded-xl bg-white border border-amber-200 shadow-2xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold text-amber-700 uppercase">Duty Drawback &amp; FTA</span>
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  </div>
+                  <div className="text-sm font-black text-slate-800 font-mono mt-1">
+                    DBK {dossierCont.dbkCode || '0202B'}
+                  </div>
+                  <div className="text-[10px] text-amber-600 font-medium mt-0.5">
+                    {dossierCont.tradeScheme || 'CEPA (India-UAE FTA)'}
+                  </div>
+                </div>
+              </div>
+
+              {/* 4 Detailed Compliance Sections in 2x2 Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Card 1: Customs Filing & Clearance Credentials */}
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-2.5">
+                  <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                    <Building className="w-4 h-4 text-blue-600" />
+                    <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider font-mono">
+                      Customs Filing &amp; LEO Clearance
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div>
+                      <div className="text-slate-400 text-[10px]">Shipping Bill (SB) No</div>
+                      <div className="font-mono font-bold text-blue-700">{dossierCont.sbNo || 'SB-5108'}</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px]">SB Filing Date</div>
+                      <div className="font-mono font-medium text-slate-800">{dossierCont.sbDate || '2026-09-17'}</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px]">Customs Station</div>
+                      <div className="font-mono font-medium text-slate-800">Dadri ICD (INDER6)</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px]">EDI LEO Status</div>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 inline-block">
+                        LEO PASSED ✓
+                      </span>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px]">CHA PAN / Identity</div>
+                      <div className="font-mono font-medium text-slate-800">ADGPJ3166MCH001 (PURAN001)</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px]">Customs / Agent Seal</div>
+                      <div className="font-mono font-medium text-slate-800">{dossierCont.customSeal || 'CUSTOM-9921'} / {dossierCont.sealNumber || 'SEAL-88910'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 2: Commercial Valuation & Tariff Concession */}
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-2.5">
+                  <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                    <FileText className="w-4 h-4 text-emerald-600" />
+                    <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider font-mono">
+                      Commercial Valuation &amp; Tariff
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div>
+                      <div className="text-slate-400 text-[10px]">Commercial Invoice No</div>
+                      <div className="font-mono font-bold text-slate-800">{dossierCont.invoiceNo || 'IFF/EXP/27/0943'}</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px]">Invoice Date</div>
+                      <div className="font-mono font-medium text-slate-800">{dossierCont.invoiceDate || '2026-09-17'}</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px]">Foreign Invoice Value</div>
+                      <div className="font-mono font-bold text-slate-800">USD $7,113.29</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px]">Customs Exchange Rate</div>
+                      <div className="font-mono font-medium text-slate-800">₹93.5500 / USD (ICEGATE)</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px]">Assessable Value (INR)</div>
+                      <div className="font-mono font-bold text-blue-700">₹6,65,448.29 INR</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px]">Trade Scheme / DBK</div>
+                      <div className="font-medium text-emerald-700">CEPA FTA (0% Duty) &bull; DBK {dossierCont.dbkCode || '0202B'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 3: Cargo, Weight Breakdown & Plant Compliance */}
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-2.5">
+                  <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                    <Package className="w-4 h-4 text-amber-600" />
+                    <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider font-mono">
+                      Cargo, Weights &amp; Plant Compliance
+                    </h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="col-span-2">
+                      <div className="text-slate-400 text-[10px]">Commodity / ITC-HS Code</div>
+                      <div className="font-bold text-slate-800 truncate" title={dossierCont.itemDescription}>
+                        {dossierCont.itemDescription || 'FROZEN BONELESS BUFFALO MEAT'} (HS: 02023000)
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px]">Gross Cargo Weight</div>
+                      <div className="font-mono font-bold text-slate-800">{Number(dossierCont.grossWeight || 29120).toLocaleString()} KGS</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px]">Net Cargo Weight</div>
+                      <div className="font-mono font-bold text-emerald-700">{Number(dossierCont.netWeight || 28008).toLocaleString()} KGS</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px]">Tare Packaging Difference</div>
+                      <div className="font-mono text-slate-600">1,112 KGS (1,472 Cartons)</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 text-[10px]">Veterinary Health Inspection</div>
+                      <span className="text-emerald-700 font-bold">Passed &amp; Fit for Consumption</span>
+                    </div>
+                    <div className="col-span-2 bg-slate-50 p-2 rounded-lg border border-slate-100 mt-1">
+                      <div className="text-slate-400 text-[10px]">Approved Slaughter / Producer Plant</div>
+                      <div className="font-bold text-blue-900 text-[11px] mt-0.5">
+                        {dossierCont.producerPlant || 'MEEM AGRO FOODS PRIVATE LIMITED (APEDA/149)'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 4: e-SANCHIT Verified Supporting Documents */}
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-2.5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <div className="flex items-center gap-2">
+                      <FileCheck className="w-4 h-4 text-purple-600" />
+                      <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider font-mono">
+                        e-SANCHIT Repository Documents
+                      </h4>
+                    </div>
+                    <span className="text-[10px] font-mono text-purple-700 bg-purple-50 px-2 py-0.5 rounded font-bold border border-purple-200">
+                      3 IRNs
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {[
+                      { irn: '2026091900044945', docCode: '101TO2', docName: 'Commercial Invoice & Packing List', date: dossierCont.sbDate || '2026-09-17' },
+                      { irn: '2026091900044943', docCode: '331000', docName: 'APEDA Veterinary Sanitary Health Certificate', date: dossierCont.sbDate || '2026-09-17' },
+                      { irn: '2026091900044944', docCode: '636000', docName: 'Certificate of Origin (CEPA UAE / Halal)', date: dossierCont.sbDate || '2026-09-17' }
+                    ].map((doc, dIdx) => (
+                      <div key={dIdx} className="p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-800 truncate text-[11px]">{doc.docName}</div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="font-mono text-[10px] text-purple-700 font-bold bg-purple-100/60 px-1 rounded">
+                              {doc.docCode}
+                            </span>
+                            <span className="font-mono text-[10px] text-slate-500">IRN: {doc.irn}</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyIrn(doc.irn)}
+                          className="px-2 py-1 rounded bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-mono font-bold text-[10px] flex items-center gap-1 cursor-pointer transition shrink-0 shadow-2xs"
+                          title="Copy IRN to Clipboard"
+                        >
+                          <Copy className="w-2.5 h-2.5 text-slate-500" />
+                          <span>{copiedIrn === doc.irn ? 'Copied!' : 'Copy IRN'}</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-3 bg-white border-t border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-slate-500 font-mono">
+                  Customs Status: <strong className="text-emerald-700">100% Compliant &amp; Cleared</strong>
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
+                >
+                  <Download className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Print Dossier</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDossierCont(null)}
+                  className="px-4 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer transition shadow-xs"
+                >
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Close Dossier</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

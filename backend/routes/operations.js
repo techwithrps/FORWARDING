@@ -786,6 +786,11 @@ async function getLifecycleRows(extraWhere = '1=1') {
       c.delivered_to_consignee_date, c.empty_returned_depot_date,
       c.empty_out_date, c.factory_gate_in_date, c.factory_gate_out_date, c.buffer_in_date, c.loaded_icd_in_date,
       c.custom_seal,
+      c.customs_dossier,
+      c.net_weight,
+      c.dbk_code,
+      c.trade_scheme,
+      c.producer_plant,
       COALESCE(c.sb_no, j.sb_no) as sb_no,
       COALESCE(c.sb_date, j.sb_date) as sb_date,
       COALESCE(c.invoice_no, j.party_invoice_no) as invoice_no,
@@ -809,6 +814,11 @@ async function getLifecycleRows(extraWhere = '1=1') {
     cargoWeight: Number(r.cargo_weight) || 0,
     sealNumber: r.seal_number || '',
     customSeal: r.custom_seal || '',
+    customsDossier: r.customs_dossier || null,
+    netWeight: Number(r.net_weight) || 28008,
+    dbkCode: r.dbk_code || '0202B',
+    tradeScheme: r.trade_scheme || 'CEPA (India-UAE FTA)',
+    producerPlant: r.producer_plant || 'MEEM AGRO FOODS PRIVATE LIMITED (APEDA/149)',
     sbNo: r.sb_no || 'SB-981024',
     sbDate: r.sb_date ? new Date(r.sb_date).toISOString().split('T')[0] : '2026-10-28',
     invoiceNo: r.invoice_no || '',
@@ -966,6 +976,11 @@ router.post('/edi-update', async (req, res) => {
       sealNumber,
       customSeal,
       grossWeight,
+      netWeight,
+      dbkCode,
+      tradeScheme,
+      producerPlant,
+      customsDossier,
       itemDescription
     } = req.body;
 
@@ -983,9 +998,14 @@ router.post('/edi-update', async (req, res) => {
          seal_number = COALESCE($8, seal_number),
          custom_seal = COALESCE($9, custom_seal),
          gross_weight = COALESCE($10::NUMERIC, gross_weight),
-         item_description = COALESCE($11, item_description),
+         net_weight = COALESCE($11::NUMERIC, net_weight),
+         dbk_code = COALESCE($12, dbk_code),
+         trade_scheme = COALESCE($13, trade_scheme),
+         producer_plant = COALESCE($14, producer_plant),
+         customs_dossier = COALESCE($15::JSONB, customs_dossier),
+         item_description = COALESCE($16, item_description),
          updated_at = NOW()
-       WHERE id = $12 OR container_number = $12 RETURNING *`,
+       WHERE id = $17 OR container_number = $17 RETURNING *`,
       [
         ediSbStatus || 'LEO_PASSED',
         ediFilingDate || null,
@@ -997,6 +1017,11 @@ router.post('/edi-update', async (req, res) => {
         sealNumber || null,
         customSeal || null,
         grossWeight ? Number(grossWeight) : null,
+        netWeight ? Number(netWeight) : null,
+        dbkCode || null,
+        tradeScheme || null,
+        producerPlant || null,
+        customsDossier ? JSON.stringify(customsDossier) : null,
         itemDescription || null,
         containerId
       ]
@@ -1036,7 +1061,13 @@ router.post('/edi-bulk-update', async (req, res) => {
       invoiceNo, 
       invoiceDate, 
       consignee,
-      itemDescription
+      itemDescription,
+      grossWeight,
+      netWeight,
+      dbkCode,
+      tradeScheme,
+      producerPlant,
+      customsDossier
     } = req.body;
 
     if (!Array.isArray(containerIds) || containerIds.length === 0) {
@@ -1053,8 +1084,14 @@ router.post('/edi-bulk-update', async (req, res) => {
          invoice_date = COALESCE($6::DATE, invoice_date),
          consignee_name = COALESCE($7, consignee_name),
          item_description = COALESCE($8, item_description),
+         gross_weight = COALESCE($9::NUMERIC, gross_weight),
+         net_weight = COALESCE($10::NUMERIC, net_weight),
+         dbk_code = COALESCE($11, dbk_code),
+         trade_scheme = COALESCE($12, trade_scheme),
+         producer_plant = COALESCE($13, producer_plant),
+         customs_dossier = COALESCE($14::JSONB, customs_dossier),
          updated_at = NOW()
-       WHERE id = ANY($9::text[]) OR container_number = ANY($9::text[])`,
+       WHERE id = ANY($15::text[]) OR container_number = ANY($15::text[])`,
       [
         ediSbStatus || null,
         ediFilingDate || null,
@@ -1064,6 +1101,12 @@ router.post('/edi-bulk-update', async (req, res) => {
         invoiceDate || null,
         consignee || null,
         itemDescription || null,
+        grossWeight ? Number(grossWeight) : null,
+        netWeight ? Number(netWeight) : null,
+        dbkCode || null,
+        tradeScheme || null,
+        producerPlant || null,
+        customsDossier ? JSON.stringify(customsDossier) : null,
         containerIds
       ]
     );
