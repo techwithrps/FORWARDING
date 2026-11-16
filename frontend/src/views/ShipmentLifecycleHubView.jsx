@@ -113,18 +113,18 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
     loadLiveData();
   }, []);
 
-  // Operational lifecycle sections (Pages 24-34, Vessel Plan managed via top header)
+  // Operational lifecycle sections (Vessel Plan managed via top header)
   const sections = [
-    { id: 'EdiUpdate', pageNo: '24', title: 'EDI Update', desc: 'Icegate Shipping Bill transmission & LEO clearance' },
-    { id: 'RailOutStatus', pageNo: '25', title: 'Rail Out Status', desc: 'CONCOR / DFC Train Rake Out & Wagon movement' },
-    { id: 'SobUpdate', pageNo: '27', title: 'SOB Update', desc: 'Shipped On Board date & onboard B/L verification' },
-    { id: 'DocumentUpdate', pageNo: '28', title: 'Document Update', desc: 'Checklist approval, SI Cut-off & Exporter Invoice' },
-    { id: 'BlStatusUpdate', pageNo: '29', title: 'BL Status Update', desc: 'Draft B/L approval & Original B/L release' },
-    { id: 'TelexStatusUpdate', pageNo: '30', title: 'Telex Status Update', desc: 'Surrender endorsement & Telex message release' },
-    { id: 'TrUpdate', pageNo: '31', title: 'TR Update', desc: 'Transshipment Request (TR / SMTP) customs permit' },
-    { id: 'HandoverUpdate', pageNo: '32', title: 'Handover Update', desc: 'Customs Examination & Port Terminal Handover' },
-    { id: 'EgmUpdate', pageNo: '33', title: 'EGM Update', desc: 'Export General Manifest submission & rotation' },
-    { id: 'ShipmentDischargeStatus', pageNo: '34', title: 'Shipment Discharge', desc: 'POD Vessel Discharge ETA & delivery monitoring' },
+    { id: 'EdiUpdate', pageNo: '', title: 'EDI Update', desc: 'Icegate Shipping Bill transmission & LEO clearance' },
+    { id: 'RailOutStatus', pageNo: '', title: 'Rail Out Status', desc: 'CONCOR / DFC Train Rake Out & Wagon movement' },
+    { id: 'SobUpdate', pageNo: '', title: 'SOB Update', desc: 'Shipped On Board date & onboard B/L verification' },
+    { id: 'DocumentUpdate', pageNo: '', title: 'Document Update', desc: 'Checklist approval, SI Cut-off & Exporter Invoice' },
+    { id: 'BlStatusUpdate', pageNo: '', title: 'BL Status Update', desc: 'Draft B/L approval & Original B/L release' },
+    { id: 'TelexStatusUpdate', pageNo: '', title: 'Telex Status Update', desc: 'Surrender endorsement & Telex message release' },
+    { id: 'TrUpdate', pageNo: '', title: 'TR Update', desc: 'Transshipment Request (TR / SMTP) customs permit' },
+    { id: 'HandoverUpdate', pageNo: '', title: 'Handover Update', desc: 'Customs Examination & Port Terminal Handover' },
+    { id: 'EgmUpdate', pageNo: '', title: 'EGM Update', desc: 'Export General Manifest submission & rotation' },
+    { id: 'ShipmentDischargeStatus', pageNo: '', title: 'Shipment Discharge', desc: 'POD Vessel Discharge ETA & delivery monitoring' },
   ];
 
   // Fallback rich seed pool aligned with SPJ operational records
@@ -655,7 +655,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold font-heading text-[rgb(25,40,57)]">
-              {activeMeta.pageNo}. {activeMeta.title}
+              {activeMeta.title}
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
               Shipment Lifecycle Hub
@@ -674,7 +674,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
         )}
       </div>
 
-      {/* 11 Horizontal Sub-Nav Tabs for Pages 24-34 */}
+      {/* Horizontal Sub-Nav Tabs for Lifecycle Stages */}
       <div className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 pb-2 scrollbar-thin">
         {sections.map((s) => (
           <button
@@ -687,7 +687,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                 : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200')
             }
           >
-            {s.pageNo}. {s.title}
+            {s.title}
           </button>
         ))}
       </div>

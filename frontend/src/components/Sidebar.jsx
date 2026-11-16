@@ -113,16 +113,16 @@ export default function Sidebar({
       key: 'LIFECYCLE',
       title: 'Shipment Lifecycle',
       items: [
-        { id: 'EdiUpdate', pageNo: '24', label: 'EDI Update', icon: Send },
-        { id: 'RailOutStatus', pageNo: '25', label: 'Rail Out Status', icon: Train },
-        { id: 'SobUpdate', pageNo: '27', label: 'SOB Update', icon: Ship },
-        { id: 'DocumentUpdate', pageNo: '28', label: 'Document Update', icon: FileText },
-        { id: 'BlStatusUpdate', pageNo: '29', label: 'BL Status Update', icon: FileCheck },
-        { id: 'TelexStatusUpdate', pageNo: '30', label: 'Telex Status Update', icon: Send },
-        { id: 'TrUpdate', pageNo: '31', label: 'TR Update', icon: ShieldCheck },
-        { id: 'HandoverUpdate', pageNo: '32', label: 'Handover Update', icon: FileText },
-        { id: 'EgmUpdate', pageNo: '33', label: 'EGM Update', icon: FileCheck },
-        { id: 'ShipmentDischargeStatus', pageNo: '34', label: 'Shipment Discharge', icon: Ship }
+        { id: 'EdiUpdate', pageNo: '', label: 'EDI Update', icon: Send },
+        { id: 'RailOutStatus', pageNo: '', label: 'Rail Out Status', icon: Train },
+        { id: 'SobUpdate', pageNo: '', label: 'SOB Update', icon: Ship },
+        { id: 'DocumentUpdate', pageNo: '', label: 'Document Update', icon: FileText },
+        { id: 'BlStatusUpdate', pageNo: '', label: 'BL Status Update', icon: FileCheck },
+        { id: 'TelexStatusUpdate', pageNo: '', label: 'Telex Status Update', icon: Send },
+        { id: 'TrUpdate', pageNo: '', label: 'TR Update', icon: ShieldCheck },
+        { id: 'HandoverUpdate', pageNo: '', label: 'Handover Update', icon: FileText },
+        { id: 'EgmUpdate', pageNo: '', label: 'EGM Update', icon: FileCheck },
+        { id: 'ShipmentDischargeStatus', pageNo: '', label: 'Shipment Discharge', icon: Ship }
       ]
     },
     {
@@ -217,7 +217,7 @@ export default function Sidebar({
             const filteredItems = normalizedSearch
               ? sec.items.filter(it =>
                   it.label.toLowerCase().includes(normalizedSearch) ||
-                  it.pageNo.toLowerCase().includes(normalizedSearch) ||
+                  (it.pageNo && it.pageNo.toLowerCase().includes(normalizedSearch)) ||
                   it.id.toLowerCase().includes(normalizedSearch)
                 )
               : sec.items;
@@ -248,9 +248,13 @@ export default function Sidebar({
                         }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-mono text-[10px] w-4 text-slate-400 font-bold shrink-0">
-                            {item.pageNo}.
-                          </span>
+                          {item.pageNo ? (
+                            <span className="font-mono text-[10px] w-4 text-slate-400 font-bold shrink-0">
+                              {item.pageNo}.
+                            </span>
+                          ) : (
+                            <span className="w-1 shrink-0" />
+                          )}
                           <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
                           <span className="truncate text-[12px]">{item.label}</span>
                         </div>
