@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
-import VesselBookingPlanningView from './VesselBookingPlanningView';
 import DocumentationUpdateView from './DocumentationUpdateView';
 import {
   Ship,
@@ -80,11 +79,10 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
     loadLiveData();
   }, []);
 
-  // 11 distinct operational lifecycle sections (Pages 24-34)
+  // Operational lifecycle sections (Pages 24-34, Vessel Plan managed via top header)
   const sections = [
     { id: 'EdiUpdate', pageNo: '24', title: 'EDI Update', desc: 'Icegate Shipping Bill transmission & LEO clearance' },
     { id: 'RailOutStatus', pageNo: '25', title: 'Rail Out Status', desc: 'CONCOR / DFC Train Rake Out & Wagon movement' },
-    { id: 'VesselPlanDetails', pageNo: '26', title: 'Vessel Plan Details', desc: 'Feeder/Mother vessel scheduling & cut-offs' },
     { id: 'SobUpdate', pageNo: '27', title: 'SOB Update', desc: 'Shipped On Board date & onboard B/L verification' },
     { id: 'DocumentUpdate', pageNo: '28', title: 'Document Update', desc: 'Checklist approval, SI Cut-off & Exporter Invoice' },
     { id: 'BlStatusUpdate', pageNo: '29', title: 'BL Status Update', desc: 'Draft B/L approval & Original B/L release' },
@@ -476,14 +474,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* 1. EMBEDDED PAGE 26: VESSEL PLAN DETAILS                      */}
-      {/* ------------------------------------------------------------- */}
-      {activeSection === 'VesselPlanDetails' && (
-        <VesselBookingPlanningView />
-      )}
-
-      {/* ------------------------------------------------------------- */}
-      {/* 2. EMBEDDED PAGE 28: DOCUMENT UPDATE & VERIFICATION DOSSIER   */}
+      {/* 1. EMBEDDED PAGE 28: DOCUMENT UPDATE & VERIFICATION DOSSIER   */}
       {/* ------------------------------------------------------------- */}
       {activeSection === 'DocumentUpdate' && (
         <DocumentationUpdateView jobs={jobs} onUpdateJob={onUpdateJob} />
@@ -1068,7 +1059,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
       {/* ------------------------------------------------------------- */}
       {/* 4. OTHER SECTIONS (EDI, Rail Out, BL Status, Telex, TR, etc.) */}
       {/* ------------------------------------------------------------- */}
-      {!['VesselPlanDetails', 'DocumentUpdate', 'SobUpdate'].includes(activeSection) && (
+      {!['DocumentUpdate', 'SobUpdate'].includes(activeSection) && (
         <>
           {/* Filter Toolbar */}
           <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-3">

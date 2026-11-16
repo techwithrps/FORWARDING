@@ -115,7 +115,6 @@ export default function Sidebar({
       items: [
         { id: 'EdiUpdate', pageNo: '24', label: 'EDI Update', icon: Send },
         { id: 'RailOutStatus', pageNo: '25', label: 'Rail Out Status', icon: Train },
-        { id: 'VesselPlanDetails', pageNo: '26', label: 'Vessel Plan Details', icon: Anchor },
         { id: 'SobUpdate', pageNo: '27', label: 'SOB Update', icon: Ship },
         { id: 'DocumentUpdate', pageNo: '28', label: 'Document Update', icon: FileText },
         { id: 'BlStatusUpdate', pageNo: '29', label: 'BL Status Update', icon: FileCheck },
