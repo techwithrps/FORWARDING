@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
 import DocumentationUpdateView from './DocumentationUpdateView';
+import { parseIcegateSbFile } from '../utils/sbParser';
+import { SAMPLE_SB_FILE_TEXT } from '../utils/sbSample';
 import {
   Ship,
   FileText,
@@ -27,7 +29,14 @@ import {
   Radio,
   Sparkles,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  UploadCloud,
+  Upload,
+  X,
+  FileUp,
+  Package,
+  Building,
+  CheckCircle
 } from 'lucide-react';
 
 export default function ShipmentLifecycleHubView({ jobs = [], initialSection = 'EdiUpdate', onUpdateJob }) {
@@ -45,6 +54,31 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 25;
+
+  // Dedicated EDI State (Upload .sb file, Manual Edit, Status Filters)
+  const [ediStatusFilter, setEdiStatusFilter] = useState('ALL');
+  const [sbUploadModalOpen, setSbUploadModalOpen] = useState(false);
+  const [parsedSbData, setParsedSbData] = useState(null);
+  const [sbTargetContId, setSbTargetContId] = useState('');
+  const [ediManualModalOpen, setEdiManualModalOpen] = useState(false);
+  const [manualEdiForm, setManualEdiForm] = useState({
+    containerId: '',
+    containerNo: '',
+    sizeType: '40HC',
+    jobNo: '',
+    shipper: '',
+    consignee: '',
+    sbNo: '',
+    sbDate: '',
+    ediSbStatus: 'LEO_PASSED',
+    ediFilingDate: '',
+    invoiceNo: '',
+    invoiceDate: '',
+    grossWeight: '',
+    sealNumber: '',
+    customSeal: '',
+    itemDescription: ''
+  });
 
   // Dedicated Rail Out state (Train, Wagon, Deck Tier, Departure Date)
   const [railTrainNo, setRailTrainNo] = useState('');
@@ -95,14 +129,14 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
 
   // Fallback rich seed pool aligned with SPJ operational records
   const defaultContSeeds = [
-    { containerNo: 'MSCU7456431', size: '40HC', customer: 'Al-Falah Agro Exports Ltd', jobNo: 'JO-94289', origin: 'TRANSWORLD-DADRI', destination: 'JEBEL ALI', line: 'MSC GROUP', vessel: 'MSC RIFAYA', voyageNo: '245E', sbNo: 'SB-981024', sbDate: '2026-10-28', trainNo: 'CONCOR DFC #9182', wagonNo: 'CR-104928', deckTier: 'UPPER', rakeDate: '2026-10-29', plannedSobDate: '2026-11-08', revisedSobDate: '2026-11-13', delayDays: 5, isDelayed: true },
-    { containerNo: 'MEDU9004289', size: '40RF', customer: 'INTERNATIONAL AGRO FOODS', jobNo: 'JO-94290', origin: 'TRANSWORLD-DADRI', destination: 'NHAVA SHEVA', line: 'MSC GROUP', vessel: 'MSC VALENCIA', voyageNo: '112W', sbNo: 'SB-981025', sbDate: '2026-10-29', trainNo: 'CONCOR DFC #9182', wagonNo: 'CR-104929', deckTier: 'LOWER', rakeDate: '2026-10-29', sobDate: '2026-11-05', plannedSobDate: '2026-11-05', delayDays: 0, isDelayed: false },
-    { containerNo: 'HLBU9943648', size: '40RF', customer: 'ARS AGRO FOODS', jobNo: 'JO-94291', origin: 'TRANSWORLD-DADRI', destination: 'PORT SAID', line: 'HAPAG GROUP', vessel: 'AL NEFUD', voyageNo: '034E', sbNo: 'SB-981026', sbDate: '2026-10-30', trainNo: 'CONCOR DFC #9184', wagonNo: 'CR-104930', deckTier: 'UPPER', rakeDate: '2026-10-30', plannedSobDate: '2026-11-06', revisedSobDate: '2026-11-10', delayDays: 4, isDelayed: true },
-    { containerNo: 'EMCU5388133', size: '40RF', customer: 'HMA AGRO INDUSTRIES LTD', jobNo: 'JO-94292', origin: 'TRANSWORLD-DADRI', destination: 'JEBEL ALI', line: 'EVERGREEN GROUP', vessel: 'EVER LIFTING', voyageNo: '066E', sbNo: 'SB-981027', sbDate: '2026-10-31', trainNo: 'CONCOR DFC #9184', wagonNo: 'CR-104931', deckTier: 'LOWER', rakeDate: '2026-10-31', sobDate: '2026-11-07', plannedSobDate: '2026-11-07', delayDays: 0, isDelayed: false },
-    { containerNo: 'MNBU3352101', size: '40RF', customer: 'MIRHA EXPORTS PVT. LTD.(PUNJAB)', jobNo: 'JO-94293', origin: 'TRANSWORLD-DADRI', destination: 'SHUWAIKH', line: 'MAERSK GROUP', vessel: 'MAERSK COLOMBO', voyageNo: '441S', sbNo: 'SB-981028', sbDate: '2026-11-01', trainNo: 'CONCOR DFC #9185', wagonNo: 'CR-104932', deckTier: 'UPPER', rakeDate: '2026-11-01', plannedSobDate: '2026-11-09', revisedSobDate: '2026-11-15', delayDays: 6, isDelayed: true },
-    { containerNo: 'MMAU1157581', size: '40RF', customer: 'HMA AGRO INDUSTRIES LTD', jobNo: 'JO-94294', origin: 'TRANSWORLD-DADRI', destination: 'HAMAD PORT', line: 'MAERSK GROUP', vessel: 'MAERSK COLOMBO', voyageNo: '441S', sbNo: 'SB-981029', sbDate: '2026-11-02', trainNo: 'CONCOR DFC #9185', wagonNo: 'CR-104933', deckTier: 'LOWER', rakeDate: '2026-11-02', sobDate: '2026-11-06', plannedSobDate: '2026-11-06', delayDays: 0, isDelayed: false },
-    { containerNo: 'SZLU9747540', size: '40RF', customer: 'INTERNATIONAL AGRO FOODS', jobNo: 'JO-94295', origin: 'TRANSWORLD-DADRI', destination: 'PORT KLANG', line: 'WAN HAI GROUP', vessel: 'WAN HAI 502', voyageNo: 'W108', sbNo: 'SB-981030', sbDate: '2026-11-02', trainNo: 'CONCOR DFC #9186', wagonNo: 'CR-104934', deckTier: 'UPPER', rakeDate: '2026-11-02', plannedSobDate: '2026-11-07', revisedSobDate: '2026-11-12', delayDays: 5, isDelayed: true },
-    { containerNo: 'FBIU5296090', size: '40RF', customer: 'IFF INDIA FROZEN FOODS', jobNo: 'JO-94296', origin: 'TRANSWORLD-DADRI', destination: 'SINGAPORE', line: 'WAN HAI GROUP', vessel: 'WAN HAI 502', voyageNo: 'W108', sbNo: 'SB-981031', sbDate: '2026-11-03', trainNo: 'CONCOR DFC #9186', wagonNo: 'CR-104935', deckTier: 'LOWER', rakeDate: '2026-11-03', sobDate: '2026-11-08', plannedSobDate: '2026-11-08', delayDays: 0, isDelayed: false }
+    { containerNo: 'MSCU7456431', size: '40HC', customer: 'IFF INDIA FROZEN FOODS PRIVATE LIMITED', consignee: 'SIDCO FOODS TRADING LLC', jobNo: 'JO-94289', origin: 'TRANSWORLD-DADRI', destination: 'JEBEL ALI', line: 'MSC GROUP', vessel: 'MSC RIFAYA', voyageNo: '245E', sbNo: 'SB-5108', sbDate: '2026-09-17', invoiceNo: 'IFF/EXP/27/0943', invoiceDate: '2026-09-17', grossWeight: 29120, packages: 1472, sealNumber: 'SEAL-88910', customSeal: 'CUSTOM-9921', ediStatus: 'LEO_PASSED', ediFilingDate: '2026-09-17', itemDescription: 'FROZEN BONELESS BUFFALO MEAT', trainNo: 'CONCOR DFC #9182', wagonNo: 'CR-104928', deckTier: 'UPPER', rakeDate: '2026-10-29', plannedSobDate: '2026-11-08', revisedSobDate: '2026-11-13', delayDays: 5, isDelayed: true },
+    { containerNo: 'MEDU9004289', size: '40RF', customer: 'INTERNATIONAL AGRO FOODS', consignee: 'AL-FARIS TRADING CO LLC', jobNo: 'JO-94290', origin: 'TRANSWORLD-DADRI', destination: 'NHAVA SHEVA', line: 'MSC GROUP', vessel: 'MSC VALENCIA', voyageNo: '112W', sbNo: 'SB-981025', sbDate: '2026-10-29', invoiceNo: 'INV-2026-0991', invoiceDate: '2026-10-28', grossWeight: 28400, packages: 1250, sealNumber: 'SEAL-88911', customSeal: 'CUSTOM-9922', ediStatus: 'LEO_GENERATED', ediFilingDate: '2026-10-29', itemDescription: 'CHILLED BONELESS MEAT', trainNo: 'CONCOR DFC #9182', wagonNo: 'CR-104929', deckTier: 'LOWER', rakeDate: '2026-10-29', sobDate: '2026-11-05', plannedSobDate: '2026-11-05', delayDays: 0, isDelayed: false },
+    { containerNo: 'HLBU9943648', size: '40RF', customer: 'ARS AGRO FOODS', consignee: 'MIDDLE EAST CATERING LTD', jobNo: 'JO-94291', origin: 'TRANSWORLD-DADRI', destination: 'PORT SAID', line: 'HAPAG GROUP', vessel: 'AL NEFUD', voyageNo: '034E', sbNo: 'SB-981026', sbDate: '2026-10-30', invoiceNo: 'INV-2026-0992', invoiceDate: '2026-10-29', grossWeight: 27900, packages: 1320, sealNumber: 'SEAL-88912', customSeal: 'CUSTOM-9923', ediStatus: 'CUSTOMS_EXAM', ediFilingDate: '2026-10-30', itemDescription: 'FROZEN MEAT CARCASSES', trainNo: 'CONCOR DFC #9184', wagonNo: 'CR-104930', deckTier: 'UPPER', rakeDate: '2026-10-30', plannedSobDate: '2026-11-06', revisedSobDate: '2026-11-10', delayDays: 4, isDelayed: true },
+    { containerNo: 'EMCU5388133', size: '40RF', customer: 'HMA AGRO INDUSTRIES LTD', consignee: 'EMIRATES GLOBAL LOGISTICS', jobNo: 'JO-94292', origin: 'TRANSWORLD-DADRI', destination: 'JEBEL ALI', line: 'EVERGREEN GROUP', vessel: 'EVER LIFTING', voyageNo: '066E', sbNo: 'SB-981027', sbDate: '2026-10-31', invoiceNo: 'INV-2026-0993', invoiceDate: '2026-10-30', grossWeight: 29000, packages: 1400, sealNumber: 'SEAL-88913', customSeal: 'CUSTOM-9924', ediStatus: 'LEO_PASSED', ediFilingDate: '2026-10-31', itemDescription: 'PROCESSED FROZEN MEAT', trainNo: 'CONCOR DFC #9184', wagonNo: 'CR-104931', deckTier: 'LOWER', rakeDate: '2026-10-31', sobDate: '2026-11-07', plannedSobDate: '2026-11-07', delayDays: 0, isDelayed: false },
+    { containerNo: 'MNBU3352101', size: '40RF', customer: 'MIRHA EXPORTS PVT. LTD.(PUNJAB)', consignee: 'KUWAIT SUPPLY CO WLL', jobNo: 'JO-94293', origin: 'TRANSWORLD-DADRI', destination: 'SHUWAIKH', line: 'MAERSK GROUP', vessel: 'MAERSK COLOMBO', voyageNo: '441S', sbNo: 'SB-981028', sbDate: '2026-11-01', invoiceNo: 'INV-2026-0994', invoiceDate: '2026-10-31', grossWeight: 28100, packages: 1100, sealNumber: 'SEAL-88914', customSeal: 'CUSTOM-9925', ediStatus: 'QUERY_RAISED', ediFilingDate: '2026-11-01', itemDescription: 'FROZEN BONED MEAT', trainNo: 'CONCOR DFC #9185', wagonNo: 'CR-104932', deckTier: 'UPPER', rakeDate: '2026-11-01', plannedSobDate: '2026-11-09', revisedSobDate: '2026-11-15', delayDays: 6, isDelayed: true },
+    { containerNo: 'MMAU1157581', size: '40RF', customer: 'HMA AGRO INDUSTRIES LTD', consignee: 'GULF FOODSTUFF TRADING', jobNo: 'JO-94294', origin: 'TRANSWORLD-DADRI', destination: 'HAMAD PORT', line: 'MAERSK GROUP', vessel: 'MAERSK COLOMBO', voyageNo: '441S', sbNo: 'SB-981029', sbDate: '2026-11-02', invoiceNo: 'INV-2026-0995', invoiceDate: '2026-11-01', grossWeight: 28800, packages: 1350, sealNumber: 'SEAL-88915', customSeal: 'CUSTOM-9926', ediStatus: 'LEO_PASSED', ediFilingDate: '2026-11-02', itemDescription: 'BUFFALO OFFALS FROZEN', trainNo: 'CONCOR DFC #9185', wagonNo: 'CR-104933', deckTier: 'LOWER', rakeDate: '2026-11-02', sobDate: '2026-11-06', plannedSobDate: '2026-11-06', delayDays: 0, isDelayed: false },
+    { containerNo: 'SZLU9747540', size: '40RF', customer: 'INTERNATIONAL AGRO FOODS', consignee: 'MALAYSIA HALAL DISTRIBUTORS', jobNo: 'JO-94295', origin: 'TRANSWORLD-DADRI', destination: 'PORT KLANG', line: 'WAN HAI GROUP', vessel: 'WAN HAI 502', voyageNo: 'W108', sbNo: 'SB-981030', sbDate: '2026-11-02', invoiceNo: 'INV-2026-0996', invoiceDate: '2026-11-01', grossWeight: 27500, packages: 1200, sealNumber: 'SEAL-88916', customSeal: 'CUSTOM-9927', ediStatus: 'SB_FILED', ediFilingDate: '2026-11-02', itemDescription: 'BEEF TENDERLOIN FROZEN', trainNo: 'CONCOR DFC #9186', wagonNo: 'CR-104934', deckTier: 'UPPER', rakeDate: '2026-11-02', plannedSobDate: '2026-11-07', revisedSobDate: '2026-11-12', delayDays: 5, isDelayed: true },
+    { containerNo: 'FBIU5296090', size: '40RF', customer: 'IFF INDIA FROZEN FOODS', consignee: 'OCEANIC TRADERS PTE LTD', jobNo: 'JO-94296', origin: 'TRANSWORLD-DADRI', destination: 'SINGAPORE', line: 'WAN HAI GROUP', vessel: 'WAN HAI 502', voyageNo: 'W108', sbNo: 'SB-981031', sbDate: '2026-11-03', invoiceNo: 'INV-2026-0997', invoiceDate: '2026-11-02', grossWeight: 29120, packages: 1472, sealNumber: 'SEAL-88917', customSeal: 'CUSTOM-9928', ediStatus: 'LEO_PASSED', ediFilingDate: '2026-11-03', itemDescription: 'FROZEN BONELESS BUFFALO MEAT', trainNo: 'CONCOR DFC #9186', wagonNo: 'CR-104935', deckTier: 'LOWER', rakeDate: '2026-11-03', sobDate: '2026-11-08', plannedSobDate: '2026-11-08', delayDays: 0, isDelayed: false }
   ];
 
   // Flatten containers from live PostgreSQL + local jobs + fallback seeds (Memoized for high performance)
@@ -126,6 +160,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
         size: c.sizeType || '40HC',
         jobNo: c.jobNo || c.job_number || 'JO-94289',
         customer: c.customer || c.shipper || 'Fair Exports (India) Pvt Ltd',
+        consignee: c.consignee || 'SIDCO FOODS TRADING LLC',
         origin: c.origin || 'Dadri ICD',
         destination: c.destination || 'Jebel Ali',
         line: c.shippingLine || 'Maersk Line',
@@ -133,8 +168,16 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
         voyageNo: c.voyageNo || (idx % 2 === 0 ? '0UW4RW1MA' : '245E'),
         sbNo: c.sbNo || 'SB-981024',
         sbDate: c.sbDate || '2026-10-28',
+        invoiceNo: c.invoiceNo || 'IFF/EXP/27/0943',
+        invoiceDate: c.invoiceDate || '2026-10-28',
+        grossWeight: Number(c.grossWeight) || 29120,
+        packages: Number(c.packages) || 1472,
+        sealNumber: c.sealNumber || 'SEAL-88910',
+        customSeal: c.customSeal || 'CUSTOM-9921',
+        itemDescription: c.itemDescription || 'FROZEN BONELESS BUFFALO MEAT',
         blNo: c.blNo || 'MSK-2026-98124',
         ediStatus: c.ediSbStatus || 'LEO_PASSED',
+        ediFilingDate: c.ediFilingDate || c.sbDate || '2026-10-28',
         trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
         wagonNo: c.wagonNo || 'CR-104928',
         deckTier: c.deck_tier || c.deckTier || 'LOWER',
@@ -171,6 +214,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
             size: c.size || c.sizeType || '40HC',
             jobNo: j.id || j.joNo,
             customer: j.customer || j.consignor || 'Fair Exports (India)',
+            consignee: j.consigneeName || 'SIDCO FOODS TRADING LLC',
             origin: j.origin || j.fromLocation || 'Dadri ICD',
             destination: j.pod || j.toLocation || 'Jebel Ali',
             line: j.line || j.shippingLine || 'Maersk Line',
@@ -178,8 +222,16 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
             voyageNo: '245E',
             sbNo: j.sbNo || 'SB-981024',
             sbDate: j.sbDate || '2026-10-28',
+            invoiceNo: j.partyInvoiceNo || 'IFF/EXP/27/0943',
+            invoiceDate: j.partyInvoiceDate || '2026-10-28',
+            grossWeight: Number(c.grossWeight) || 29120,
+            packages: Number(j.cartons) || 1472,
+            sealNumber: c.sealNumber || 'SEAL-88910',
+            customSeal: c.customSeal || 'CUSTOM-9921',
+            itemDescription: j.commodity || 'FROZEN BONELESS BUFFALO MEAT',
             blNo: j.blNo || 'MSK-2026-98124',
             ediStatus: c.ediSbStatus || 'LEO_PASSED',
+            ediFilingDate: c.ediFilingDate || j.sbDate || '2026-10-28',
             trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
             wagonNo: c.wagonNo || 'CR-104928',
             deckTier: c.deckTier || c.deck_tier || 'LOWER',
@@ -356,14 +408,181 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
     };
   }, [rows]);
 
+  // Compute EDI KPI Stats
+  const ediStats = useMemo(() => {
+    let leoPassed = 0;
+    let leoGenerated = 0;
+    let pendingLeo = 0;
+    let customsExam = 0;
+    rows.forEach(r => {
+      const st = String(r.ediStatus || '').toUpperCase();
+      if (st.includes('PASSED') || st.includes('CLEARED')) leoPassed++;
+      else if (st.includes('GENERATED')) leoGenerated++;
+      else if (st.includes('EXAM')) customsExam++;
+      else pendingLeo++;
+    });
+    return {
+      total: rows.length,
+      leoPassed,
+      leoGenerated,
+      pendingLeo,
+      customsExam
+    };
+  }, [rows]);
+
+  const handleOpenManualEdi = (row) => {
+    setManualEdiForm({
+      containerId: row.id || row.containerNo,
+      containerNo: row.containerNo,
+      sizeType: row.size || '40HC',
+      jobNo: row.jobNo || '',
+      shipper: row.customer || '',
+      consignee: row.consignee || '',
+      sbNo: row.sbNo || '',
+      sbDate: row.sbDate || new Date().toISOString().split('T')[0],
+      ediSbStatus: row.ediStatus || 'LEO_PASSED',
+      ediFilingDate: row.ediFilingDate || new Date().toISOString().split('T')[0],
+      invoiceNo: row.invoiceNo || '',
+      invoiceDate: row.invoiceDate || '',
+      grossWeight: row.grossWeight || 29120,
+      sealNumber: row.sealNumber || '',
+      customSeal: row.customSeal || '',
+      itemDescription: row.itemDescription || ''
+    });
+    setEdiManualModalOpen(true);
+  };
+
+  const handleSaveManualEdi = async (e) => {
+    e.preventDefault();
+    try {
+      await api.updateEdi(manualEdiForm);
+      setNotice(`✓ Updated EDI details for container ${manualEdiForm.containerNo} in PostgreSQL DB!`);
+      setTimeout(() => setNotice(''), 3000);
+      setEdiManualModalOpen(false);
+      loadLiveData();
+    } catch (err) {
+      alert('Error updating EDI record: ' + err.message);
+    }
+  };
+
+  const handleOpenSbUpload = (row = null) => {
+    const targetId = row ? (row.id || row.containerNo) : (selectedContIds[0] || (rows[0]?.id || rows[0]?.containerNo) || '');
+    setSbTargetContId(targetId);
+    setSbUploadModalOpen(true);
+  };
+
+  const handleFileSelected = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target.result;
+        const parsed = parseIcegateSbFile(text);
+        setParsedSbData(parsed);
+      } catch (err) {
+        alert('Could not parse .sb ICEGATE file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleLoadSampleSb = () => {
+    try {
+      const parsed = parseIcegateSbFile(SAMPLE_SB_FILE_TEXT);
+      setParsedSbData(parsed);
+      setNotice('✓ Loaded authentic ICEGATE .sb sample file!');
+      setTimeout(() => setNotice(''), 2500);
+    } catch (err) {
+      alert('Error loading sample: ' + err.message);
+    }
+  };
+
+  const handleApplySbToDatabase = async () => {
+    if (!parsedSbData) {
+      alert('Please upload or load a .sb file first!');
+      return;
+    }
+    const targetId = sbTargetContId || (selectedContIds[0] || rows[0]?.id || rows[0]?.containerNo);
+    if (!targetId) {
+      alert('Please select a target container to link this Shipping Bill!');
+      return;
+    }
+
+    try {
+      const s = parsedSbData.summary;
+      await api.updateEdi({
+        containerId: targetId,
+        ediSbStatus: 'LEO_PASSED',
+        ediFilingDate: s.sbDate || new Date().toISOString().split('T')[0],
+        sbNo: s.sbNo,
+        sbDate: s.sbDate,
+        invoiceNo: s.invoiceNo,
+        invoiceDate: s.invoiceDate,
+        consigneeName: s.consigneeName,
+        grossWeight: s.grossWeight,
+        itemDescription: s.itemDescription
+      });
+
+      // If multiple containers selected, also apply to other selected containers
+      if (selectedContIds.length > 1) {
+        await api.updateEdiBulk({
+          containerIds: selectedContIds,
+          ediSbStatus: 'LEO_PASSED',
+          ediFilingDate: s.sbDate || new Date().toISOString().split('T')[0],
+          sbNo: s.sbNo,
+          sbDate: s.sbDate,
+          invoiceNo: s.invoiceNo,
+          invoiceDate: s.invoiceDate,
+          consignee: s.consigneeName,
+          itemDescription: s.itemDescription
+        });
+      }
+
+      setNotice(`✓ ICEGATE .sb file applied! Shipping Bill ${s.sbNo} saved to PostgreSQL database!`);
+      setTimeout(() => setNotice(''), 3500);
+      setSbUploadModalOpen(false);
+      setParsedSbData(null);
+      setSelectedContIds([]);
+      loadLiveData();
+    } catch (err) {
+      alert('Error applying .sb to database: ' + err.message);
+    }
+  };
+
   // Reset pagination on filter or section switch
   useEffect(() => {
     setPage(1);
-  }, [activeSection, searchTerm, sobFilterPill, sobPolFilter, sobPodFilter, sobLineFilter, sobStatusFilter]);
+  }, [activeSection, searchTerm, ediStatusFilter, sobFilterPill, sobPolFilter, sobPodFilter, sobLineFilter, sobStatusFilter]);
 
   // Filtering Logic (Memoized for zero-lag responsiveness)
   const filtered = useMemo(() => {
     return rows.filter((r) => {
+      if (activeSection === 'EdiUpdate') {
+        if (ediStatusFilter !== 'ALL') {
+          const st = String(r.ediStatus || '').toUpperCase();
+          if (ediStatusFilter === 'LEO_PASSED' && !st.includes('PASSED') && !st.includes('CLEARED')) return false;
+          if (ediStatusFilter === 'LEO_GENERATED' && !st.includes('GENERATED')) return false;
+          if (ediStatusFilter === 'CUSTOMS_EXAM' && !st.includes('EXAM')) return false;
+          if (ediStatusFilter === 'PENDING_LEO' && (st.includes('PASSED') || st.includes('CLEARED'))) return false;
+          if (ediStatusFilter === 'QUERY_RAISED' && !st.includes('QUERY')) return false;
+        }
+
+        if (searchTerm.trim()) {
+          const q = searchTerm.toLowerCase();
+          const match = (r.containerNo || '').toLowerCase().includes(q) ||
+            (r.customer || '').toLowerCase().includes(q) ||
+            (r.consignee || '').toLowerCase().includes(q) ||
+            (r.jobNo || '').toLowerCase().includes(q) ||
+            (r.origin || '').toLowerCase().includes(q) ||
+            (r.destination || '').toLowerCase().includes(q) ||
+            (r.sbNo || '').toLowerCase().includes(q) ||
+            (r.invoiceNo || '').toLowerCase().includes(q) ||
+            (r.itemDescription || '').toLowerCase().includes(q) ||
+            (r.vessel || '').toLowerCase().includes(q);
+          if (!match) return false;
+        }
+        return true;
+      }
+
       if (activeSection === 'SobUpdate') {
         if (sobFilterPill === 'DELAYED' && !r.isDelayed) return false;
         if (sobFilterPill === 'CONFIRMED' && (!r.sobDate || String(r.sobDate).trim() === '')) return false;
@@ -1057,9 +1276,390 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* 4. OTHER SECTIONS (EDI, Rail Out, BL Status, Telex, TR, etc.) */}
+      {/* 4. DEDICATED EDI UPDATE WORKSPACE (Page 24 - ICEGATE .sb & LEO) */}
       {/* ------------------------------------------------------------- */}
-      {!['DocumentUpdate', 'SobUpdate'].includes(activeSection) && (
+      {activeSection === 'EdiUpdate' && (
+        <div className="space-y-4 animate-fade-in">
+          {/* EDI Operational KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">Total EDI Shipments</div>
+                <div className="text-xl font-black text-slate-800 font-mono mt-0.5">{ediStats.total}</div>
+                <div className="text-[10px] text-slate-500 font-medium mt-0.5">ICEGATE Customs Containers</div>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                <FileText className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider font-mono">LEO Cleared / Passed</div>
+                <div className="text-xl font-black text-emerald-700 font-mono mt-0.5">{ediStats.leoPassed}</div>
+                <div className="text-[10px] text-slate-500 font-medium mt-0.5">Let Export Order Issued</div>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-bold text-sky-600 uppercase tracking-wider font-mono">LEO Generated</div>
+                <div className="text-xl font-black text-sky-700 font-mono mt-0.5">{ediStats.leoGenerated}</div>
+                <div className="text-[10px] text-slate-500 font-medium mt-0.5">Ready for Port Gate In / Loading</div>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 border border-sky-100">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-bold text-amber-600 uppercase tracking-wider font-mono">Exam / Pending LEO</div>
+                <div className="text-xl font-black text-amber-700 font-mono mt-0.5">{ediStats.customsExam + ediStats.pendingLeo}</div>
+                <div className="text-[10px] text-slate-500 font-medium mt-0.5">In Assessment / Examination</div>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+                <Clock className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+
+          {/* EDI Action & Filter Toolbar */}
+          <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-3">
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+              {/* Search Box */}
+              <div className="flex-1 relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  placeholder="Search by Container No, Job No, Shipper, Consignee, SB No, Invoice No, POD..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[rgb(25,40,57)] focus:outline-none focus:border-blue-500 font-sans"
+                />
+              </div>
+
+              {/* Status Filter Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
+                {[
+                  { id: 'ALL', label: 'All Status' },
+                  { id: 'LEO_PASSED', label: '✓ LEO Passed' },
+                  { id: 'LEO_GENERATED', label: '⚡ LEO Generated' },
+                  { id: 'CUSTOMS_EXAM', label: '🔍 Customs Exam' },
+                  { id: 'PENDING_LEO', label: '⏳ Pending LEO' },
+                  { id: 'QUERY_RAISED', label: '⚠ Query Raised' }
+                ].map((st) => (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => setEdiStatusFilter(st.id)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                      ediStatusFilter === st.id
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {st.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Action Buttons: Upload .sb & Load Sample */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => handleOpenSbUpload()}
+                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                  title="Upload Indian Customs ICEGATE ICES 1.5 (.sb / RES) flat file"
+                >
+                  <UploadCloud className="w-3.5 h-3.5 text-blue-200" />
+                  <span>Upload .sb File</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleLoadSampleSb}
+                  className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs border border-amber-300 flex items-center gap-1 shadow-2xs transition cursor-pointer"
+                  title="Instantly test parser with authentic sample .sb file"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Load Sample .sb</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={loadLiveData}
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                  title="Refresh Live Database"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-600' : ''}`} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Bulk Action Bar for EDI */}
+          {selectedContIds.length > 0 && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs animate-fade-in">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-blue-900">
+                  Bulk EDI Action on {selectedContIds.length} Selected Container(s):
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={bulkVal}
+                  onChange={(e) => setBulkVal(e.target.value)}
+                  className="px-2.5 py-1 bg-white border border-blue-300 rounded text-xs font-sans font-medium"
+                >
+                  <option value="">-- Choose Status to Apply --</option>
+                  <option value="LEO_PASSED">✓ LEO Passed</option>
+                  <option value="LEO_GENERATED">⚡ LEO Generated</option>
+                  <option value="SB_FILED">⏳ SB Filed (Under Assessment)</option>
+                  <option value="CUSTOMS_EXAM">🔍 Customs Examination Completed</option>
+                  <option value="QUERY_RAISED">⚠ Query Raised by Customs</option>
+                </select>
+
+                <input
+                  type="date"
+                  value={bulkDate}
+                  onChange={(e) => setBulkDate(e.target.value)}
+                  className="px-2 py-1 bg-white border border-blue-300 rounded text-xs font-sans"
+                />
+
+                <button
+                  type="button"
+                  onClick={handleBulkApply}
+                  className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs transition cursor-pointer"
+                >
+                  <span>⚡ Apply to All Selected</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleOpenSbUpload()}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs transition cursor-pointer"
+                >
+                  <UploadCloud className="w-3.5 h-3.5" />
+                  <span>Upload .sb for Selected</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedContIds([])}
+                  className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Dedicated Tabular EDI View */}
+          <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-4">
+            <div className="overflow-x-auto rounded-lg border border-slate-200">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[11px] uppercase">
+                  <tr>
+                    <th className="py-2.5 px-3 w-8">
+                      <input
+                        type="checkbox"
+                        checked={filtered.length > 0 && selectedContIds.length === filtered.length}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedContIds(filtered.map(r => r.id || r.containerNo));
+                          else setSelectedContIds([]);
+                        }}
+                        className="rounded border-slate-300 text-blue-600 cursor-pointer"
+                      />
+                    </th>
+                    <th className="py-2.5 px-3">Container No</th>
+                    <th className="py-2.5 px-3">Job / Shipper</th>
+                    <th className="py-2.5 px-3">Consignee &amp; Route</th>
+                    <th className="py-2.5 px-3 font-bold text-blue-700">Shipping Bill (SB)</th>
+                    <th className="py-2.5 px-3">Party Invoice</th>
+                    <th className="py-2.5 px-3">Weight &amp; Seal</th>
+                    <th className="py-2.5 px-3 font-bold text-emerald-700">EDI / ICEGATE Status</th>
+                    <th className="py-2.5 px-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white">
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="p-8 text-center text-slate-400 font-sans">
+                        No containers found pending EDI Icegate Update.
+                      </td>
+                    </tr>
+                  ) : (
+                    pagedRows.map((r, idx) => (
+                      <tr
+                        key={idx}
+                        className="hover:bg-blue-50/70 transition group"
+                      >
+                        <td className="py-3 px-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedContIds.includes(r.id || r.containerNo)}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              const cid = r.id || r.containerNo;
+                              if (e.target.checked) setSelectedContIds([...selectedContIds, cid]);
+                              else setSelectedContIds(selectedContIds.filter(id => id !== cid));
+                            }}
+                            className="rounded border-slate-300 text-blue-600 cursor-pointer"
+                          />
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-mono font-bold text-blue-700 text-xs">{r.containerNo}</div>
+                          <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                            {r.size}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 max-w-[200px]">
+                          <div className="font-semibold text-slate-800 truncate" title={r.customer}>{r.customer}</div>
+                          <div className="font-mono text-[10px] text-blue-600 font-medium">{r.jobNo}</div>
+                        </td>
+                        <td className="py-3 px-3 max-w-[180px]">
+                          <div className="font-medium text-slate-700 truncate" title={r.consignee}>{r.consignee}</div>
+                          <div className="text-[10.5px] font-mono text-slate-500">
+                            {r.origin} &rarr; <span className="font-bold text-blue-700">{r.destination}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-mono font-bold text-blue-800 text-xs">{r.sbNo || 'Pending'}</div>
+                          <div className="text-[10px] text-slate-500 flex items-center gap-1 font-mono">
+                            <Calendar className="w-3 h-3 text-slate-400" />
+                            <span>{r.sbDate || '—'}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-mono font-semibold text-slate-800 text-[11px]">{r.invoiceNo || '—'}</div>
+                          <div className="text-[10px] text-slate-400 font-mono">{r.invoiceDate || '—'}</div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-mono text-slate-800 font-medium text-[11px]">{Number(r.grossWeight || 29120).toLocaleString()} KGS</div>
+                          <div className="text-[10px] text-slate-500 font-mono">Seal: {r.sealNumber || r.customSeal || 'SEAL-88910'}</div>
+                        </td>
+                        <td className="py-3 px-3">
+                          {(() => {
+                            const st = String(r.ediStatus || '').toUpperCase();
+                            if (st.includes('PASSED') || st.includes('CLEARED')) {
+                              return (
+                                <span className="px-2.5 py-1 rounded-full text-[10.5px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1">
+                                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                                  <span>LEO PASSED</span>
+                                </span>
+                              );
+                            }
+                            if (st.includes('GENERATED')) {
+                              return (
+                                <span className="px-2.5 py-1 rounded-full text-[10.5px] font-mono font-bold bg-sky-50 text-sky-800 border border-sky-300 inline-flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3 text-sky-600" />
+                                  <span>LEO GENERATED</span>
+                                </span>
+                              );
+                            }
+                            if (st.includes('EXAM')) {
+                              return (
+                                <span className="px-2.5 py-1 rounded-full text-[10.5px] font-mono font-bold bg-amber-50 text-amber-800 border border-amber-300 inline-flex items-center gap-1">
+                                  <Clock className="w-3 h-3 text-amber-600" />
+                                  <span>CUSTOMS EXAM</span>
+                                </span>
+                              );
+                            }
+                            if (st.includes('QUERY')) {
+                              return (
+                                <span className="px-2.5 py-1 rounded-full text-[10.5px] font-mono font-bold bg-rose-50 text-rose-800 border border-rose-300 inline-flex items-center gap-1">
+                                  <AlertTriangle className="w-3 h-3 text-rose-600" />
+                                  <span>QUERY RAISED</span>
+                                </span>
+                              );
+                            }
+                            return (
+                              <span className="px-2.5 py-1 rounded-full text-[10.5px] font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                {r.ediStatus || 'SB FILED'}
+                              </span>
+                            );
+                          })()}
+                          <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                            Filing: {r.ediFilingDate || r.sbDate || '—'}
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenManualEdi(r)}
+                              className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-[10.5px] shadow-2xs cursor-pointer inline-flex items-center gap-1 transition"
+                              title="Manual EDI Edit"
+                            >
+                              <Edit2 className="w-3 h-3 text-blue-600" />
+                              <span>Edit</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenSbUpload(r)}
+                              className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10.5px] shadow-xs cursor-pointer inline-flex items-center gap-1 whitespace-nowrap transition"
+                              title="Upload .sb ICEGATE Flat File for this container"
+                            >
+                              <Upload className="w-3 h-3 text-blue-200" />
+                              <span>Upload .sb</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* High-Speed Pagination Toolbar */}
+            {filtered.length > 0 && (
+              <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <div className="text-slate-500 font-mono text-[11px]">
+                  Showing <strong className="text-slate-800">{(safePage - 1) * pageSize + 1}</strong> to <strong className="text-slate-800">{Math.min(safePage * pageSize, filtered.length)}</strong> of <strong className="text-slate-900">{filtered.length}</strong> containers
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={safePage <= 1}
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-slate-700 flex items-center gap-1 cursor-pointer transition shadow-2xs text-xs"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Prev</span>
+                  </button>
+
+                  <span className="px-3 py-1 rounded-lg bg-white border border-slate-200 font-mono font-bold text-blue-700 text-xs shadow-2xs">
+                    Page {safePage} / {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    disabled={safePage >= totalPages}
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-slate-700 flex items-center gap-1 cursor-pointer transition shadow-2xs text-xs"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* 5. OTHER SECTIONS (Rail Out, BL Status, Telex, TR, etc.)       */}
+      {/* ------------------------------------------------------------- */}
+      {!['DocumentUpdate', 'SobUpdate', 'EdiUpdate'].includes(activeSection) && (
         <>
           {/* Filter Toolbar */}
           <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-3">
@@ -1550,6 +2150,357 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setModalOpen(false)} className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 cursor-pointer">Cancel</button>
                 <button type="submit" className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer">Save Update</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* 6. MODAL: ICEGATE .sb FILE UPLOAD & PARSER REVIEW             */}
+      {/* ------------------------------------------------------------- */}
+      {sbUploadModalOpen && (
+        <div className="fixed inset-0 z-[160] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in font-sans">
+          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="p-4 bg-gradient-to-r from-blue-700 to-indigo-800 text-white flex items-center justify-between select-none">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                  <UploadCloud className="w-5 h-5 text-blue-200" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm tracking-tight">Upload ICEGATE Shipping Bill (.sb / RES File)</h3>
+                  <p className="text-[11px] text-blue-200">Parse Indian Customs ICES 1.5 flat file format & sync to PostgreSQL</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setSbUploadModalOpen(false); setParsedSbData(null); }}
+                className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 overflow-y-auto text-xs">
+              {/* Dropzone */}
+              <div className="border-2 border-dashed border-blue-300 rounded-xl p-6 bg-blue-50/40 text-center hover:bg-blue-50/70 transition cursor-pointer relative group">
+                <input
+                  type="file"
+                  accept=".sb,.res,.txt,.edi"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileSelected(file);
+                  }}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
+                <Upload className="w-8 h-8 text-blue-600 mx-auto mb-2 group-hover:scale-110 transition" />
+                <div className="font-bold text-slate-800 text-sm">Click or Drag &amp; Drop .sb File Here</div>
+                <div className="text-[11px] text-slate-500 mt-1">
+                  Supports Indian Customs ICEGATE 1.5 Flat File (.sb, .res, .txt, ASCII \x1d delimited)
+                </div>
+              </div>
+
+              {/* Quick Sample Button */}
+              <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <div>
+                  <div className="text-slate-800 font-bold text-xs">Test with Authentic Sample .sb File</div>
+                  <div className="text-slate-500 text-[11px]">Loads real ICEGATE Shipping Bill data (IFF India Frozen Foods)</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLoadSampleSb}
+                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-blue-700 font-bold border border-blue-200 rounded-lg text-xs flex items-center gap-1.5 shadow-2xs cursor-pointer transition"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Load Sample .sb</span>
+                </button>
+              </div>
+
+              {/* Parsed Results Card */}
+              {parsedSbData && (
+                <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 space-y-3 animate-fade-in">
+                  <div className="flex items-center justify-between border-b border-emerald-200/80 pb-2.5">
+                    <span className="font-bold text-emerald-950 flex items-center gap-2 text-xs">
+                      <CheckCircle className="w-4 h-4 text-emerald-600" />
+                      Successfully Parsed ICEGATE .sb Message
+                    </span>
+                    <span className="text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold border border-emerald-200">
+                      Station: {parsedSbData.summary.pol}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-[11px]">
+                    <div className="bg-white p-2.5 rounded-lg border border-emerald-100 shadow-2xs">
+                      <div className="text-slate-400 font-medium text-[10px]">Shipping Bill (SB) No</div>
+                      <div className="font-mono font-black text-blue-700 text-xs mt-0.5">{parsedSbData.summary.sbNo || 'Pending'}</div>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-lg border border-emerald-100 shadow-2xs">
+                      <div className="text-slate-400 font-medium text-[10px]">SB Filing Date</div>
+                      <div className="font-mono font-bold text-slate-800 text-xs mt-0.5">{parsedSbData.summary.sbDate || '—'}</div>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-lg border border-emerald-100 shadow-2xs">
+                      <div className="text-slate-400 font-medium text-[10px]">POL &rarr; POD Route</div>
+                      <div className="font-mono font-bold text-slate-800 text-xs mt-0.5">{parsedSbData.summary.pol} &rarr; {parsedSbData.summary.pod}</div>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-lg border border-emerald-100 col-span-2 shadow-2xs">
+                      <div className="text-slate-400 font-medium text-[10px]">Exporter / Shipper</div>
+                      <div className="font-bold text-slate-800 truncate text-xs mt-0.5" title={parsedSbData.summary.exporterName}>
+                        {parsedSbData.summary.exporterName || '—'}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono">GSTIN: {parsedSbData.summary.gstin || '—'} &bull; IEC: {parsedSbData.summary.iec || '—'}</div>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-lg border border-emerald-100 shadow-2xs">
+                      <div className="text-slate-400 font-medium text-[10px]">Consignee Country</div>
+                      <div className="font-bold text-slate-800 text-xs mt-0.5">{parsedSbData.summary.country} (UAE)</div>
+                      <div className="text-[10px] text-slate-500 truncate">{parsedSbData.summary.consigneeName}</div>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-lg border border-emerald-100 shadow-2xs">
+                      <div className="text-slate-400 font-medium text-[10px]">Commercial Invoice</div>
+                      <div className="font-mono font-bold text-slate-800 text-xs mt-0.5">{parsedSbData.summary.invoiceNo || '—'}</div>
+                      <div className="text-[10px] text-slate-500 font-mono">{parsedSbData.summary.currency} {parsedSbData.summary.invoiceAmount} ({parsedSbData.summary.invoiceDate})</div>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-lg border border-emerald-100 shadow-2xs">
+                      <div className="text-slate-400 font-medium text-[10px]">Cargo Gross Weight</div>
+                      <div className="font-mono font-bold text-slate-800 text-xs mt-0.5">{Number(parsedSbData.summary.grossWeight || 29120).toLocaleString()} {parsedSbData.summary.weightUnit}</div>
+                      <div className="text-[10px] text-slate-500 font-mono">{parsedSbData.summary.totalPackages} Total Packages</div>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-lg border border-emerald-100 shadow-2xs">
+                      <div className="text-slate-400 font-medium text-[10px]">Commodity / HS Code</div>
+                      <div className="font-bold text-slate-800 truncate text-xs mt-0.5" title={parsedSbData.summary.itemDescription}>
+                        {parsedSbData.summary.itemDescription || 'Frozen Meat'}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono">HS: {parsedSbData.summary.hsCode || '02023000'}</div>
+                    </div>
+                  </div>
+
+                  {/* Target Container Selector */}
+                  <div className="pt-2 border-t border-emerald-200/80 space-y-1.5">
+                    <label className="font-bold text-slate-800 block text-xs">
+                      Link &amp; Apply this Shipping Bill to Container:
+                    </label>
+                    <select
+                      value={sbTargetContId}
+                      onChange={(e) => setSbTargetContId(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 font-sans text-xs focus:outline-none focus:border-blue-500 font-medium shadow-2xs"
+                    >
+                      <option value="">-- Choose Container to Update --</option>
+                      {rows.map((r) => (
+                        <option key={r.id || r.containerNo} value={r.id || r.containerNo}>
+                          {r.containerNo} ({r.size}) — {r.customer} ({r.jobNo}) &rarr; {r.destination}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedContIds.length > 1 && (
+                      <div className="text-[11px] font-bold text-blue-700 mt-1">
+                        ⚡ Will also automatically apply to all {selectedContIds.length} checked containers!
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => { setSbUploadModalOpen(false); setParsedSbData(null); }}
+                className="px-4 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 font-medium text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!parsedSbData}
+                onClick={handleApplySbToDatabase}
+                className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+              >
+                <Check className="w-4 h-4" />
+                <span>Save &amp; Sync EDI to PostgreSQL DB</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* 7. MODAL: MANUAL EDI & SHIPPING BILL FORM                     */}
+      {/* ------------------------------------------------------------- */}
+      {ediManualModalOpen && (
+        <div className="fixed inset-0 z-[160] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in font-sans">
+          <div className="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+            <div className="p-4 bg-[#232f3e] text-white flex items-center justify-between select-none">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Edit2 className="w-4 h-4 text-blue-300" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm tracking-tight">Manual EDI &amp; Shipping Bill Update</h3>
+                  <p className="text-[11px] text-slate-300">
+                    Container: <span className="text-white font-mono font-bold">{manualEdiForm.containerNo}</span> ({manualEdiForm.sizeType}) &bull; {manualEdiForm.jobNo}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEdiManualModalOpen(false)}
+                className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveManualEdi} className="p-5 space-y-3.5 overflow-y-auto text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Shipping Bill (SB) No *</label>
+                  <input
+                    type="text"
+                    required
+                    value={manualEdiForm.sbNo}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, sbNo: e.target.value.toUpperCase() })}
+                    placeholder="e.g. SB-981024 / 5108"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-blue-700 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">SB Filing Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={manualEdiForm.sbDate}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, sbDate: e.target.value })}
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">EDI Icegate / LEO Status *</label>
+                  <select
+                    value={manualEdiForm.ediSbStatus}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, ediSbStatus: e.target.value })}
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans font-medium focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="LEO_PASSED">LEO Passed (Let Export Order Issued)</option>
+                    <option value="LEO_GENERATED">LEO Generated (Ready for Loading)</option>
+                    <option value="SB_FILED">SB Filed (Pending Customs Assessment)</option>
+                    <option value="CUSTOMS_EXAM">Customs Examination Completed</option>
+                    <option value="QUERY_RAISED">Query Raised by Appraiser / Customs</option>
+                    <option value="REJECTED">EDI Transmission Rejected</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">LEO Clearance Date</label>
+                  <input
+                    type="date"
+                    value={manualEdiForm.ediFilingDate}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, ediFilingDate: e.target.value })}
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Party Commercial Invoice No</label>
+                  <input
+                    type="text"
+                    value={manualEdiForm.invoiceNo}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, invoiceNo: e.target.value })}
+                    placeholder="e.g. IFF/EXP/27/0943"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Invoice Date</label>
+                  <input
+                    type="date"
+                    value={manualEdiForm.invoiceDate}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, invoiceDate: e.target.value })}
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Consignee (Foreign Buyer)</label>
+                  <input
+                    type="text"
+                    value={manualEdiForm.consignee}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, consignee: e.target.value })}
+                    placeholder="e.g. SIDCO FOODS TRADING LLC"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans text-slate-800 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Gross Cargo Weight (KGS)</label>
+                  <input
+                    type="number"
+                    value={manualEdiForm.grossWeight}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, grossWeight: e.target.value })}
+                    placeholder="e.g. 29120"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Customs Seal No</label>
+                  <input
+                    type="text"
+                    value={manualEdiForm.customSeal}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, customSeal: e.target.value })}
+                    placeholder="e.g. CUST-99214"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">Line / Agent Seal No</label>
+                  <input
+                    type="text"
+                    value={manualEdiForm.sealNumber}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, sealNumber: e.target.value })}
+                    placeholder="e.g. MSC-88190"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="font-bold text-slate-700">Cargo / Item Description</label>
+                  <textarea
+                    rows={2}
+                    value={manualEdiForm.itemDescription}
+                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, itemDescription: e.target.value })}
+                    placeholder="e.g. FROZEN BONELESS BUFFALO MEAT"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans text-slate-800 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setEdiManualModalOpen(false)}
+                  className="px-4 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 font-medium text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Save EDI Update to DB</span>
+                </button>
               </div>
             </form>
           </div>

@@ -785,6 +785,13 @@ async function getLifecycleRows(extraWhere = '1=1') {
       c.handover_status, c.handover_date, c.egm_no, c.egm_date, c.discharge_date,
       c.delivered_to_consignee_date, c.empty_returned_depot_date,
       c.empty_out_date, c.factory_gate_in_date, c.factory_gate_out_date, c.buffer_in_date, c.loaded_icd_in_date,
+      c.custom_seal,
+      COALESCE(c.sb_no, j.sb_no) as sb_no,
+      COALESCE(c.sb_date, j.sb_date) as sb_date,
+      COALESCE(c.invoice_no, j.party_invoice_no) as invoice_no,
+      COALESCE(c.invoice_date, j.party_invoice_date) as invoice_date,
+      COALESCE(c.consignee_name, j.consignee_name) as consignee_name,
+      COALESCE(c.item_description, j.commodity) as item_description,
       j.job_number, j.booking_no, j.customer_name, j.shipping_line_name,
       j.origin_port_name, j.pod_port_name, j.vessel_name, j.commodity
     FROM job_containers c
@@ -800,6 +807,14 @@ async function getLifecycleRows(extraWhere = '1=1') {
     tareWeight: Number(r.tare_weight) || 0,
     grossWeight: Number(r.gross_weight) || 0,
     cargoWeight: Number(r.cargo_weight) || 0,
+    sealNumber: r.seal_number || '',
+    customSeal: r.custom_seal || '',
+    sbNo: r.sb_no || 'SB-981024',
+    sbDate: r.sb_date ? new Date(r.sb_date).toISOString().split('T')[0] : '2026-10-28',
+    invoiceNo: r.invoice_no || '',
+    invoiceDate: r.invoice_date ? new Date(r.invoice_date).toISOString().split('T')[0] : '',
+    consignee: r.consignee_name || '',
+    itemDescription: r.item_description || r.commodity || '',
     jobNo: r.job_number,
     bookingNo: r.booking_no,
     shipper: r.customer_name,
@@ -938,17 +953,124 @@ router.get('/edi-update', async (req, res) => {
 
 router.post('/edi-update', async (req, res) => {
   try {
-    const { containerId, ediSbStatus } = req.body;
+    const { 
+      containerId, 
+      ediSbStatus, 
+      ediFilingDate,
+      sbNo, 
+      sbDate, 
+      invoiceNo, 
+      invoiceDate, 
+      consignee,
+      consigneeName,
+      sealNumber,
+      customSeal,
+      grossWeight,
+      itemDescription
+    } = req.body;
+
+    const finalConsignee = consigneeName || consignee;
+
     const { rows } = await db.query(
       `UPDATE job_containers SET 
          edi_sb_status = COALESCE($1, edi_sb_status),
-         edi_filing_date = CURRENT_DATE,
+         edi_filing_date = COALESCE($2::DATE, edi_filing_date, CURRENT_DATE),
+         sb_no = COALESCE($3, sb_no),
+         sb_date = COALESCE($4::DATE, sb_date),
+         invoice_no = COALESCE($5, invoice_no),
+         invoice_date = COALESCE($6::DATE, invoice_date),
+         consignee_name = COALESCE($7, consignee_name),
+         seal_number = COALESCE($8, seal_number),
+         custom_seal = COALESCE($9, custom_seal),
+         gross_weight = COALESCE($10::NUMERIC, gross_weight),
+         item_description = COALESCE($11, item_description),
          updated_at = NOW()
-       WHERE id = $2 OR container_number = $2 RETURNING *`,
-      [ediSbStatus || 'LEO_PASSED', containerId]
+       WHERE id = $12 OR container_number = $12 RETURNING *`,
+      [
+        ediSbStatus || 'LEO_PASSED',
+        ediFilingDate || null,
+        sbNo || null,
+        sbDate || null,
+        invoiceNo || null,
+        invoiceDate || null,
+        finalConsignee || null,
+        sealNumber || null,
+        customSeal || null,
+        grossWeight ? Number(grossWeight) : null,
+        itemDescription || null,
+        containerId
+      ]
     );
+
+    // Sync to parent job_orders table if SB/Invoice provided
+    if (sbNo || sbDate || invoiceNo || invoiceDate || finalConsignee) {
+      await db.query(
+        `UPDATE job_orders SET
+           sb_no = COALESCE($1, sb_no),
+           sb_date = COALESCE($2::DATE, sb_date),
+           party_invoice_no = COALESCE($3, party_invoice_no),
+           party_invoice_date = COALESCE($4::DATE, party_invoice_date),
+           consignee_name = COALESCE($5, consignee_name),
+           updated_at = NOW()
+         WHERE id = (SELECT job_id FROM job_containers WHERE id = $6 OR container_number = $6 LIMIT 1)`,
+        [sbNo || null, sbDate || null, invoiceNo || null, invoiceDate || null, finalConsignee || null, containerId]
+      );
+    }
+
     res.json({ success: true, data: rows[0] });
   } catch (err) {
+    console.error('Error in edi-update:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// EDI Bulk Update for multi-container selection
+router.post('/edi-bulk-update', async (req, res) => {
+  try {
+    const { 
+      containerIds = [], 
+      ediSbStatus, 
+      ediFilingDate,
+      sbNo, 
+      sbDate, 
+      invoiceNo, 
+      invoiceDate, 
+      consignee,
+      itemDescription
+    } = req.body;
+
+    if (!Array.isArray(containerIds) || containerIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'No containers provided for bulk update' });
+    }
+
+    const { rowCount } = await db.query(
+      `UPDATE job_containers SET 
+         edi_sb_status = COALESCE($1, edi_sb_status),
+         edi_filing_date = COALESCE($2::DATE, edi_filing_date, CURRENT_DATE),
+         sb_no = COALESCE($3, sb_no),
+         sb_date = COALESCE($4::DATE, sb_date),
+         invoice_no = COALESCE($5, invoice_no),
+         invoice_date = COALESCE($6::DATE, invoice_date),
+         consignee_name = COALESCE($7, consignee_name),
+         item_description = COALESCE($8, item_description),
+         updated_at = NOW()
+       WHERE id = ANY($9::text[]) OR container_number = ANY($9::text[])`,
+      [
+        ediSbStatus || null,
+        ediFilingDate || null,
+        sbNo || null,
+        sbDate || null,
+        invoiceNo || null,
+        invoiceDate || null,
+        consignee || null,
+        itemDescription || null,
+        containerIds
+      ]
+    );
+
+    res.json({ success: true, updatedCount: rowCount });
+  } catch (err) {
+    console.error('Error in edi-bulk-update:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

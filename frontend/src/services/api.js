@@ -221,6 +221,7 @@ export const api = {
   updateRunningPosition: (payload) => request('/operations/running-position', { method: 'POST', body: JSON.stringify(payload) }),
   updateTripClose: (payload) => request('/operations/trip-close', { method: 'POST', body: JSON.stringify(payload) }),
   updateEdi: (payload) => request('/operations/edi-update', { method: 'POST', body: JSON.stringify(payload) }),
+  updateEdiBulk: (payload) => request('/operations/edi-bulk-update', { method: 'POST', body: JSON.stringify(payload) }),
   updateRailOut: (payload) => request('/operations/rail-out', { method: 'POST', body: JSON.stringify(payload) }),
   updateVesselPlan: (payload) => request('/operations/vessel-plan', { method: 'POST', body: JSON.stringify(payload) }),
   updateSob: (payload) => request('/operations/sob-update', { method: 'POST', body: JSON.stringify(payload) }),
