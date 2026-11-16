@@ -140,7 +140,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
     { containerNo: 'MEDU9004289', size: '40RF', customer: 'INTERNATIONAL AGRO FOODS', consignee: 'AL-FARIS TRADING CO LLC', jobNo: 'JO-94290', origin: 'TRANSWORLD-DADRI', destination: 'NHAVA SHEVA', line: 'MSC GROUP', vessel: 'MSC VALENCIA', voyageNo: '112W', sbNo: 'SB-981025', sbDate: '2026-10-29', invoiceNo: 'INV-2026-0991', invoiceDate: '2026-10-28', grossWeight: 28400, packages: 1250, sealNumber: 'SEAL-88911', customSeal: 'CUSTOM-9922', ediStatus: 'LEO_GENERATED', ediFilingDate: '2026-10-29', itemDescription: 'CHILLED BONELESS MEAT', trainNo: 'CONCOR DFC #9182', wagonNo: 'CR-104929', deckTier: 'LOWER', rakeDate: '2026-10-29', sobDate: '2026-11-05', plannedSobDate: '2026-11-05', delayDays: 0, isDelayed: false },
     { containerNo: 'HLBU9943648', size: '40RF', customer: 'ARS AGRO FOODS', consignee: 'MIDDLE EAST CATERING LTD', jobNo: 'JO-94291', origin: 'TRANSWORLD-DADRI', destination: 'PORT SAID', line: 'HAPAG GROUP', vessel: 'AL NEFUD', voyageNo: '034E', sbNo: 'SB-981026', sbDate: '2026-10-30', invoiceNo: 'INV-2026-0992', invoiceDate: '2026-10-29', grossWeight: 27900, packages: 1320, sealNumber: 'SEAL-88912', customSeal: 'CUSTOM-9923', ediStatus: 'CUSTOMS_EXAM', ediFilingDate: '2026-10-30', itemDescription: 'FROZEN MEAT CARCASSES', trainNo: 'CONCOR DFC #9184', wagonNo: 'CR-104930', deckTier: 'UPPER', rakeDate: '2026-10-30', plannedSobDate: '2026-11-06', revisedSobDate: '2026-11-10', delayDays: 4, isDelayed: true },
     { containerNo: 'EMCU5388133', size: '40RF', customer: 'HMA AGRO INDUSTRIES LTD', consignee: 'EMIRATES GLOBAL LOGISTICS', jobNo: 'JO-94292', origin: 'TRANSWORLD-DADRI', destination: 'JEBEL ALI', line: 'EVERGREEN GROUP', vessel: 'EVER LIFTING', voyageNo: '066E', sbNo: 'SB-981027', sbDate: '2026-10-31', invoiceNo: 'INV-2026-0993', invoiceDate: '2026-10-30', grossWeight: 29000, packages: 1400, sealNumber: 'SEAL-88913', customSeal: 'CUSTOM-9924', ediStatus: 'LEO_PASSED', ediFilingDate: '2026-10-31', itemDescription: 'PROCESSED FROZEN MEAT', trainNo: 'CONCOR DFC #9184', wagonNo: 'CR-104931', deckTier: 'LOWER', rakeDate: '2026-10-31', sobDate: '2026-11-07', plannedSobDate: '2026-11-07', delayDays: 0, isDelayed: false },
-    { containerNo: 'MNBU3352101', size: '40RF', customer: 'MIRHA EXPORTS PVT. LTD.(PUNJAB)', consignee: 'KUWAIT SUPPLY CO WLL', jobNo: 'JO-94293', origin: 'TRANSWORLD-DADRI', destination: 'SHUWAIKH', line: 'MAERSK GROUP', vessel: 'MAERSK COLOMBO', voyageNo: '441S', sbNo: 'SB-981028', sbDate: '2026-11-01', invoiceNo: 'INV-2026-0994', invoiceDate: '2026-10-31', grossWeight: 28100, packages: 1100, sealNumber: 'SEAL-88914', customSeal: 'CUSTOM-9925', ediStatus: 'QUERY_RAISED', ediFilingDate: '2026-11-01', itemDescription: 'FROZEN BONED MEAT', trainNo: 'CONCOR DFC #9185', wagonNo: 'CR-104932', deckTier: 'UPPER', rakeDate: '2026-11-01', plannedSobDate: '2026-11-09', revisedSobDate: '2026-11-15', delayDays: 6, isDelayed: true },
+    { containerNo: 'MNBU3352101', size: '40RF', customer: 'MIRHA EXPORTS PVT. LTD.(PUNJAB)', consignee: 'KUWAIT SUPPLY CO WLL', jobNo: 'JO-94293', origin: 'TRANSWORLD-DADRI', destination: 'SHUWAIKH', line: 'MAERSK GROUP', vessel: 'MAERSK COLOMBO', voyageNo: '441S', sbNo: 'SB-981028', sbDate: '2026-11-01', invoiceNo: 'INV-2026-0994', invoiceDate: '2026-10-31', grossWeight: 28100, packages: 1100, sealNumber: 'SEAL-88914', customSeal: 'CUSTOM-9925', ediStatus: 'CUSTOMS_EXAM', ediFilingDate: '2026-11-01', itemDescription: 'FROZEN BONED MEAT', trainNo: 'CONCOR DFC #9185', wagonNo: 'CR-104932', deckTier: 'UPPER', rakeDate: '2026-11-01', plannedSobDate: '2026-11-09', revisedSobDate: '2026-11-15', delayDays: 6, isDelayed: true },
     { containerNo: 'MMAU1157581', size: '40RF', customer: 'HMA AGRO INDUSTRIES LTD', consignee: 'GULF FOODSTUFF TRADING', jobNo: 'JO-94294', origin: 'TRANSWORLD-DADRI', destination: 'HAMAD PORT', line: 'MAERSK GROUP', vessel: 'MAERSK COLOMBO', voyageNo: '441S', sbNo: 'SB-981029', sbDate: '2026-11-02', invoiceNo: 'INV-2026-0995', invoiceDate: '2026-11-01', grossWeight: 28800, packages: 1350, sealNumber: 'SEAL-88915', customSeal: 'CUSTOM-9926', ediStatus: 'LEO_PASSED', ediFilingDate: '2026-11-02', itemDescription: 'BUFFALO OFFALS FROZEN', trainNo: 'CONCOR DFC #9185', wagonNo: 'CR-104933', deckTier: 'LOWER', rakeDate: '2026-11-02', sobDate: '2026-11-06', plannedSobDate: '2026-11-06', delayDays: 0, isDelayed: false },
     { containerNo: 'SZLU9747540', size: '40RF', customer: 'INTERNATIONAL AGRO FOODS', consignee: 'MALAYSIA HALAL DISTRIBUTORS', jobNo: 'JO-94295', origin: 'TRANSWORLD-DADRI', destination: 'PORT KLANG', line: 'WAN HAI GROUP', vessel: 'WAN HAI 502', voyageNo: 'W108', sbNo: 'SB-981030', sbDate: '2026-11-02', invoiceNo: 'INV-2026-0996', invoiceDate: '2026-11-01', grossWeight: 27500, packages: 1200, sealNumber: 'SEAL-88916', customSeal: 'CUSTOM-9927', ediStatus: 'SB_FILED', ediFilingDate: '2026-11-02', itemDescription: 'BEEF TENDERLOIN FROZEN', trainNo: 'CONCOR DFC #9186', wagonNo: 'CR-104934', deckTier: 'UPPER', rakeDate: '2026-11-02', plannedSobDate: '2026-11-07', revisedSobDate: '2026-11-12', delayDays: 5, isDelayed: true },
     { containerNo: 'FBIU5296090', size: '40RF', customer: 'IFF INDIA FROZEN FOODS', consignee: 'OCEANIC TRADERS PTE LTD', jobNo: 'JO-94296', origin: 'TRANSWORLD-DADRI', destination: 'SINGAPORE', line: 'WAN HAI GROUP', vessel: 'WAN HAI 502', voyageNo: 'W108', sbNo: 'SB-981031', sbDate: '2026-11-03', invoiceNo: 'INV-2026-0997', invoiceDate: '2026-11-02', grossWeight: 29120, packages: 1472, sealNumber: 'SEAL-88917', customSeal: 'CUSTOM-9928', ediStatus: 'LEO_PASSED', ediFilingDate: '2026-11-03', itemDescription: 'FROZEN BONELESS BUFFALO MEAT', trainNo: 'CONCOR DFC #9186', wagonNo: 'CR-104935', deckTier: 'LOWER', rakeDate: '2026-11-03', sobDate: '2026-11-08', plannedSobDate: '2026-11-08', delayDays: 0, isDelayed: false }
@@ -477,13 +477,11 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
     let leoGenerated = 0;
     let customsExam = 0;
     let pendingLeo = 0;
-    let queryRaised = 0;
     rows.forEach(r => {
       const st = String(r.ediStatus || '').toUpperCase();
       if (st.includes('PASSED') || st.includes('CLEARED')) leoPassed++;
       else if (st.includes('GENERATED')) leoGenerated++;
       else if (st.includes('EXAM')) customsExam++;
-      else if (st.includes('QUERY')) queryRaised++;
       else pendingLeo++;
     });
     return {
@@ -491,8 +489,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
       leoPassed,
       leoGenerated,
       customsExam,
-      pendingLeo,
-      queryRaised
+      pendingLeo
     };
   }, [rows]);
 
@@ -651,8 +648,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
           if (ediStatusFilter === 'LEO_PASSED' && !(st.includes('PASSED') || st.includes('CLEARED'))) return false;
           if (ediStatusFilter === 'LEO_GENERATED' && !st.includes('GENERATED')) return false;
           if (ediStatusFilter === 'CUSTOMS_EXAM' && !st.includes('EXAM')) return false;
-          if (ediStatusFilter === 'PENDING_LEO' && !(st.includes('PENDING') || st.includes('FILED') || st.includes('SUBMITTED') || (!st.includes('PASSED') && !st.includes('GENERATED') && !st.includes('EXAM') && !st.includes('QUERY')))) return false;
-          if (ediStatusFilter === 'QUERY_RAISED' && !st.includes('QUERY')) return false;
+          if (ediStatusFilter === 'PENDING_LEO' && !(st.includes('PENDING') || st.includes('FILED') || st.includes('SUBMITTED') || (!st.includes('PASSED') && !st.includes('GENERATED') && !st.includes('EXAM')))) return false;
         }
 
         if (searchTerm.trim()) {
@@ -1426,12 +1422,12 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
               }`}
             >
               <div>
-                <div className="text-[11px] font-bold text-amber-600 uppercase tracking-wider font-mono">Exam / Pending / Query</div>
+                <div className="text-[11px] font-bold text-amber-600 uppercase tracking-wider font-mono">Exam / Pending LEO</div>
                 <div className="text-xl font-black text-amber-700 font-mono mt-0.5">
-                  {ediStats.customsExam + ediStats.pendingLeo + ediStats.queryRaised}
+                  {ediStats.customsExam + ediStats.pendingLeo}
                 </div>
                 <div className="text-[10px] text-slate-500 font-medium mt-0.5">
-                  Exam ({ediStats.customsExam}) &bull; Pend ({ediStats.pendingLeo}) &bull; Query ({ediStats.queryRaised})
+                  In Assessment / Examination
                 </div>
               </div>
               <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
@@ -1455,32 +1451,26 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                 />
               </div>
 
-              {/* Status Filter Pills with live counts */}
+              {/* Status Filter Pills */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
                 {[
-                  { id: 'ALL', label: 'All Status', count: ediStats.total },
-                  { id: 'LEO_PASSED', label: '✓ LEO Passed', count: ediStats.leoPassed },
-                  { id: 'LEO_GENERATED', label: '⚡ LEO Generated', count: ediStats.leoGenerated },
-                  { id: 'CUSTOMS_EXAM', label: '🔍 Customs Exam', count: ediStats.customsExam },
-                  { id: 'PENDING_LEO', label: '⏳ Pending LEO', count: ediStats.pendingLeo },
-                  { id: 'QUERY_RAISED', label: '⚠ Query Raised', count: ediStats.queryRaised }
+                  { id: 'ALL', label: 'All Status' },
+                  { id: 'LEO_PASSED', label: '✓ LEO Passed' },
+                  { id: 'LEO_GENERATED', label: '⚡ LEO Generated' },
+                  { id: 'CUSTOMS_EXAM', label: '🔍 Customs Exam' },
+                  { id: 'PENDING_LEO', label: '⏳ Pending LEO' }
                 ].map((st) => (
                   <button
                     key={st.id}
                     type="button"
                     onClick={() => setEdiStatusFilter(st.id)}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
                       ediStatusFilter === st.id
                         ? 'bg-blue-600 text-white shadow-2xs'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                   >
-                    <span>{st.label}</span>
-                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
-                      ediStatusFilter === st.id ? 'bg-white/25 text-white' : 'bg-white text-slate-700 border border-slate-200'
-                    }`}>
-                      {st.count}
-                    </span>
+                    {st.label}
                   </button>
                 ))}
               </div>
@@ -1557,13 +1547,6 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                   className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-2xs cursor-pointer transition"
                 >
                   ⏳ Pending LEO
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleBulkStatusChange('QUERY_RAISED')}
-                  className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-2xs cursor-pointer transition"
-                >
-                  ⚠ Query Raised
                 </button>
 
                 <button
@@ -1695,8 +1678,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                               value={
                                 String(r.ediStatus).includes('PASSED') || String(r.ediStatus).includes('CLEARED') ? 'LEO_PASSED' :
                                 String(r.ediStatus).includes('GENERATED') ? 'LEO_GENERATED' :
-                                String(r.ediStatus).includes('EXAM') ? 'CUSTOMS_EXAM' :
-                                String(r.ediStatus).includes('QUERY') ? 'QUERY_RAISED' : 'SB_FILED'
+                                String(r.ediStatus).includes('EXAM') ? 'CUSTOMS_EXAM' : 'SB_FILED'
                               }
                               onChange={async (e) => {
                                 const newSt = e.target.value;
@@ -1721,8 +1703,6 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                                   ? 'bg-sky-50 text-sky-800 border-sky-300'
                                   : String(r.ediStatus).includes('EXAM')
                                   ? 'bg-amber-50 text-amber-800 border-amber-300'
-                                  : String(r.ediStatus).includes('QUERY')
-                                  ? 'bg-rose-50 text-rose-800 border-rose-300'
                                   : 'bg-indigo-50 text-indigo-800 border-indigo-300'
                               }`}
                             >
@@ -1730,7 +1710,6 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                               <option value="LEO_GENERATED">⚡ LEO GENERATED</option>
                               <option value="CUSTOMS_EXAM">🔍 CUSTOMS EXAM</option>
                               <option value="SB_FILED">⏳ PENDING LEO</option>
-                              <option value="QUERY_RAISED">⚠ QUERY RAISED</option>
                             </select>
                           </div>
                           <div className="text-[10px] text-slate-400 font-mono mt-0.5">
@@ -2571,7 +2550,6 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                     <option value="LEO_GENERATED">LEO Generated (Ready for Loading)</option>
                     <option value="SB_FILED">SB Filed (Pending Customs Assessment)</option>
                     <option value="CUSTOMS_EXAM">Customs Examination Completed</option>
-                    <option value="QUERY_RAISED">Query Raised by Appraiser / Customs</option>
                     <option value="REJECTED">EDI Transmission Rejected</option>
                   </select>
                 </div>
