@@ -846,7 +846,7 @@ async function getLifecycleRows(extraWhere = '1=1') {
     loadedIcdInDate: r.loaded_icd_in_date ? new Date(r.loaded_icd_in_date).toISOString().split('T')[0] : '',
     podReceivedBy: r.pod_received_by || '',
     tripCloseDate: r.trip_close_date || null,
-    ediSbStatus: r.edi_sb_status || 'LEO_GENERATED',
+    ediSbStatus: r.edi_sb_status || 'SB_FILED',
     ediFilingDate: r.edi_filing_date || null,
     trainNo: r.train_no || '',
     wagonNo: r.wagon_no || '',
@@ -1007,7 +1007,7 @@ router.post('/edi-update', async (req, res) => {
          updated_at = NOW()
        WHERE id = $17 OR container_number = $17 RETURNING *`,
       [
-        ediSbStatus || 'LEO_PASSED',
+        ediSbStatus || null,
         ediFilingDate || null,
         sbNo || null,
         sbDate || null,

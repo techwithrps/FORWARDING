@@ -188,7 +188,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
         customSeal: c.customSeal || 'CUSTOM-9921',
         itemDescription: c.itemDescription || 'FROZEN BONELESS BUFFALO MEAT',
         blNo: c.blNo || 'MSK-2026-98124',
-        ediStatus: c.ediSbStatus || 'LEO_PASSED',
+        ediStatus: c.ediSbStatus || 'SB_FILED',
         ediFilingDate: c.ediFilingDate || c.sbDate || '2026-10-28',
         trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
         wagonNo: c.wagonNo || 'CR-104928',
@@ -247,7 +247,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
             customSeal: c.customSeal || 'CUSTOM-9921',
             itemDescription: j.commodity || 'FROZEN BONELESS BUFFALO MEAT',
             blNo: j.blNo || 'MSK-2026-98124',
-            ediStatus: c.ediSbStatus || 'LEO_PASSED',
+            ediStatus: c.ediSbStatus || 'SB_FILED',
             ediFilingDate: c.ediFilingDate || j.sbDate || '2026-10-28',
             trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
             wagonNo: c.wagonNo || 'CR-104928',
@@ -291,6 +291,28 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
 
   const activeMeta = sections.find((s) => s.id === activeSection) || sections[0];
 
+  // 1-Click Status Update for all checked containers
+  const handleBulkStatusChange = async (targetStatus) => {
+    if (selectedContIds.length === 0) return;
+    try {
+      await api.updateEdiBulk({
+        containerIds: selectedContIds,
+        ediSbStatus: targetStatus
+      });
+      rows.forEach(r => {
+        if (selectedContIds.includes(r.id || r.containerNo)) {
+          r.ediStatus = targetStatus;
+        }
+      });
+      setNotice(`✓ Updated ${selectedContIds.length} container(s) to ${targetStatus} in PostgreSQL DB!`);
+      setTimeout(() => setNotice(''), 3000);
+      setSelectedContIds([]);
+      loadLiveData();
+    } catch (err) {
+      alert('Error in bulk status update: ' + err.message);
+    }
+  };
+
   // 1-Click Bulk Update for all selected containers
   const handleBulkApply = async () => {
     if (selectedContIds.length === 0) {
@@ -302,14 +324,38 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
       return;
     }
 
+    if (activeSection === 'EdiUpdate') {
+      try {
+        await api.updateEdiBulk({
+          containerIds: selectedContIds,
+          ediSbStatus: bulkVal || null,
+          ediFilingDate: bulkDate || null
+        });
+        rows.forEach(r => {
+          if (selectedContIds.includes(r.id || r.containerNo)) {
+            if (bulkVal) r.ediStatus = bulkVal;
+            if (bulkDate) r.ediFilingDate = bulkDate;
+          }
+        });
+        setNotice(`✓ Bulk updated ${selectedContIds.length} containers in PostgreSQL DB!`);
+        setTimeout(() => setNotice(''), 3000);
+        setSelectedContIds([]);
+        setBulkVal('');
+        setBulkDate('');
+        loadLiveData();
+        return;
+      } catch (err) {
+        console.error('Error in EDI bulk apply:', err);
+        alert('Error applying bulk update: ' + err.message);
+        return;
+      }
+    }
+
     const targets = rows.filter(r => selectedContIds.includes(r.id || r.containerNo));
     for (const r of targets) {
       try {
         const cid = r.id || r.containerNo;
-        if (activeSection === 'EdiUpdate') {
-          await api.updateEdi({ containerId: cid, ediSbStatus: bulkVal });
-          r.ediStatus = bulkVal;
-        } else if (activeSection === 'RailOutStatus') {
+        if (activeSection === 'RailOutStatus') {
           await api.updateRailOut({
             containerId: cid,
             trainNo: railTrainNo || bulkVal,
@@ -429,21 +475,24 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
   const ediStats = useMemo(() => {
     let leoPassed = 0;
     let leoGenerated = 0;
-    let pendingLeo = 0;
     let customsExam = 0;
+    let pendingLeo = 0;
+    let queryRaised = 0;
     rows.forEach(r => {
       const st = String(r.ediStatus || '').toUpperCase();
       if (st.includes('PASSED') || st.includes('CLEARED')) leoPassed++;
       else if (st.includes('GENERATED')) leoGenerated++;
       else if (st.includes('EXAM')) customsExam++;
+      else if (st.includes('QUERY')) queryRaised++;
       else pendingLeo++;
     });
     return {
       total: rows.length,
       leoPassed,
       leoGenerated,
+      customsExam,
       pendingLeo,
-      customsExam
+      queryRaised
     };
   }, [rows]);
 
@@ -599,10 +648,10 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
       if (activeSection === 'EdiUpdate') {
         if (ediStatusFilter !== 'ALL') {
           const st = String(r.ediStatus || '').toUpperCase();
-          if (ediStatusFilter === 'LEO_PASSED' && !st.includes('PASSED') && !st.includes('CLEARED')) return false;
+          if (ediStatusFilter === 'LEO_PASSED' && !(st.includes('PASSED') || st.includes('CLEARED'))) return false;
           if (ediStatusFilter === 'LEO_GENERATED' && !st.includes('GENERATED')) return false;
           if (ediStatusFilter === 'CUSTOMS_EXAM' && !st.includes('EXAM')) return false;
-          if (ediStatusFilter === 'PENDING_LEO' && (st.includes('PASSED') || st.includes('CLEARED'))) return false;
+          if (ediStatusFilter === 'PENDING_LEO' && !(st.includes('PENDING') || st.includes('FILED') || st.includes('SUBMITTED') || (!st.includes('PASSED') && !st.includes('GENERATED') && !st.includes('EXAM') && !st.includes('QUERY')))) return false;
           if (ediStatusFilter === 'QUERY_RAISED' && !st.includes('QUERY')) return false;
         }
 
@@ -1320,9 +1369,14 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
       {/* ------------------------------------------------------------- */}
       {activeSection === 'EdiUpdate' && (
         <div className="space-y-4 animate-fade-in">
-          {/* EDI Operational KPI Cards */}
+          {/* EDI Operational KPI Cards (Clickable Filters) */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
+            <div
+              onClick={() => setEdiStatusFilter('ALL')}
+              className={`p-3.5 rounded-xl bg-white border cursor-pointer transition shadow-2xs flex items-center justify-between hover:border-blue-400 ${
+                ediStatusFilter === 'ALL' ? 'ring-2 ring-blue-500 border-blue-500' : 'border-slate-200'
+              }`}
+            >
               <div>
                 <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">Total EDI Shipments</div>
                 <div className="text-xl font-black text-slate-800 font-mono mt-0.5">{ediStats.total}</div>
@@ -1333,7 +1387,12 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
+            <div
+              onClick={() => setEdiStatusFilter('LEO_PASSED')}
+              className={`p-3.5 rounded-xl bg-white border cursor-pointer transition shadow-2xs flex items-center justify-between hover:border-emerald-400 ${
+                ediStatusFilter === 'LEO_PASSED' ? 'ring-2 ring-emerald-500 border-emerald-500' : 'border-slate-200'
+              }`}
+            >
               <div>
                 <div className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider font-mono">LEO Cleared / Passed</div>
                 <div className="text-xl font-black text-emerald-700 font-mono mt-0.5">{ediStats.leoPassed}</div>
@@ -1344,7 +1403,12 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
+            <div
+              onClick={() => setEdiStatusFilter('LEO_GENERATED')}
+              className={`p-3.5 rounded-xl bg-white border cursor-pointer transition shadow-2xs flex items-center justify-between hover:border-sky-400 ${
+                ediStatusFilter === 'LEO_GENERATED' ? 'ring-2 ring-sky-500 border-sky-500' : 'border-slate-200'
+              }`}
+            >
               <div>
                 <div className="text-[11px] font-bold text-sky-600 uppercase tracking-wider font-mono">LEO Generated</div>
                 <div className="text-xl font-black text-sky-700 font-mono mt-0.5">{ediStats.leoGenerated}</div>
@@ -1355,11 +1419,20 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
               </div>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
+            <div
+              onClick={() => setEdiStatusFilter('CUSTOMS_EXAM')}
+              className={`p-3.5 rounded-xl bg-white border cursor-pointer transition shadow-2xs flex items-center justify-between hover:border-amber-400 ${
+                ediStatusFilter === 'CUSTOMS_EXAM' ? 'ring-2 ring-amber-500 border-amber-500' : 'border-slate-200'
+              }`}
+            >
               <div>
-                <div className="text-[11px] font-bold text-amber-600 uppercase tracking-wider font-mono">Exam / Pending LEO</div>
-                <div className="text-xl font-black text-amber-700 font-mono mt-0.5">{ediStats.customsExam + ediStats.pendingLeo}</div>
-                <div className="text-[10px] text-slate-500 font-medium mt-0.5">In Assessment / Examination</div>
+                <div className="text-[11px] font-bold text-amber-600 uppercase tracking-wider font-mono">Exam / Pending / Query</div>
+                <div className="text-xl font-black text-amber-700 font-mono mt-0.5">
+                  {ediStats.customsExam + ediStats.pendingLeo + ediStats.queryRaised}
+                </div>
+                <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                  Exam ({ediStats.customsExam}) &bull; Pend ({ediStats.pendingLeo}) &bull; Query ({ediStats.queryRaised})
+                </div>
               </div>
               <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
                 <Clock className="w-5 h-5" />
@@ -1382,27 +1455,32 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                 />
               </div>
 
-              {/* Status Filter Pills */}
+              {/* Status Filter Pills with live counts */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
                 {[
-                  { id: 'ALL', label: 'All Status' },
-                  { id: 'LEO_PASSED', label: '✓ LEO Passed' },
-                  { id: 'LEO_GENERATED', label: '⚡ LEO Generated' },
-                  { id: 'CUSTOMS_EXAM', label: '🔍 Customs Exam' },
-                  { id: 'PENDING_LEO', label: '⏳ Pending LEO' },
-                  { id: 'QUERY_RAISED', label: '⚠ Query Raised' }
+                  { id: 'ALL', label: 'All Status', count: ediStats.total },
+                  { id: 'LEO_PASSED', label: '✓ LEO Passed', count: ediStats.leoPassed },
+                  { id: 'LEO_GENERATED', label: '⚡ LEO Generated', count: ediStats.leoGenerated },
+                  { id: 'CUSTOMS_EXAM', label: '🔍 Customs Exam', count: ediStats.customsExam },
+                  { id: 'PENDING_LEO', label: '⏳ Pending LEO', count: ediStats.pendingLeo },
+                  { id: 'QUERY_RAISED', label: '⚠ Query Raised', count: ediStats.queryRaised }
                 ].map((st) => (
                   <button
                     key={st.id}
                     type="button"
                     onClick={() => setEdiStatusFilter(st.id)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                       ediStatusFilter === st.id
                         ? 'bg-blue-600 text-white shadow-2xs'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                   >
-                    {st.label}
+                    <span>{st.label}</span>
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold ${
+                      ediStatusFilter === st.id ? 'bg-white/25 text-white' : 'bg-white text-slate-700 border border-slate-200'
+                    }`}>
+                      {st.count}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -1450,50 +1528,58 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                 </span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <select
-                  value={bulkVal}
-                  onChange={(e) => setBulkVal(e.target.value)}
-                  className="px-2.5 py-1 bg-white border border-blue-300 rounded text-xs font-sans font-medium"
-                >
-                  <option value="">-- Choose Status to Apply --</option>
-                  <option value="LEO_PASSED">✓ LEO Passed</option>
-                  <option value="LEO_GENERATED">⚡ LEO Generated</option>
-                  <option value="SB_FILED">⏳ SB Filed (Under Assessment)</option>
-                  <option value="CUSTOMS_EXAM">🔍 Customs Examination Completed</option>
-                  <option value="QUERY_RAISED">⚠ Query Raised by Customs</option>
-                </select>
-
-                <input
-                  type="date"
-                  value={bulkDate}
-                  onChange={(e) => setBulkDate(e.target.value)}
-                  className="px-2 py-1 bg-white border border-blue-300 rounded text-xs font-sans"
-                />
-
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-slate-500 text-[11px] font-semibold mr-1">1-Click Mark:</span>
                 <button
                   type="button"
-                  onClick={handleBulkApply}
-                  className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs transition cursor-pointer"
+                  onClick={() => handleBulkStatusChange('LEO_PASSED')}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs cursor-pointer transition"
                 >
-                  <span>⚡ Apply to All Selected</span>
+                  ✓ LEO Passed
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkStatusChange('LEO_GENERATED')}
+                  className="px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-2xs cursor-pointer transition"
+                >
+                  ⚡ LEO Generated
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkStatusChange('CUSTOMS_EXAM')}
+                  className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-2xs cursor-pointer transition"
+                >
+                  🔍 Customs Exam
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkStatusChange('SB_FILED')}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-2xs cursor-pointer transition"
+                >
+                  ⏳ Pending LEO
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkStatusChange('QUERY_RAISED')}
+                  className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-2xs cursor-pointer transition"
+                >
+                  ⚠ Query Raised
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleOpenSbUpload()}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs transition cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs shadow-2xs cursor-pointer transition ml-1"
                 >
-                  <UploadCloud className="w-3.5 h-3.5" />
-                  <span>Upload .sb for Selected</span>
+                  Upload .sb
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setSelectedContIds([])}
-                  className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs cursor-pointer"
+                  className="px-2 py-1 rounded-lg bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs cursor-pointer ml-1"
                 >
-                  Cancel
+                  Deselect
                 </button>
               </div>
             </div>
@@ -1604,46 +1690,49 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                           </div>
                         </td>
                         <td className="py-3 px-3">
-                          {(() => {
-                            const st = String(r.ediStatus || '').toUpperCase();
-                            if (st.includes('PASSED') || st.includes('CLEARED')) {
-                              return (
-                                <span className="px-2.5 py-1 rounded-full text-[10.5px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1">
-                                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                                  <span>LEO PASSED</span>
-                                </span>
-                              );
-                            }
-                            if (st.includes('GENERATED')) {
-                              return (
-                                <span className="px-2.5 py-1 rounded-full text-[10.5px] font-mono font-bold bg-sky-50 text-sky-800 border border-sky-300 inline-flex items-center gap-1">
-                                  <CheckCircle2 className="w-3 h-3 text-sky-600" />
-                                  <span>LEO GENERATED</span>
-                                </span>
-                              );
-                            }
-                            if (st.includes('EXAM')) {
-                              return (
-                                <span className="px-2.5 py-1 rounded-full text-[10.5px] font-mono font-bold bg-amber-50 text-amber-800 border border-amber-300 inline-flex items-center gap-1">
-                                  <Clock className="w-3 h-3 text-amber-600" />
-                                  <span>CUSTOMS EXAM</span>
-                                </span>
-                              );
-                            }
-                            if (st.includes('QUERY')) {
-                              return (
-                                <span className="px-2.5 py-1 rounded-full text-[10.5px] font-mono font-bold bg-rose-50 text-rose-800 border border-rose-300 inline-flex items-center gap-1">
-                                  <AlertTriangle className="w-3 h-3 text-rose-600" />
-                                  <span>QUERY RAISED</span>
-                                </span>
-                              );
-                            }
-                            return (
-                              <span className="px-2.5 py-1 rounded-full text-[10.5px] font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                                {r.ediStatus || 'SB FILED'}
-                              </span>
-                            );
-                          })()}
+                          <div>
+                            <select
+                              value={
+                                String(r.ediStatus).includes('PASSED') || String(r.ediStatus).includes('CLEARED') ? 'LEO_PASSED' :
+                                String(r.ediStatus).includes('GENERATED') ? 'LEO_GENERATED' :
+                                String(r.ediStatus).includes('EXAM') ? 'CUSTOMS_EXAM' :
+                                String(r.ediStatus).includes('QUERY') ? 'QUERY_RAISED' : 'SB_FILED'
+                              }
+                              onChange={async (e) => {
+                                const newSt = e.target.value;
+                                const cid = r.id || r.containerNo;
+                                try {
+                                  await api.updateEdi({
+                                    containerId: cid,
+                                    ediSbStatus: newSt
+                                  });
+                                  r.ediStatus = newSt;
+                                  setNotice(`✓ Container ${r.containerNo} updated to ${newSt} in PostgreSQL!`);
+                                  setTimeout(() => setNotice(''), 2500);
+                                  loadLiveData();
+                                } catch (err) {
+                                  alert('Error updating status: ' + err.message);
+                                }
+                              }}
+                              className={`px-2 py-1 rounded-lg text-[10.5px] font-mono font-bold border cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs transition ${
+                                String(r.ediStatus).includes('PASSED') || String(r.ediStatus).includes('CLEARED')
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                  : String(r.ediStatus).includes('GENERATED')
+                                  ? 'bg-sky-50 text-sky-800 border-sky-300'
+                                  : String(r.ediStatus).includes('EXAM')
+                                  ? 'bg-amber-50 text-amber-800 border-amber-300'
+                                  : String(r.ediStatus).includes('QUERY')
+                                  ? 'bg-rose-50 text-rose-800 border-rose-300'
+                                  : 'bg-indigo-50 text-indigo-800 border-indigo-300'
+                              }`}
+                            >
+                              <option value="LEO_PASSED">✓ LEO PASSED</option>
+                              <option value="LEO_GENERATED">⚡ LEO GENERATED</option>
+                              <option value="CUSTOMS_EXAM">🔍 CUSTOMS EXAM</option>
+                              <option value="SB_FILED">⏳ PENDING LEO</option>
+                              <option value="QUERY_RAISED">⚠ QUERY RAISED</option>
+                            </select>
+                          </div>
                           <div className="text-[10px] text-slate-400 font-mono mt-0.5">
                             Filing: {r.ediFilingDate || r.sbDate || '—'}
                           </div>
