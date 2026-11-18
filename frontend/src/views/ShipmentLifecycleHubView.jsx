@@ -1358,30 +1358,6 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                 />
               </div>
 
-              {/* Status Filter Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
-                {[
-                  { id: 'ALL', label: 'All Status' },
-                  { id: 'LEO_PASSED', label: '✓ LEO Passed' },
-                  { id: 'LEO_GENERATED', label: '⚡ LEO Generated' },
-                  { id: 'CUSTOMS_EXAM', label: '🔍 Customs Exam' },
-                  { id: 'PENDING_LEO', label: '⏳ Pending LEO' }
-                ].map((st) => (
-                  <button
-                    key={st.id}
-                    type="button"
-                    onClick={() => setEdiStatusFilter(st.id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
-                      ediStatusFilter === st.id
-                        ? 'bg-blue-600 text-white shadow-2xs'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    {st.label}
-                  </button>
-                ))}
-              </div>
-
               {/* Action Buttons: Upload .sb & Load Sample */}
               <div className="flex items-center gap-2 shrink-0">
                 <button
