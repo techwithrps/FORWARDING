@@ -1527,10 +1527,10 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                               type="button"
                               onClick={(e) => { e.stopPropagation(); setDossierCont(r); }}
                               className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 cursor-pointer transition shadow-2xs inline-flex items-center gap-0.5"
-                              title="View ICEGATE Customs Dossier & e-SANCHIT IRNs"
+                              title="View Customs & Shipping Bill Details"
                             >
                               <FileText className="w-2.5 h-2.5 text-indigo-600" />
-                              <span>Dossier 📜</span>
+                              <span>SB Details 📄</span>
                             </button>
                           </div>
                           <div className="text-[10px] text-slate-500 flex items-center gap-1 font-mono mt-0.5">
@@ -1605,10 +1605,10 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                               type="button"
                               onClick={() => setDossierCont(r)}
                               className="px-2 py-1 rounded-lg bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 font-bold text-[10.5px] shadow-2xs cursor-pointer inline-flex items-center gap-1 transition"
-                              title="ICEGATE Customs Dossier & e-SANCHIT IRN Verification"
+                              title="Customs & Shipping Bill Details"
                             >
                               <FileCheck className="w-3 h-3 text-indigo-600" />
-                              <span>Dossier</span>
+                              <span>Customs Details</span>
                             </button>
 
                             <button
@@ -2602,7 +2602,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-base tracking-tight text-white">ICEGATE Customs Dossier &amp; Compliance Sheet</h3>
+                    <h3 className="font-bold text-base tracking-tight text-white">Customs &amp; Shipping Bill (SB) Details</h3>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
                       ICES 1.5 VERIFIED
                     </span>
@@ -2858,7 +2858,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                   className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
                 >
                   <Download className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Print Dossier</span>
+                  <span>Print Details</span>
                 </button>
                 <button
                   type="button"
@@ -2866,7 +2866,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                   className="px-4 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer transition shadow-xs"
                 >
                   <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Close Dossier</span>
+                  <span>Close</span>
                 </button>
               </div>
             </div>
