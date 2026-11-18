@@ -471,28 +471,6 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
     };
   }, [rows]);
 
-  // Compute EDI KPI Stats
-  const ediStats = useMemo(() => {
-    let leoPassed = 0;
-    let leoGenerated = 0;
-    let customsExam = 0;
-    let pendingLeo = 0;
-    rows.forEach(r => {
-      const st = String(r.ediStatus || '').toUpperCase();
-      if (st.includes('PASSED') || st.includes('CLEARED')) leoPassed++;
-      else if (st.includes('GENERATED')) leoGenerated++;
-      else if (st.includes('EXAM')) customsExam++;
-      else pendingLeo++;
-    });
-    return {
-      total: rows.length,
-      leoPassed,
-      leoGenerated,
-      customsExam,
-      pendingLeo
-    };
-  }, [rows]);
-
   const handleOpenManualEdi = (row) => {
     setManualEdiForm({
       containerId: row.id || row.containerNo,
@@ -1365,77 +1343,6 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
       {/* ------------------------------------------------------------- */}
       {activeSection === 'EdiUpdate' && (
         <div className="space-y-4 animate-fade-in">
-          {/* EDI Operational KPI Cards (Clickable Filters) */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div
-              onClick={() => setEdiStatusFilter('ALL')}
-              className={`p-3.5 rounded-xl bg-white border cursor-pointer transition shadow-2xs flex items-center justify-between hover:border-blue-400 ${
-                ediStatusFilter === 'ALL' ? 'ring-2 ring-blue-500 border-blue-500' : 'border-slate-200'
-              }`}
-            >
-              <div>
-                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">Total EDI Shipments</div>
-                <div className="text-xl font-black text-slate-800 font-mono mt-0.5">{ediStats.total}</div>
-                <div className="text-[10px] text-slate-500 font-medium mt-0.5">ICEGATE Customs Containers</div>
-              </div>
-              <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
-                <FileText className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div
-              onClick={() => setEdiStatusFilter('LEO_PASSED')}
-              className={`p-3.5 rounded-xl bg-white border cursor-pointer transition shadow-2xs flex items-center justify-between hover:border-emerald-400 ${
-                ediStatusFilter === 'LEO_PASSED' ? 'ring-2 ring-emerald-500 border-emerald-500' : 'border-slate-200'
-              }`}
-            >
-              <div>
-                <div className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider font-mono">LEO Cleared / Passed</div>
-                <div className="text-xl font-black text-emerald-700 font-mono mt-0.5">{ediStats.leoPassed}</div>
-                <div className="text-[10px] text-slate-500 font-medium mt-0.5">Let Export Order Issued</div>
-              </div>
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div
-              onClick={() => setEdiStatusFilter('LEO_GENERATED')}
-              className={`p-3.5 rounded-xl bg-white border cursor-pointer transition shadow-2xs flex items-center justify-between hover:border-sky-400 ${
-                ediStatusFilter === 'LEO_GENERATED' ? 'ring-2 ring-sky-500 border-sky-500' : 'border-slate-200'
-              }`}
-            >
-              <div>
-                <div className="text-[11px] font-bold text-sky-600 uppercase tracking-wider font-mono">LEO Generated</div>
-                <div className="text-xl font-black text-sky-700 font-mono mt-0.5">{ediStats.leoGenerated}</div>
-                <div className="text-[10px] text-slate-500 font-medium mt-0.5">Ready for Port Gate In / Loading</div>
-              </div>
-              <div className="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 border border-sky-100">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div
-              onClick={() => setEdiStatusFilter('CUSTOMS_EXAM')}
-              className={`p-3.5 rounded-xl bg-white border cursor-pointer transition shadow-2xs flex items-center justify-between hover:border-amber-400 ${
-                ediStatusFilter === 'CUSTOMS_EXAM' ? 'ring-2 ring-amber-500 border-amber-500' : 'border-slate-200'
-              }`}
-            >
-              <div>
-                <div className="text-[11px] font-bold text-amber-600 uppercase tracking-wider font-mono">Exam / Pending LEO</div>
-                <div className="text-xl font-black text-amber-700 font-mono mt-0.5">
-                  {ediStats.customsExam + ediStats.pendingLeo}
-                </div>
-                <div className="text-[10px] text-slate-500 font-medium mt-0.5">
-                  In Assessment / Examination
-                </div>
-              </div>
-              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
-                <Clock className="w-5 h-5" />
-              </div>
-            </div>
-          </div>
-
           {/* EDI Action & Filter Toolbar */}
           <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-3">
             <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
