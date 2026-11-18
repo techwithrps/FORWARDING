@@ -791,16 +791,23 @@ async function getLifecycleRows(extraWhere = '1=1') {
       c.dbk_code,
       c.trade_scheme,
       c.producer_plant,
-      COALESCE(c.sb_no, j.sb_no) as sb_no,
-      COALESCE(c.sb_date, j.sb_date) as sb_date,
-      COALESCE(c.invoice_no, j.party_invoice_no) as invoice_no,
-      COALESCE(c.invoice_date, j.party_invoice_date) as invoice_date,
-      COALESCE(c.consignee_name, j.consignee_name) as consignee_name,
+      COALESCE(c.sb_no, doc."SB_NO", j.sb_no) as sb_no,
+      COALESCE(c.sb_date, doc."SB_DATE"::DATE, j.sb_date) as sb_date,
+      COALESCE(c.invoice_no, doc."PARTY_INV_NO", j.party_invoice_no) as invoice_no,
+      COALESCE(c.invoice_date, doc."PARTY_INV_DATE"::DATE, j.party_invoice_date) as invoice_date,
+      COALESCE(c.consignee_name, doc."CONSINGEE_NAME", j.consignee_name) as consignee_name,
       COALESCE(c.item_description, j.commodity) as item_description,
       j.job_number, j.booking_no, j.customer_name, j.shipping_line_name,
       j.origin_port_name, j.pod_port_name, j.vessel_name, j.commodity
     FROM job_containers c
     JOIN job_orders j ON c.job_id = j.id
+    LEFT JOIN LATERAL (
+      SELECT d."PARTY_INV_NO", d."PARTY_INV_DATE", d."SB_NO", d."SB_DATE", d."CONSINGEE_NAME"
+      FROM spjlive."ALL_PARTY_DOCUMENT" d
+      WHERE d."CONT_NO" = c.container_number AND d."PARTY_INV_NO" IS NOT NULL
+      ORDER BY d."CREATED_ON" DESC NULLS LAST
+      LIMIT 1
+    ) doc ON true
     WHERE ${extraWhere}
     ORDER BY c.created_at DESC;
   `;
@@ -815,12 +822,12 @@ async function getLifecycleRows(extraWhere = '1=1') {
     sealNumber: r.seal_number || '',
     customSeal: r.custom_seal || '',
     customsDossier: r.customs_dossier || null,
-    netWeight: Number(r.net_weight) || 28008,
-    dbkCode: r.dbk_code || '0202B',
-    tradeScheme: r.trade_scheme || 'CEPA (India-UAE FTA)',
-    producerPlant: r.producer_plant || 'MEEM AGRO FOODS PRIVATE LIMITED (APEDA/149)',
-    sbNo: r.sb_no || 'SB-981024',
-    sbDate: r.sb_date ? new Date(r.sb_date).toISOString().split('T')[0] : '2026-10-28',
+    netWeight: Number(r.net_weight) || (Number(r.gross_weight) ? Number(r.gross_weight) - 1100 : 0),
+    dbkCode: r.dbk_code || '',
+    tradeScheme: r.trade_scheme || '',
+    producerPlant: r.producer_plant || '',
+    sbNo: r.sb_no || '',
+    sbDate: r.sb_date ? new Date(r.sb_date).toISOString().split('T')[0] : '',
     invoiceNo: r.invoice_no || '',
     invoiceDate: r.invoice_date ? new Date(r.invoice_date).toISOString().split('T')[0] : '',
     consignee: r.consignee_name || '',

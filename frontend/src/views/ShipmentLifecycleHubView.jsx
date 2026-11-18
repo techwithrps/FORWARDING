@@ -173,10 +173,10 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
         line: c.shippingLine || 'Maersk Line',
         vessel: c.vessel || 'MAERSK COLOMBO',
         voyageNo: c.voyageNo || (idx % 2 === 0 ? '0UW4RW1MA' : '245E'),
-        sbNo: c.sbNo || 'SB-981024',
-        sbDate: c.sbDate || '2026-10-28',
-        invoiceNo: c.invoiceNo || 'IFF/EXP/27/0943',
-        invoiceDate: c.invoiceDate || '2026-10-28',
+        sbNo: c.sbNo || '',
+        sbDate: c.sbDate || '',
+        invoiceNo: c.invoiceNo || '',
+        invoiceDate: c.invoiceDate || '',
         grossWeight: Number(c.grossWeight) || 29120,
         netWeight: Number(c.netWeight) || 28008,
         dbkCode: c.dbkCode || '0202B',
@@ -189,7 +189,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
         itemDescription: c.itemDescription || 'FROZEN BONELESS BUFFALO MEAT',
         blNo: c.blNo || 'MSK-2026-98124',
         ediStatus: c.ediSbStatus || 'SB_FILED',
-        ediFilingDate: c.ediFilingDate || c.sbDate || '2026-10-28',
+        ediFilingDate: c.ediFilingDate || c.sbDate || '',
         trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
         wagonNo: c.wagonNo || 'CR-104928',
         deckTier: c.deck_tier || c.deckTier || 'LOWER',
@@ -232,10 +232,10 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
             line: j.line || j.shippingLine || 'Maersk Line',
             vessel: j.vessel || 'MAERSK COLOMBO',
             voyageNo: '245E',
-            sbNo: j.sbNo || 'SB-981024',
-            sbDate: j.sbDate || '2026-10-28',
-            invoiceNo: j.partyInvoiceNo || 'IFF/EXP/27/0943',
-            invoiceDate: j.partyInvoiceDate || '2026-10-28',
+            sbNo: j.sbNo || '',
+            sbDate: j.sbDate || '',
+            invoiceNo: j.partyInvoiceNo || '',
+            invoiceDate: j.partyInvoiceDate || '',
             grossWeight: Number(c.grossWeight) || 29120,
             netWeight: Number(c.netWeight) || 28008,
             dbkCode: c.dbkCode || '0202B',
@@ -248,7 +248,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
             itemDescription: j.commodity || 'FROZEN BONELESS BUFFALO MEAT',
             blNo: j.blNo || 'MSK-2026-98124',
             ediStatus: c.ediSbStatus || 'SB_FILED',
-            ediFilingDate: c.ediFilingDate || j.sbDate || '2026-10-28',
+            ediFilingDate: c.ediFilingDate || j.sbDate || '',
             trainNo: c.trainNo || 'CONCOR DFC RAKE #9182',
             wagonNo: c.wagonNo || 'CR-104928',
             deckTier: c.deckTier || c.deck_tier || 'LOWER',
@@ -2523,7 +2523,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                     required
                     value={manualEdiForm.sbNo}
                     onChange={(e) => setManualEdiForm({ ...manualEdiForm, sbNo: e.target.value.toUpperCase() })}
-                    placeholder="e.g. SB-981024 / 5108"
+                    placeholder="e.g. 5108 / 7418417"
                     className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-blue-700 focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -2570,7 +2570,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                     type="text"
                     value={manualEdiForm.invoiceNo}
                     onChange={(e) => setManualEdiForm({ ...manualEdiForm, invoiceNo: e.target.value })}
-                    placeholder="e.g. IFF/EXP/27/0943"
+                    placeholder="e.g. HMA/1717/2026-27"
                     className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -2812,11 +2812,11 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                   <div className="grid grid-cols-2 gap-2 text-[11px]">
                     <div>
                       <div className="text-slate-400 text-[10px]">Shipping Bill (SB) No</div>
-                      <div className="font-mono font-bold text-blue-700">{dossierCont.sbNo || 'SB-5108'}</div>
+                      <div className="font-mono font-bold text-blue-700">{dossierCont.sbNo || '—'}</div>
                     </div>
                     <div>
                       <div className="text-slate-400 text-[10px]">SB Filing Date</div>
-                      <div className="font-mono font-medium text-slate-800">{dossierCont.sbDate || '2026-09-17'}</div>
+                      <div className="font-mono font-medium text-slate-800">{dossierCont.sbDate || '—'}</div>
                     </div>
                     <div>
                       <div className="text-slate-400 text-[10px]">Customs Station</div>
@@ -2834,7 +2834,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                     </div>
                     <div>
                       <div className="text-slate-400 text-[10px]">Customs / Agent Seal</div>
-                      <div className="font-mono font-medium text-slate-800">{dossierCont.customSeal || 'CUSTOM-9921'} / {dossierCont.sealNumber || 'SEAL-88910'}</div>
+                      <div className="font-mono font-medium text-slate-800">{dossierCont.customSeal || '—'} / {dossierCont.sealNumber || '—'}</div>
                     </div>
                   </div>
                 </div>
@@ -2850,11 +2850,11 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                   <div className="grid grid-cols-2 gap-2 text-[11px]">
                     <div>
                       <div className="text-slate-400 text-[10px]">Commercial Invoice No</div>
-                      <div className="font-mono font-bold text-slate-800">{dossierCont.invoiceNo || 'IFF/EXP/27/0943'}</div>
+                      <div className="font-mono font-bold text-slate-800">{dossierCont.invoiceNo || '—'}</div>
                     </div>
                     <div>
                       <div className="text-slate-400 text-[10px]">Invoice Date</div>
-                      <div className="font-mono font-medium text-slate-800">{dossierCont.invoiceDate || '2026-09-17'}</div>
+                      <div className="font-mono font-medium text-slate-800">{dossierCont.invoiceDate || '—'}</div>
                     </div>
                     <div>
                       <div className="text-slate-400 text-[10px]">Foreign Invoice Value</div>

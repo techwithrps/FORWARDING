@@ -31,22 +31,24 @@ pool.on('error', (err) => {
 // Auto-ensure required columns exist in production
 (async () => {
   try {
-    await pool.query('ALTER TABLE job_orders ADD COLUMN IF NOT EXISTS equipment_breakdown JSONB;');
-    await pool.query('ALTER TABLE job_orders ADD COLUMN IF NOT EXISTS jo_date DATE;');
-    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS commodity VARCHAR(255);');
-    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS handover_location VARCHAR(255);');
-    await pool.query("ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS deck_tier VARCHAR(20) DEFAULT 'LOWER';");
-    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS sb_no VARCHAR(100);');
-    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS sb_date DATE;');
-    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS invoice_no VARCHAR(100);');
-    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS invoice_date DATE;');
-    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS consignee_name VARCHAR(255);');
-    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS item_description TEXT;');
-    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS customs_dossier JSONB;');
-    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS net_weight NUMERIC;');
-    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS dbk_code VARCHAR(50);');
-    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS trade_scheme VARCHAR(100);');
-    await pool.query('ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS producer_plant VARCHAR(255);');
+    await pool.query(`
+      ALTER TABLE job_orders ADD COLUMN IF NOT EXISTS equipment_breakdown JSONB;
+      ALTER TABLE job_orders ADD COLUMN IF NOT EXISTS jo_date DATE;
+      ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS commodity VARCHAR(255);
+      ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS handover_location VARCHAR(255);
+      ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS deck_tier VARCHAR(20) DEFAULT 'LOWER';
+      ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS sb_no VARCHAR(100);
+      ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS sb_date DATE;
+      ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS invoice_no VARCHAR(100);
+      ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS invoice_date DATE;
+      ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS consignee_name VARCHAR(255);
+      ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS item_description TEXT;
+      ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS customs_dossier JSONB;
+      ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS net_weight NUMERIC;
+      ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS dbk_code VARCHAR(50);
+      ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS trade_scheme VARCHAR(100);
+      ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS producer_plant VARCHAR(255);
+    `);
   } catch (e) {}
 })();
 
