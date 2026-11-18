@@ -174,9 +174,9 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
         vessel: c.vessel || 'MAERSK COLOMBO',
         voyageNo: c.voyageNo || (idx % 2 === 0 ? '0UW4RW1MA' : '245E'),
         sbNo: c.sbNo || '',
-        sbDate: c.sbDate || '',
+        sbDate: c.sbDate ? String(c.sbDate).split('T')[0] : '',
         invoiceNo: c.invoiceNo || '',
-        invoiceDate: c.invoiceDate || '',
+        invoiceDate: c.invoiceDate ? String(c.invoiceDate).split('T')[0] : '',
         grossWeight: Number(c.grossWeight) || 29120,
         netWeight: Number(c.netWeight) || 28008,
         dbkCode: c.dbkCode || '0202B',
@@ -233,9 +233,9 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
             vessel: j.vessel || 'MAERSK COLOMBO',
             voyageNo: '245E',
             sbNo: j.sbNo || '',
-            sbDate: j.sbDate || '',
+            sbDate: j.sbDate ? String(j.sbDate).split('T')[0] : '',
             invoiceNo: j.partyInvoiceNo || '',
-            invoiceDate: j.partyInvoiceDate || '',
+            invoiceDate: j.partyInvoiceDate ? String(j.partyInvoiceDate).split('T')[0] : '',
             grossWeight: Number(c.grossWeight) || 29120,
             netWeight: Number(c.netWeight) || 28008,
             dbkCode: c.dbkCode || '0202B',
@@ -1713,7 +1713,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                             </select>
                           </div>
                           <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                            Filing: {r.ediFilingDate || r.sbDate || '—'}
+                            Filing: {r.ediFilingDate ? String(r.ediFilingDate).split('T')[0] : (r.sbDate ? String(r.sbDate).split('T')[0] : '—')}
                           </div>
                         </td>
                         <td className="py-3 px-3 text-right">
