@@ -806,8 +806,8 @@ async function getLifecycleRows(extraWhere = '1=1') {
       j.origin_port_name, j.pod_port_name, j.vessel_name, j.commodity,
       j.cha_name, j.on_account, j.jo_type, j.package_type, j.cartons,
       j.booking_date, j.jo_date,
-      COALESCE(c.remarks, j.remarks, '') as remarks,
-      COALESCE(c.created_at, j.booking_date, j.created_at) as allotment_date,
+      COALESCE(c.gr_remarks, j.remarks, '') as remarks,
+      COALESCE(c.created_at::text, j.booking_date::text, j.created_at::text) as allotment_date,
       j.services_required
     FROM job_containers c
     JOIN job_orders j ON c.job_id = j.id
@@ -882,7 +882,7 @@ async function getLifecycleRows(extraWhere = '1=1') {
     servicesRequired: r.services_required || '',
     cha: r.cha_name || 'SPJ LOGISTICS CHA',
     notify: r.on_account || 'SAME AS CONSIGNEE',
-    allotmentDate: r.allotment_date ? new Date(r.allotment_date).toISOString().split('T')[0] : '',
+    allotmentDate: r.allotment_date ? (isNaN(new Date(r.allotment_date).getTime()) ? String(r.allotment_date) : new Date(r.allotment_date).toISOString().split('T')[0]) : '',
     joType: r.jo_type || 'Export FCL',
     packageType: r.package_type || 'CARTONS',
     noOfPcs: Number(r.cartons) || 1472,
