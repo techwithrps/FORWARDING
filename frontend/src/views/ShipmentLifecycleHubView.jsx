@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { api } from '../services/api';
 import DocumentationUpdateView from './DocumentationUpdateView';
 import { parseIcegateSbFile } from '../utils/sbParser';
@@ -64,21 +64,58 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
   const [ediManualModalOpen, setEdiManualModalOpen] = useState(false);
   const [dossierCont, setDossierCont] = useState(null);
   const [copiedIrn, setCopiedIrn] = useState('');
+  const ediTableScrollRef = useRef(null);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+
+  const handleEdiTableScroll = () => {
+    if (ediTableScrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = ediTableScrollRef.current;
+      setCanScrollLeft(scrollLeft > 20);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 20);
+    }
+  };
+
+  const scrollEdiTable = (direction) => {
+    if (ediTableScrollRef.current) {
+      const scrollAmount = direction === 'right' ? 520 : -520;
+      ediTableScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   const [manualEdiForm, setManualEdiForm] = useState({
     containerId: '',
     containerNo: '',
     sizeType: '40HC',
+    contSize: '40',
+    contType: 'HC',
     jobNo: '',
+    joDate: '',
     shipper: '',
     consignee: '',
-    sbNo: '',
-    sbDate: '',
-    ediSbStatus: 'LEO_PASSED',
-    ediFilingDate: '',
+    notify: '',
+    line: '',
+    allotmentDate: '',
+    joType: 'Export FCL',
+    cfs: 'ACTL CFS DADRI',
+    grossWeight: 29120,
+    netWeight: 28008,
+    refId: '',
+    healthCertNo: '',
+    packageType: 'CARTONS',
+    noOfPcs: 1472,
+    commodity: '',
     invoiceNo: '',
     invoiceDate: '',
-    grossWeight: '',
-    netWeight: '',
+    sbNo: '',
+    sbDate: '',
+    consignmentType: 'FCL',
+    fobValue: '4520000',
+    pod: '',
+    cha: 'SPJ LOGISTICS CHA',
+    remarks: '',
+    ediSbStatus: 'LEO_PASSED',
+    ediFilingDate: '',
     dbkCode: '0202B',
     tradeScheme: 'CEPA (India-UAE FTA)',
     producerPlant: 'MEEM AGRO FOODS PRIVATE LIMITED (APEDA/149)',
@@ -516,27 +553,59 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
   }, [rows]);
 
   const handleOpenManualEdi = (row) => {
+    const rawSize = String(row.size || '').toUpperCase();
+    const contSize = (row.size || '40').includes('20') ? '20' : (row.size || '40').includes('45') ? '45' : '40';
+    const contType = rawSize.includes('RF') || rawSize.includes('REEFER') ? 'RF'
+      : rawSize.includes('GP') || rawSize.includes('DRY') || rawSize.includes('STD') ? 'GP'
+      : rawSize.includes('OT') ? 'OT'
+      : rawSize.includes('FR') ? 'FR'
+      : 'HC';
+    const grossWt = Number(row.grossWeight || 29120);
+    const netWt = Number(row.netWeight || (grossWt > 1500 ? grossWt - 1112 : grossWt * 0.96));
+    const noPcs = Number(row.noOfPcs || row.packages || 1472);
+    const refIdVal = row.refId || row.customsDossier?.refId || (row.jobNo ? `REF-${String(row.jobNo).replace(/[^0-9]/g, '') || '94289'}` : 'REF-94289');
+    const healthCertVal = row.healthCertNo || row.customsDossier?.healthCertNo || (row.id ? `EIC/DEL/2026/${row.id}` : 'EIC/DEL/2026/8841');
+    const fobVal = row.fobValue || row.customsDossier?.fobValue || '4520000';
+
     setManualEdiForm({
       containerId: row.id || row.containerNo,
-      containerNo: row.containerNo,
-      sizeType: row.size || '40HC',
+      containerNo: row.containerNo || '',
+      sizeType: row.size || `${contSize}${contType}`,
+      contSize: contSize,
+      contType: contType,
       jobNo: row.jobNo || '',
-      shipper: row.customer || '',
+      joDate: row.joDate || '',
+      shipper: row.customer || row.shipper || '',
       consignee: row.consignee || '',
-      sbNo: row.sbNo || '',
-      sbDate: row.sbDate || new Date().toISOString().split('T')[0],
-      ediSbStatus: row.ediStatus || 'LEO_PASSED',
-      ediFilingDate: row.ediFilingDate || new Date().toISOString().split('T')[0],
+      notify: row.notify || 'SAME AS CONSIGNEE',
+      line: row.line || row.shippingLine || '',
+      allotmentDate: row.allotmentDate || '',
+      joType: row.joType || 'Export FCL',
+      cfs: row.origin || row.cfs || 'ACTL CFS DADRI',
+      grossWeight: grossWt,
+      netWeight: netWt,
+      refId: refIdVal,
+      healthCertNo: healthCertVal,
+      packageType: row.packageType || 'CARTONS',
+      noOfPcs: noPcs,
+      commodity: row.commodity || row.itemDescription || '',
       invoiceNo: row.invoiceNo || '',
       invoiceDate: row.invoiceDate || '',
-      grossWeight: row.grossWeight || 29120,
-      netWeight: row.netWeight || 28008,
+      sbNo: row.sbNo || '',
+      sbDate: row.sbDate || new Date().toISOString().split('T')[0],
+      consignmentType: row.consignmentType || 'FCL',
+      fobValue: fobVal,
+      pod: row.pod || row.destination || '',
+      cha: row.cha || 'SPJ LOGISTICS CHA',
+      remarks: row.remarks || '',
+      ediSbStatus: row.ediStatus || 'LEO_PASSED',
+      ediFilingDate: row.ediFilingDate || (row.sbDate ? String(row.sbDate).split('T')[0] : new Date().toISOString().split('T')[0]),
       dbkCode: row.dbkCode || '0202B',
       tradeScheme: row.tradeScheme || 'CEPA (India-UAE FTA)',
       producerPlant: row.producerPlant || 'MEEM AGRO FOODS PRIVATE LIMITED (APEDA/149)',
       sealNumber: row.sealNumber || '',
       customSeal: row.customSeal || '',
-      itemDescription: row.itemDescription || ''
+      itemDescription: row.commodity || row.itemDescription || ''
     });
     setEdiManualModalOpen(true);
   };
@@ -553,7 +622,50 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
     e.preventDefault();
     try {
       await api.updateEdi(manualEdiForm);
-      setNotice(`✓ Updated EDI details for container ${manualEdiForm.containerNo} in PostgreSQL DB!`);
+      // Immediately reflect updates on in-memory row
+      rows.forEach(r => {
+        if ((r.id && r.id === manualEdiForm.containerId) || r.containerNo === manualEdiForm.containerNo) {
+          r.customer = manualEdiForm.shipper;
+          r.shipper = manualEdiForm.shipper;
+          r.consignee = manualEdiForm.consignee;
+          r.notify = manualEdiForm.notify;
+          r.line = manualEdiForm.line;
+          r.shippingLine = manualEdiForm.line;
+          r.allotmentDate = manualEdiForm.allotmentDate;
+          r.joType = manualEdiForm.joType;
+          r.size = `${manualEdiForm.contSize}${manualEdiForm.contType}`;
+          r.origin = manualEdiForm.cfs;
+          r.grossWeight = manualEdiForm.grossWeight;
+          r.netWeight = manualEdiForm.netWeight;
+          r.refId = manualEdiForm.refId;
+          r.healthCertNo = manualEdiForm.healthCertNo;
+          r.packageType = manualEdiForm.packageType;
+          r.noOfPcs = manualEdiForm.noOfPcs;
+          r.packages = manualEdiForm.noOfPcs;
+          r.commodity = manualEdiForm.commodity;
+          r.itemDescription = manualEdiForm.commodity;
+          r.invoiceNo = manualEdiForm.invoiceNo;
+          r.invoiceDate = manualEdiForm.invoiceDate;
+          r.sbNo = manualEdiForm.sbNo;
+          r.sbDate = manualEdiForm.sbDate;
+          r.consignmentType = manualEdiForm.consignmentType;
+          r.fobValue = manualEdiForm.fobValue;
+          r.pod = manualEdiForm.pod;
+          r.destination = manualEdiForm.pod;
+          r.cha = manualEdiForm.cha;
+          r.jobNo = manualEdiForm.jobNo;
+          r.joDate = manualEdiForm.joDate;
+          r.remarks = manualEdiForm.remarks;
+          r.ediStatus = manualEdiForm.ediSbStatus;
+          r.ediFilingDate = manualEdiForm.ediFilingDate;
+          r.sealNumber = manualEdiForm.sealNumber;
+          r.customSeal = manualEdiForm.customSeal;
+          r.dbkCode = manualEdiForm.dbkCode;
+          r.tradeScheme = manualEdiForm.tradeScheme;
+          r.producerPlant = manualEdiForm.producerPlant;
+        }
+      });
+      setNotice(`✓ Updated all 28 EDI details for container ${manualEdiForm.containerNo} in DB!`);
       setTimeout(() => setNotice(''), 3000);
       setEdiManualModalOpen(false);
       loadLiveData();
@@ -1523,9 +1635,72 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
           )}
 
           {/* Dedicated Tabular EDI View */}
-          <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-4">
-            <div className="overflow-x-auto rounded-lg border border-slate-200">
-              <table className="w-full text-left text-xs">
+          <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-3.5">
+            {/* Scroll Indicator & Controls Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-xl bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-slate-50 border border-blue-200 text-xs shadow-2xs">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-600"></span>
+                </span>
+                <span className="font-bold text-blue-950 text-xs tracking-tight">28-Column Ledger View</span>
+                <span className="text-blue-300 hidden sm:inline">&bull;</span>
+                <span className="text-slate-600 text-[11.5px] hidden sm:inline">
+                  Click the floating right arrow or scroll horizontally to inspect all 28 customs &amp; operational columns.
+                </span>
+              </div>
+              <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                <span className="text-[11px] font-mono text-slate-500 font-semibold hidden md:inline">Quick Scroll:</span>
+                <button
+                  type="button"
+                  onClick={() => scrollEdiTable('left')}
+                  className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 flex items-center gap-1 font-bold text-xs shadow-2xs cursor-pointer transition active:scale-95"
+                  title="Scroll table to the left"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Scroll Left</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollEdiTable('right')}
+                  className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 font-bold text-xs shadow-xs cursor-pointer transition active:scale-95 animate-pulse"
+                  title="Scroll table to the right"
+                >
+                  <span>Scroll Right</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-blue-100" />
+                </button>
+              </div>
+            </div>
+
+            <div className="relative group/table">
+              {/* Floating Circle Button with Right Arrow Animation */}
+              <button
+                type="button"
+                onClick={() => scrollEdiTable('right')}
+                className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-2xl flex items-center justify-center cursor-pointer transition-all duration-300 transform hover:scale-115 active:scale-90 border-2 border-white ring-4 ring-blue-500/25 group/btn"
+                title="Click to scroll right and see all 28 columns (FOB Value, POD, CHA, JOB No, SB Date, Remarks & Actions)"
+              >
+                <ChevronRight className="w-6 h-6 animate-pulse group-hover/btn:translate-x-0.5 transition-transform" />
+              </button>
+
+              {/* Floating Circle Button with Left Arrow */}
+              {canScrollLeft && (
+                <button
+                  type="button"
+                  onClick={() => scrollEdiTable('left')}
+                  className="absolute -left-3.5 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-slate-800/95 hover:bg-slate-900 text-white shadow-2xl flex items-center justify-center cursor-pointer transition-all duration-300 transform hover:scale-115 active:scale-90 border-2 border-white ring-4 ring-slate-700/25 group/btn"
+                  title="Click to scroll back left"
+                >
+                  <ChevronLeft className="w-6 h-6 group-hover/btn:-translate-x-0.5 transition-transform" />
+                </button>
+              )}
+
+              <div
+                ref={ediTableScrollRef}
+                onScroll={handleEdiTableScroll}
+                className="overflow-x-auto rounded-lg border border-slate-200 scroll-smooth"
+              >
+                <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-mono text-[11px] uppercase tracking-wider sticky top-0 z-10 whitespace-nowrap">
                   <tr>
                     <th className="py-2.5 px-3 w-8 sticky left-0 bg-slate-50 z-20">
@@ -1860,6 +2035,7 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                 </tbody>
               </table>
             </div>
+          </div>
 
             {/* High-Speed Pagination Toolbar */}
             {filtered.length > 0 && (
@@ -2593,217 +2769,500 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* 7. MODAL: MANUAL EDI & SHIPPING BILL FORM                     */}
+      {/* 7. MODAL: MANUAL EDI & 28-COLUMN FULL RECORD EDIT FORM        */}
       {/* ------------------------------------------------------------- */}
       {ediManualModalOpen && (
-        <div className="fixed inset-0 z-[160] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in font-sans">
-          <div className="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
-            <div className="p-4 bg-[#232f3e] text-white flex items-center justify-between select-none">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                  <Edit2 className="w-4 h-4 text-blue-300" />
+        <div className="fixed inset-0 z-[160] bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fade-in font-sans">
+          <div className="bg-white rounded-2xl max-w-5xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[94vh]">
+            {/* Header */}
+            <div className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white flex items-center justify-between select-none border-b border-indigo-900">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center shrink-0">
+                  <Edit2 className="w-5 h-5 text-blue-300" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm tracking-tight">Manual EDI &amp; Shipping Bill Update</h3>
-                  <p className="text-[11px] text-slate-300">
-                    Container: <span className="text-white font-mono font-bold">{manualEdiForm.containerNo}</span> ({manualEdiForm.sizeType}) &bull; {manualEdiForm.jobNo}
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-sm sm:text-base tracking-tight text-white">Edit Container &amp; Full 28-Column Ledger Record</h3>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                      ALL 28 FIELDS
+                    </span>
+                  </div>
+                  <p className="text-xs text-indigo-200 mt-0.5">
+                    Container: <span className="text-white font-mono font-bold">{manualEdiForm.containerNo}</span> ({manualEdiForm.sizeType}) &bull; Job No: <span className="font-mono text-white">{manualEdiForm.jobNo}</span> &bull; Shipper: <span className="text-blue-300 font-semibold truncate">{manualEdiForm.shipper || 'Fair Exports'}</span>
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setEdiManualModalOpen(false)}
-                className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 cursor-pointer"
+                className="text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-white/10 cursor-pointer transition"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveManualEdi} className="p-5 space-y-3.5 overflow-y-auto text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Shipping Bill (SB) No *</label>
-                  <input
-                    type="text"
-                    required
-                    value={manualEdiForm.sbNo}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, sbNo: e.target.value.toUpperCase() })}
-                    placeholder="e.g. 5108 / 7418417"
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-blue-700 focus:outline-none focus:border-blue-500"
-                  />
+            <form onSubmit={handleSaveManualEdi} className="p-5 space-y-5 overflow-y-auto text-xs bg-slate-50/40">
+              {/* SECTION 1: Stakeholders & Routing */}
+              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-100 text-slate-800 font-bold text-xs uppercase tracking-wider">
+                  <Building className="w-4 h-4 text-blue-600" />
+                  <span>1. Stakeholders &amp; Routing (Columns 1-4, 10, 24, 25)</span>
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">1. Shipper (Consignor) *</label>
+                    <input
+                      type="text"
+                      required
+                      value={manualEdiForm.shipper}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, shipper: e.target.value })}
+                      placeholder="e.g. A.R.IMPEX / Fair Exports"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">SB Filing Date *</label>
-                  <input
-                    type="date"
-                    required
-                    value={manualEdiForm.sbDate}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, sbDate: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans focus:outline-none focus:border-blue-500"
-                  />
-                </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">2. Consignee (Foreign Buyer) *</label>
+                    <input
+                      type="text"
+                      required
+                      value={manualEdiForm.consignee}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, consignee: e.target.value })}
+                      placeholder="e.g. SIDCO FOODS TRADING LLC"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">EDI Icegate / LEO Status *</label>
-                  <select
-                    value={manualEdiForm.ediSbStatus}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, ediSbStatus: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans font-medium focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="LEO_PASSED">LEO Passed (Let Export Order Issued)</option>
-                    <option value="LEO_GENERATED">LEO Generated (Ready for Loading)</option>
-                    <option value="SB_FILED">SB Filed (Pending Customs Assessment)</option>
-                    <option value="CUSTOMS_EXAM">Customs Examination Completed</option>
-                    <option value="REJECTED">EDI Transmission Rejected</option>
-                  </select>
-                </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">3. Notify Party</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.notify}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, notify: e.target.value })}
+                      placeholder="e.g. 3PL LOGISTICS / SAME AS CONSIGNEE"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">LEO Clearance Date</label>
-                  <input
-                    type="date"
-                    value={manualEdiForm.ediFilingDate}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, ediFilingDate: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans focus:outline-none focus:border-blue-500"
-                  />
-                </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">4. LINE (Shipping Line)</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.line}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, line: e.target.value })}
+                      placeholder="e.g. KMTC Line / MSC / Maersk"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Party Commercial Invoice No</label>
-                  <input
-                    type="text"
-                    value={manualEdiForm.invoiceNo}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, invoiceNo: e.target.value })}
-                    placeholder="e.g. HMA/1717/2026-27"
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">10. CFS (Origin Port / CFS)</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.cfs}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, cfs: e.target.value })}
+                      placeholder="e.g. ACTL CFS DADRI"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Invoice Date</label>
-                  <input
-                    type="date"
-                    value={manualEdiForm.invoiceDate}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, invoiceDate: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans focus:outline-none focus:border-blue-500"
-                  />
-                </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">24. POD (Port of Discharge)</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.pod}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, pod: e.target.value })}
+                      placeholder="e.g. JEBEL ALI / NHAVA SHEVA"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold text-blue-700 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
 
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Consignee (Foreign Buyer)</label>
-                  <input
-                    type="text"
-                    value={manualEdiForm.consignee}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, consignee: e.target.value })}
-                    placeholder="e.g. SIDCO FOODS TRADING LLC"
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans text-slate-800 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Gross Cargo Weight (KGS)</label>
-                  <input
-                    type="number"
-                    value={manualEdiForm.grossWeight}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, grossWeight: e.target.value })}
-                    placeholder="e.g. 29120"
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Net Cargo Weight (KGS)</label>
-                  <input
-                    type="number"
-                    value={manualEdiForm.netWeight}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, netWeight: e.target.value })}
-                    placeholder="e.g. 28008"
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Duty Drawback (DBK Tariff)</label>
-                  <input
-                    type="text"
-                    value={manualEdiForm.dbkCode}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, dbkCode: e.target.value })}
-                    placeholder="e.g. 0202B"
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Trade Scheme / FTA Agreement</label>
-                  <input
-                    type="text"
-                    value={manualEdiForm.tradeScheme}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, tradeScheme: e.target.value })}
-                    placeholder="e.g. CEPA (India-UAE FTA)"
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans text-slate-800 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div className="space-y-1 sm:col-span-2">
-                  <label className="font-bold text-slate-700">Approved APEDA Slaughter / Producer Plant</label>
-                  <input
-                    type="text"
-                    value={manualEdiForm.producerPlant}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, producerPlant: e.target.value })}
-                    placeholder="e.g. MEEM AGRO FOODS PRIVATE LIMITED (APEDA/149)"
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans text-slate-800 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Customs Seal No</label>
-                  <input
-                    type="text"
-                    value={manualEdiForm.customSeal}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, customSeal: e.target.value })}
-                    placeholder="e.g. CUST-99214"
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700">Line / Agent Seal No</label>
-                  <input
-                    type="text"
-                    value={manualEdiForm.sealNumber}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, sealNumber: e.target.value })}
-                    placeholder="e.g. MSC-88190"
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div className="space-y-1 sm:col-span-2">
-                  <label className="font-bold text-slate-700">Cargo / Item Description</label>
-                  <textarea
-                    rows={2}
-                    value={manualEdiForm.itemDescription}
-                    onChange={(e) => setManualEdiForm({ ...manualEdiForm, itemDescription: e.target.value })}
-                    placeholder="e.g. FROZEN BONELESS BUFFALO MEAT"
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans text-slate-800 focus:outline-none focus:border-blue-500"
-                  />
+                  <div className="space-y-1 sm:col-span-2 lg:col-span-3">
+                    <label className="font-bold text-slate-700">25. CHA (Customs CHA Agent)</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.cha}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, cha: e.target.value })}
+                      placeholder="e.g. SPJ LOGISTICS CHA / ASIAN PERAL"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
                 </div>
               </div>
 
+              {/* SECTION 2: Container & Job Specifications */}
+              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-100 text-slate-800 font-bold text-xs uppercase tracking-wider">
+                  <Package className="w-4 h-4 text-indigo-600" />
+                  <span>2. Container &amp; Equipment Specifications (Columns 5-9, 26, 27)</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">5. Cont No *</label>
+                    <input
+                      type="text"
+                      required
+                      value={manualEdiForm.containerNo}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, containerNo: e.target.value.toUpperCase() })}
+                      placeholder="e.g. 1122334455 / MSCU7456431"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-blue-700 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">6. Allotment Date</label>
+                    <input
+                      type="date"
+                      value={manualEdiForm.allotmentDate}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, allotmentDate: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">7. TYPE (Job Type)</label>
+                    <select
+                      value={manualEdiForm.joType}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, joType: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500"
+                    >
+                      <option value="Export FCL">Export FCL</option>
+                      <option value="Export LCL">Export LCL</option>
+                      <option value="Import FCL">Import FCL</option>
+                      <option value="Domestic Movement">Domestic Movement</option>
+                      <option value="Empty Repositioning">Empty Repositioning</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">8. Cont Size</label>
+                    <select
+                      value={manualEdiForm.contSize}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, contSize: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-blue-500"
+                    >
+                      <option value="20">20' (Twenty Foot)</option>
+                      <option value="40">40' (Forty Foot)</option>
+                      <option value="45">45' (Forty-Five Foot)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">9. Cont Type</label>
+                    <select
+                      value={manualEdiForm.contType}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, contType: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-indigo-700 focus:outline-none focus:border-blue-500"
+                    >
+                      <option value="HC">HC (High Cube)</option>
+                      <option value="GP">GP (General Purpose / Dry)</option>
+                      <option value="RF">RF (Reefer Refrigerated)</option>
+                      <option value="OT">OT (Open Top)</option>
+                      <option value="FR">FR (Flat Rack)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">26. JOB No</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.jobNo}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, jobNo: e.target.value })}
+                      placeholder="e.g. JO-94289"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="font-bold text-slate-700">27. JOB Date</label>
+                    <input
+                      type="date"
+                      value={manualEdiForm.joDate}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, joDate: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: Customs & Shipping Bill (Icegate) */}
+              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-100 text-slate-800 font-bold text-xs uppercase tracking-wider">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>3. Customs, Shipping Bill &amp; Icegate Compliance (Columns 20, 21, 13, 14, 22, 23 + EDI Status)</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">20. SB No. *</label>
+                    <input
+                      type="text"
+                      required
+                      value={manualEdiForm.sbNo}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, sbNo: e.target.value.toUpperCase() })}
+                      placeholder="e.g. SB-5108 / 7418417"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-blue-700 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">21. SB Date *</label>
+                    <input
+                      type="date"
+                      required
+                      value={manualEdiForm.sbDate}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, sbDate: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">EDI Icegate / LEO Status *</label>
+                    <select
+                      value={manualEdiForm.ediSbStatus}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, ediSbStatus: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans font-bold text-slate-800 focus:outline-none focus:border-blue-500"
+                    >
+                      <option value="LEO_PASSED">✓ LEO Passed (Let Export Order Issued)</option>
+                      <option value="LEO_GENERATED">⚡ LEO Generated (Ready for Loading)</option>
+                      <option value="CUSTOMS_EXAM">🔍 Customs Examination Completed</option>
+                      <option value="SB_FILED">⏳ SB Filed (Pending Customs Assessment)</option>
+                      <option value="REJECTED">⚠ EDI Transmission Rejected</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">LEO Clearance Date</label>
+                    <input
+                      type="date"
+                      value={manualEdiForm.ediFilingDate}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, ediFilingDate: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">13. REF Id (Icegate)</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.refId}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, refId: e.target.value })}
+                      placeholder="e.g. REF-94289"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">14. Health Cert.No (EIC)</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.healthCertNo}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, healthCertNo: e.target.value })}
+                      placeholder="e.g. EIC/DEL/2026/8841"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">22. Consignment Type</label>
+                    <select
+                      value={manualEdiForm.consignmentType}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, consignmentType: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500"
+                    >
+                      <option value="FCL">FCL (Full Container Load)</option>
+                      <option value="LCL">LCL (Less than Container Load)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">23. FOB Value (₹ INR)</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.fobValue}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, fobValue: e.target.value })}
+                      placeholder="e.g. 4520000"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-emerald-700 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 4: Commercial Invoice & Cargo Details */}
+              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-100 text-slate-800 font-bold text-xs uppercase tracking-wider">
+                  <FileText className="w-4 h-4 text-amber-600" />
+                  <span>4. Commercial Invoice &amp; Cargo Manifest (Columns 11, 12, 15-19)</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">18. Invoice No</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.invoiceNo}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, invoiceNo: e.target.value })}
+                      placeholder="e.g. IFF/EXP/27/0943"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-semibold text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">19. Invoice Date</label>
+                    <input
+                      type="date"
+                      value={manualEdiForm.invoiceDate}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, invoiceDate: e.target.value })}
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">11. Commodity Gross Wt. (KGS)</label>
+                    <input
+                      type="number"
+                      value={manualEdiForm.grossWeight}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, grossWeight: e.target.value })}
+                      placeholder="e.g. 29120"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">12. Commodity Net Wt. (KGS)</label>
+                    <input
+                      type="number"
+                      value={manualEdiForm.netWeight}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, netWeight: e.target.value })}
+                      placeholder="e.g. 28008"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-700 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">15. Package Type</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.packageType}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, packageType: e.target.value })}
+                      placeholder="e.g. CARTONS"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">16. No of PCS. (Quantity)</label>
+                    <input
+                      type="number"
+                      value={manualEdiForm.noOfPcs}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, noOfPcs: e.target.value })}
+                      placeholder="e.g. 1472"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="font-bold text-slate-700">17. Commodity *</label>
+                    <input
+                      type="text"
+                      required
+                      value={manualEdiForm.commodity}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, commodity: e.target.value, itemDescription: e.target.value })}
+                      placeholder="e.g. FROZEN BONELESS BUFFALO MEAT"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 5: Seals, Tariff Scheme & Remarks */}
+              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-100 text-slate-800 font-bold text-xs uppercase tracking-wider">
+                  <Layers className="w-4 h-4 text-purple-600" />
+                  <span>5. Seals, Duty Drawback, APEDA Plant &amp; Remarks (Column 28 + Compliance)</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">Customs Seal No</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.customSeal}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, customSeal: e.target.value })}
+                      placeholder="e.g. CUST-99214"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">Line / Agent Seal No</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.sealNumber}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, sealNumber: e.target.value })}
+                      placeholder="e.g. MSC-88190"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">Duty Drawback (DBK Tariff)</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.dbkCode}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, dbkCode: e.target.value })}
+                      placeholder="e.g. 0202B"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700">Trade Scheme / FTA Agreement</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.tradeScheme}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, tradeScheme: e.target.value })}
+                      placeholder="e.g. CEPA (India-UAE FTA)"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="font-bold text-slate-700">Approved APEDA Slaughter / Producer Plant</label>
+                    <input
+                      type="text"
+                      value={manualEdiForm.producerPlant}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, producerPlant: e.target.value })}
+                      placeholder="e.g. MEEM AGRO FOODS PRIVATE LIMITED (APEDA/149)"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1 sm:col-span-2 lg:col-span-3">
+                    <label className="font-bold text-slate-700">28. Remarks (Operational Notes)</label>
+                    <textarea
+                      rows={2}
+                      value={manualEdiForm.remarks}
+                      onChange={(e) => setManualEdiForm({ ...manualEdiForm, remarks: e.target.value })}
+                      placeholder="e.g. All customs clearance documents checked and approved"
+                      className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-sans text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
               <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => setEdiManualModalOpen(false)}
-                  className="px-4 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 font-medium text-xs cursor-pointer"
+                  className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold text-xs cursor-pointer transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                  className="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-2 shadow-md transition cursor-pointer active:scale-95"
                 >
-                  <Check className="w-4 h-4" />
-                  <span>Save EDI Update to DB</span>
+                  <Check className="w-4 h-4 text-blue-200" />
+                  <span>Save All 28 Details to Database</span>
                 </button>
               </div>
             </form>

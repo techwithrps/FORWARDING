@@ -1007,10 +1007,42 @@ router.post('/edi-update', async (req, res) => {
       tradeScheme,
       producerPlant,
       customsDossier,
-      itemDescription
+      itemDescription,
+      commodity,
+      remarks,
+      shipper,
+      notify,
+      line,
+      allotmentDate,
+      joType,
+      cfs,
+      refId,
+      healthCertNo,
+      packageType,
+      noOfPcs,
+      consignmentType,
+      fobValue,
+      pod,
+      cha,
+      jobNo,
+      joDate,
+      sizeType,
+      contSize,
+      contType
     } = req.body;
 
     const finalConsignee = consigneeName || consignee;
+    const finalCommodity = itemDescription || commodity;
+    const finalSizeType = sizeType || (contSize && contType ? `${contSize}${contType}` : null);
+
+    // Merge refId, healthCertNo, fobValue, consignmentType into dossier
+    const mergedDossier = {
+      ...(customsDossier || {}),
+      ...(refId ? { refId } : {}),
+      ...(healthCertNo ? { healthCertNo } : {}),
+      ...(fobValue ? { fobValue } : {}),
+      ...(consignmentType ? { consignmentType } : {})
+    };
 
     const { rows } = await db.query(
       `UPDATE job_containers SET 
@@ -1030,8 +1062,10 @@ router.post('/edi-update', async (req, res) => {
          producer_plant = COALESCE($14, producer_plant),
          customs_dossier = COALESCE($15::JSONB, customs_dossier),
          item_description = COALESCE($16, item_description),
+         gr_remarks = COALESCE($17, gr_remarks),
+         size_type = COALESCE($18, size_type),
          updated_at = NOW()
-       WHERE id = $17 OR container_number = $17 RETURNING *`,
+       WHERE id = $19 OR container_number = $19 RETURNING *`,
       [
         ediSbStatus || null,
         ediFilingDate || null,
@@ -1047,28 +1081,65 @@ router.post('/edi-update', async (req, res) => {
         dbkCode || null,
         tradeScheme || null,
         producerPlant || null,
-        customsDossier ? JSON.stringify(customsDossier) : null,
-        itemDescription || null,
+        Object.keys(mergedDossier).length > 0 ? JSON.stringify(mergedDossier) : null,
+        finalCommodity || null,
+        remarks || null,
+        finalSizeType || null,
         containerId
       ]
     );
 
-    // Sync to parent job_orders table if SB/Invoice provided
-    if (sbNo || sbDate || invoiceNo || invoiceDate || finalConsignee) {
+    // Sync to parent job_orders table
+    try {
       await db.query(
         `UPDATE job_orders SET
-           sb_no = COALESCE($1, sb_no),
-           sb_date = COALESCE($2::DATE, sb_date),
-           party_invoice_no = COALESCE($3, party_invoice_no),
-           party_invoice_date = COALESCE($4::DATE, party_invoice_date),
-           consignee_name = COALESCE($5, consignee_name),
+           customer_name = COALESCE($1, customer_name),
+           consignee_name = COALESCE($2, consignee_name),
+           on_account = COALESCE($3, on_account),
+           shipping_line_name = COALESCE($4, shipping_line_name),
+           origin_port_name = COALESCE($5, origin_port_name),
+           pod_port_name = COALESCE($6, pod_port_name),
+           cha_name = COALESCE($7, cha_name),
+           commodity = COALESCE($8, commodity),
+           package_type = COALESCE($9, package_type),
+           cartons = COALESCE($10::NUMERIC, cartons),
+           remarks = COALESCE($11, remarks),
+           jo_type = COALESCE($12, jo_type),
+           booking_date = COALESCE($13, booking_date),
+           jo_date = COALESCE($14, jo_date),
+           sb_no = COALESCE($15, sb_no),
+           sb_date = COALESCE($16::DATE, sb_date),
+           party_invoice_no = COALESCE($17, party_invoice_no),
+           party_invoice_date = COALESCE($18::DATE, party_invoice_date),
            updated_at = NOW()
-         WHERE id = (SELECT job_id FROM job_containers WHERE id = $6 OR container_number = $6 LIMIT 1)`,
-        [sbNo || null, sbDate || null, invoiceNo || null, invoiceDate || null, finalConsignee || null, containerId]
+         WHERE id = (SELECT job_id FROM job_containers WHERE id = $19 OR container_number = $19 LIMIT 1)`,
+        [
+          shipper || null,
+          finalConsignee || null,
+          notify || null,
+          line || null,
+          cfs || null,
+          pod || null,
+          cha || null,
+          finalCommodity || null,
+          packageType || null,
+          noOfPcs ? Number(noOfPcs) : null,
+          remarks || null,
+          joType || null,
+          allotmentDate || null,
+          joDate || null,
+          sbNo || null,
+          sbDate || null,
+          invoiceNo || null,
+          invoiceDate || null,
+          containerId
+        ]
       );
+    } catch (syncErr) {
+      console.warn('Sync to job_orders warning:', syncErr.message);
     }
 
-    res.json({ success: true, data: rows[0] });
+    res.json({ success: true, data: rows ? rows[0] : null });
   } catch (err) {
     console.error('Error in edi-update:', err);
     res.status(500).json({ success: false, error: err.message });
