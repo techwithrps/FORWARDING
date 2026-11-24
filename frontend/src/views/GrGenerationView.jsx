@@ -45,6 +45,10 @@ export default function GrGenerationView({
 
     // 1. First add real containers fetched from DB
     (liveContainers || []).forEach((c) => {
+      const svcs = Array.isArray(c.services_required || c.servicesRequired)
+        ? (c.services_required || c.servicesRequired)
+        : (c.services_required || c.servicesRequired ? String(c.services_required || c.servicesRequired).split(',').map(s => s.trim()) : []);
+      if (svcs.length > 0 && !svcs.includes('Transport')) return;
       const cNo = c.cont_no || c.contNo;
       if (cNo && !seen.has(cNo.toUpperCase())) {
         seen.add(cNo.toUpperCase());
@@ -71,6 +75,8 @@ export default function GrGenerationView({
 
     // 2. Add containers from parent jobs prop if not already listed
     (jobs || []).forEach((job) => {
+      const svcs = Array.isArray(job.servicesRequired) ? job.servicesRequired : (job.servicesRequired ? String(job.servicesRequired).split(',').map(s => s.trim()) : []);
+      if (svcs.length > 0 && !svcs.includes('Transport')) return;
       (job.containers || []).forEach((c) => {
         const cNo = c.no || c.contNo || c.containerNo || c.container_number;
         if (cNo && cNo !== 'TBA' && !seen.has(cNo.toUpperCase())) {

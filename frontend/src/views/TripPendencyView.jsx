@@ -54,6 +54,8 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
 
   // 1. First add live database records (source of truth)
   livePendency.forEach((r, idx) => {
+    const svcs = Array.isArray(r.servicesRequired) ? r.servicesRequired : (r.servicesRequired ? String(r.servicesRequired).split(',').map(s => s.trim()) : []);
+    if (svcs.length > 0 && !svcs.includes('Transport')) return;
     const cno = (r.containerNo || '').trim();
     if (cno) seenContainers.add(cno.toUpperCase());
     pendingContainers.push({
@@ -83,6 +85,8 @@ export default function TripPendencyView({ jobs = [], onUpdateContainerGR, onNew
 
   // 2. Then merge in-memory/localStorage jobs where GR is pending (if not already seen)
   jobs.forEach((job) => {
+    const svcs = Array.isArray(job.servicesRequired) ? job.servicesRequired : (job.servicesRequired ? String(job.servicesRequired).split(',').map(s => s.trim()) : []);
+    if (svcs.length > 0 && !svcs.includes('Transport')) return;
     (job.containers || []).forEach((c, idx) => {
       const cno = (c.no || c.containerNo || '').trim();
       const hasGr = c.gr && c.gr !== 'PENDING' && c.gr.trim() !== '';

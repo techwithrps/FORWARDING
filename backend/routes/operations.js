@@ -13,10 +13,12 @@ router.get('/trip-pendency', async (req, res) => {
         j.job_number, j.booking_no, j.customer_name, j.consignee_name, j.shipping_line_name,
         j.origin_port_name, j.pod_port_name, j.vessel_name, j.commodity, j.transporter,
         j.handover_location, j.empty_pickup_location,
-        j.booking_date, j.created_at as jo_created_at
+        j.booking_date, j.created_at as jo_created_at,
+        j.services_required
       FROM job_containers c
       JOIN job_orders j ON c.job_id = j.id
-      WHERE c.gr_number IS NULL OR c.gr_number = '' OR c.current_status = 'ALLOTTED'
+      WHERE (c.gr_number IS NULL OR c.gr_number = '' OR c.current_status = 'ALLOTTED')
+        AND (j.services_required IS NULL OR j.services_required = '' OR j.services_required LIKE '%Transport%')
       ORDER BY c.created_at DESC;
     `;
     const { rows } = await db.query(query);
@@ -42,6 +44,7 @@ router.get('/trip-pendency', async (req, res) => {
       truckNo: r.truck_number || '',
       driverName: r.driver_name || '',
       driverMobile: r.driver_mobile || '',
+      servicesRequired: r.services_required || '',
       status: 'AWAITING_GR'
     }));
     res.json({ success: true, count: formatted.length, data: formatted });
@@ -115,10 +118,12 @@ router.get('/pending-gr-containers', async (req, res) => {
           COALESCE(c.truck_number, '') AS vehicle_no,
           COALESCE(c.driver_name, '') AS driver,
           COALESCE(c.driver_mobile, '') AS driver_contact_no,
-          COALESCE(j.shipping_line_name, '') AS shipping_line
+          COALESCE(j.shipping_line_name, '') AS shipping_line,
+          COALESCE(j.services_required, '') AS services_required
         FROM job_containers c
         JOIN job_orders j ON c.job_id = j.id
         WHERE (c.gr_number IS NULL OR c.gr_number = '')
+          AND (j.services_required IS NULL OR j.services_required = '' OR j.services_required LIKE '%Transport%')
         ORDER BY c.created_at DESC
         LIMIT 100;
       `;
@@ -798,7 +803,12 @@ async function getLifecycleRows(extraWhere = '1=1') {
       COALESCE(c.consignee_name, doc."CONSINGEE_NAME", j.consignee_name) as consignee_name,
       COALESCE(c.item_description, j.commodity) as item_description,
       j.job_number, j.booking_no, j.customer_name, j.shipping_line_name,
-      j.origin_port_name, j.pod_port_name, j.vessel_name, j.commodity
+      j.origin_port_name, j.pod_port_name, j.vessel_name, j.commodity,
+      j.cha_name, j.on_account, j.jo_type, j.package_type, j.cartons,
+      j.booking_date, j.jo_date,
+      COALESCE(c.remarks, j.remarks, '') as remarks,
+      COALESCE(c.created_at, j.booking_date, j.created_at) as allotment_date,
+      j.services_required
     FROM job_containers c
     JOIN job_orders j ON c.job_id = j.id
     LEFT JOIN LATERAL (
@@ -869,6 +879,15 @@ async function getLifecycleRows(extraWhere = '1=1') {
     handoverStatus: r.handover_status || 'COMPLETED',
     egmNo: r.egm_no || '',
     dischargeDate: r.discharge_date || null,
+    servicesRequired: r.services_required || '',
+    cha: r.cha_name || 'SPJ LOGISTICS CHA',
+    notify: r.on_account || 'SAME AS CONSIGNEE',
+    allotmentDate: r.allotment_date ? new Date(r.allotment_date).toISOString().split('T')[0] : '',
+    joType: r.jo_type || 'Export FCL',
+    packageType: r.package_type || 'CARTONS',
+    noOfPcs: Number(r.cartons) || 1472,
+    remarks: r.remarks || '',
+    joDate: r.jo_date ? (typeof r.jo_date === 'string' && r.jo_date.includes('T') ? r.jo_date.split('T')[0] : r.jo_date) : (r.booking_date ? (typeof r.booking_date === 'string' && r.booking_date.includes('T') ? r.booking_date.split('T')[0] : r.booking_date) : ''),
     status: r.current_status || 'ALLOTTED'
   }));
 }
@@ -961,7 +980,7 @@ router.post('/trip-close', async (req, res) => {
 // 7. EDI UPDATE
 router.get('/edi-update', async (req, res) => {
   try {
-    const data = await getLifecycleRows();
+    const data = await getLifecycleRows("(j.services_required IS NULL OR j.services_required = '' OR j.services_required LIKE '%Clearance%')");
     res.json({ success: true, count: data.length, data });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1128,7 +1147,7 @@ router.post('/edi-bulk-update', async (req, res) => {
 // 8. RAIL OUT STATUS
 router.get('/rail-out', async (req, res) => {
   try {
-    const data = await getLifecycleRows();
+    const data = await getLifecycleRows("(j.services_required IS NULL OR j.services_required = '' OR j.services_required LIKE '%Rail%')");
     res.json({ success: true, count: data.length, data });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

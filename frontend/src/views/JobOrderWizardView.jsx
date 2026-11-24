@@ -350,7 +350,7 @@ export default function JobOrderWizardView({
     joDate: todayStr,
     joType: 'Export FCL',
     modeOfShipment: 'Multimodal (Rail + Road)',
-    servicesRequired: ['Transport', 'Clearance', 'Rail', 'Forwarding'],
+    servicesRequired: [],
     consignor: '',
     consignee: '',
     shippingLine: '',
@@ -767,7 +767,7 @@ export default function JobOrderWizardView({
         joDate: today,
         joType: 'Export FCL',
         modeOfShipment: 'Multimodal (Rail + Road)',
-        servicesRequired: ['Transport', 'Clearance', 'Rail', 'Forwarding'],
+        servicesRequired: [],
         consignor: '',
         consignee: '',
         shippingLine: '',
@@ -862,13 +862,14 @@ export default function JobOrderWizardView({
   // Load Previous Booking for Edit
   const handleLoadForEdit = (prevJob) => {
     const today = getTodayDateStr();
-    let svcReq = ['Transport', 'Clearance', 'Rail', 'Forwarding'];
+    let svcReq = [];
     if (prevJob.services_required) {
       svcReq = typeof prevJob.services_required === 'string'
-        ? prevJob.services_required.split(',').map(s => s.trim())
-        : prevJob.services_required;
+        ? prevJob.services_required.split(',').map(s => s.trim()).filter(s => s && s !== 'Forwarding')
+        : (Array.isArray(prevJob.services_required) ? prevJob.services_required.filter(s => s !== 'Forwarding') : []);
     } else if (prevJob.servicesRequired) {
-      svcReq = Array.isArray(prevJob.servicesRequired) ? prevJob.servicesRequired : [prevJob.servicesRequired];
+      svcReq = (Array.isArray(prevJob.servicesRequired) ? prevJob.servicesRequired : String(prevJob.servicesRequired).split(',').map(s => s.trim()))
+        .filter(s => s && s !== 'Forwarding');
     }
     setForm({
       joNo: prevJob.joNo || prevJob.id || form.joNo,
@@ -1122,6 +1123,10 @@ export default function JobOrderWizardView({
       setFormError('Please select POD (Port of Discharge)');
       return;
     }
+    if (!form.servicesRequired || form.servicesRequired.length === 0) {
+      setFormError('Please select at least one Service Required (Transport, Clearance, or Rail)');
+      return;
+    }
 
     setFormError('');
     const newJobPayload = {
@@ -1130,7 +1135,7 @@ export default function JobOrderWizardView({
       joDate: form.joDate || todayStr,
       joType: form.joType,
       modeOfShipment: form.modeOfShipment,
-      servicesRequired: Array.isArray(form.servicesRequired) ? form.servicesRequired.join(', ') : (form.servicesRequired || 'Transport, Clearance, Rail, Forwarding'),
+      servicesRequired: Array.isArray(form.servicesRequired) ? form.servicesRequired.join(', ') : (form.servicesRequired || ''),
       transporter: form.transporter || 'AJINKYA TRANSPORT',
       bookingDate: form.bookingDate || form.joDate || todayStr,
       bookingValidity: form.bookingValidity,
@@ -1490,7 +1495,7 @@ export default function JobOrderWizardView({
               <span className="text-[9px] text-slate-500 font-semibold">(Multiple Selection Supported)</span>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              {['Transport', 'Clearance', 'Rail', 'Forwarding'].map((svc, idx) => {
+              {['Transport', 'Clearance', 'Rail'].map((svc, idx) => {
                 const isChecked = form.servicesRequired?.includes(svc);
                 return (
                   <label
@@ -2520,36 +2525,70 @@ export default function JobOrderWizardView({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className="text-right mr-2 hidden sm:block">
-                        <div className="font-mono font-bold text-emerald-600 text-xs">
-                          ₹ {Number(job.margin !== undefined ? job.margin : ((job.sellFreight || 145000) - (job.buyFreight || 118000))).toLocaleString("en-IN")}
-                        </div>
-                        <span className="text-[9px] text-slate-400 font-mono">Net Margin</span>
-                      </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      {/* GR Status Badge */}
+                      {(() => {
+                        const conts = job.containers || [];
+                        const total = conts.length || Number(job.containersCount) || 1;
+                        const grDone = conts.filter(c => 
+                          (c.grNo && String(c.grNo).trim() !== '') || 
+                          (c.gr && String(c.gr).toUpperCase() !== 'PENDING' && String(c.gr).trim() !== '') || 
+                          (c.gr_number && String(c.gr_number).trim() !== '')
+                        );
+                        const doneCount = grDone.length;
+                        const singleGrNo = grDone[0]?.grNo || grDone[0]?.gr || grDone[0]?.gr_number || job.grNo || job.gr_number || job.gr;
+
+                        if (doneCount === total && total > 0) {
+                          return (
+                            <div className="text-right hidden sm:block">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                                <span>✓</span>
+                                <span>{total === 1 && singleGrNo && String(singleGrNo).toUpperCase() !== 'PENDING' ? singleGrNo : `GR Done (${doneCount}/${total})`}</span>
+                              </span>
+                              <div className="text-[9px] text-slate-400 font-semibold text-center mt-0.5">GR Status</div>
+                            </div>
+                          );
+                        } else if (doneCount > 0) {
+                          return (
+                            <div className="text-right hidden sm:block">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
+                                <span>⚡</span>
+                                <span>GR Partial ({doneCount}/${total})</span>
+                              </span>
+                              <div className="text-[9px] text-slate-400 font-semibold text-center mt-0.5">GR Status</div>
+                            </div>
+                          );
+                        } else if (singleGrNo && String(singleGrNo).toUpperCase() !== 'PENDING' && String(singleGrNo).trim() !== '') {
+                          return (
+                            <div className="text-right hidden sm:block">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                                <span>✓</span>
+                                <span>{singleGrNo}</span>
+                              </span>
+                              <div className="text-[9px] text-slate-400 font-semibold text-center mt-0.5">GR Status</div>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div className="text-right hidden sm:block">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-amber-50 text-amber-700 border border-amber-200 shadow-2xs">
+                                <span>⏳</span>
+                                <span>GR Pending</span>
+                              </span>
+                              <div className="text-[9px] text-slate-400 font-semibold text-center mt-0.5">GR Status</div>
+                            </div>
+                          );
+                        }
+                      })()}
 
                       {/* Primary Action: Load back into form for Edit! */}
                       <button
                         type="button"
                         onClick={() => handleLoadForEdit(job)}
-                        className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer select-none"
+                        className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer select-none"
                         title="Load this booking into form to edit"
                       >
                         <span>✏️ Edit in Form</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowRecentModal(false);
-                          if (onSelectJob) onSelectJob(job.id);
-                          if (onOpenShipmentStatus) onOpenShipmentStatus();
-                        }}
-                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition cursor-pointer select-none"
-                        title="Open Status Cockpit"
-                      >
-                        <span>Cockpit</span>
-                        <ChevronRight className="w-3.5 h-3.5 inline" />
                       </button>
                     </div>
                   </div>

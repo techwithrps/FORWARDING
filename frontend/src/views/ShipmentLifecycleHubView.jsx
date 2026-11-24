@@ -207,7 +207,22 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
         trStatus: c.trStatus || 'APPROVED',
         handoverStatus: c.handoverStatus || 'COMPLETED',
         egmNo: c.egmNo || 'EGM-2026-JNPT-0192',
-        dischargeDate: c.dischargeDate || '2026-11-12'
+        dischargeDate: c.dischargeDate || '2026-11-12',
+        servicesRequired: c.servicesRequired || '',
+        cha: c.cha || 'SPJ LOGISTICS CHA',
+        notify: c.notify || 'SAME AS CONSIGNEE',
+        allotmentDate: c.allotmentDate || '',
+        joType: c.joType || 'Export FCL',
+        packageType: c.packageType || 'CARTONS',
+        noOfPcs: c.noOfPcs || c.packages || 1472,
+        commodity: c.commodity || c.itemDescription || 'FROZEN BONELESS BUFFALO MEAT',
+        consignmentType: c.consignmentType || 'FCL',
+        fobValue: c.fobValue || c.customsDossier?.fobValue || '4520000',
+        pod: c.pod || c.destination || 'Jebel Ali',
+        joDate: c.joDate || '',
+        remarks: c.remarks || '',
+        refId: c.refId || c.customsDossier?.refId || '',
+        healthCertNo: c.healthCertNo || c.customsDossier?.healthCertNo || ''
       });
     });
 
@@ -266,7 +281,22 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
             trStatus: c.trStatus || 'APPROVED',
             handoverStatus: c.handoverStatus || 'COMPLETED',
             egmNo: c.egmNo || 'EGM-2026-JNPT-0192',
-            dischargeDate: c.dischargeDate || '2026-11-12'
+            dischargeDate: c.dischargeDate || '2026-11-12',
+            servicesRequired: c.servicesRequired || j.servicesRequired || j.services_required || '',
+            cha: j.cha || j.chaName || 'SPJ LOGISTICS CHA',
+            notify: j.notify || j.onAccount || 'SAME AS CONSIGNEE',
+            allotmentDate: c.allotmentDate || j.bookingDate || j.joDate || '',
+            joType: j.joType || j.type || 'Export FCL',
+            packageType: j.packageType || 'CARTONS',
+            noOfPcs: Number(j.cartons) || c.packages || 1472,
+            commodity: j.commodity || 'FROZEN BONELESS BUFFALO MEAT',
+            consignmentType: j.consignmentType || 'FCL',
+            fobValue: c.fobValue || c.customsDossier?.fobValue || j.fobValue || '4520000',
+            pod: j.pod || j.toLocation || 'Jebel Ali',
+            joDate: j.joDate || j.bookingDate || '',
+            remarks: c.remarks || j.remarks || '',
+            refId: c.refId || c.customsDossier?.refId || '',
+            healthCertNo: c.healthCertNo || c.customsDossier?.healthCertNo || ''
           });
         }
       });
@@ -280,6 +310,20 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
           result.push({
             id: s.containerNo,
             ...s,
+            cha: s.cha || 'SPJ LOGISTICS CHA',
+            notify: s.notify || 'SAME AS CONSIGNEE',
+            allotmentDate: s.allotmentDate || '2026-11-20',
+            joType: s.joType || 'Export FCL',
+            packageType: s.packageType || 'CARTONS',
+            noOfPcs: s.packages || 1472,
+            commodity: s.itemDescription || 'FROZEN BONELESS BUFFALO MEAT',
+            consignmentType: 'FCL',
+            fobValue: '4520000',
+            pod: s.destination || 'JEBEL ALI',
+            joDate: s.joDate || '2026-11-20',
+            remarks: s.remarks || '',
+            refId: 'REF-' + s.jobNo.replace(/[^0-9]/g, ''),
+            healthCertNo: 'EIC/DEL/2026/' + s.containerNo.slice(-4),
             isDelayed: simulatedSobDiff ? s.isDelayed : false
           });
         }
@@ -620,7 +664,12 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
   // Filtering Logic (Memoized for zero-lag responsiveness)
   const filtered = useMemo(() => {
     return rows.filter((r) => {
+      const svcs = Array.isArray(r.servicesRequired)
+        ? r.servicesRequired
+        : (r.servicesRequired ? String(r.servicesRequired).split(',').map(s => s.trim()) : []);
+
       if (activeSection === 'EdiUpdate') {
+        if (svcs.length > 0 && !svcs.includes('Clearance')) return false;
         if (ediStatusFilter !== 'ALL') {
           const st = String(r.ediStatus || '').toUpperCase();
           if (ediStatusFilter === 'LEO_PASSED' && !(st.includes('PASSED') || st.includes('CLEARED'))) return false;
@@ -633,13 +682,22 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
           const q = searchTerm.toLowerCase();
           const match = (r.containerNo || '').toLowerCase().includes(q) ||
             (r.customer || '').toLowerCase().includes(q) ||
+            (r.shipper || '').toLowerCase().includes(q) ||
             (r.consignee || '').toLowerCase().includes(q) ||
+            (r.notify || '').toLowerCase().includes(q) ||
+            (r.line || '').toLowerCase().includes(q) ||
+            (r.cha || '').toLowerCase().includes(q) ||
             (r.jobNo || '').toLowerCase().includes(q) ||
             (r.origin || '').toLowerCase().includes(q) ||
             (r.destination || '').toLowerCase().includes(q) ||
+            (r.pod || '').toLowerCase().includes(q) ||
             (r.sbNo || '').toLowerCase().includes(q) ||
             (r.invoiceNo || '').toLowerCase().includes(q) ||
+            (r.commodity || '').toLowerCase().includes(q) ||
             (r.itemDescription || '').toLowerCase().includes(q) ||
+            (r.refId || '').toLowerCase().includes(q) ||
+            (r.healthCertNo || '').toLowerCase().includes(q) ||
+            (r.remarks || '').toLowerCase().includes(q) ||
             (r.vessel || '').toLowerCase().includes(q);
           if (!match) return false;
         }
@@ -670,6 +728,19 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
           if (!match) return false;
         }
         return true;
+      }
+
+      if (activeSection === 'RailOutStatus') {
+        if (svcs.length > 0 && !svcs.includes('Rail')) return false;
+        if (!searchTerm.trim()) return true;
+        const q = searchTerm.toLowerCase();
+        return (
+          (r.containerNo || '').toLowerCase().includes(q) ||
+          (r.trainNo || '').toLowerCase().includes(q) ||
+          (r.wagonNo || '').toLowerCase().includes(q) ||
+          (r.customer || '').toLowerCase().includes(q) ||
+          (r.jobNo || '').toLowerCase().includes(q)
+        );
       }
 
       if (!searchTerm.trim()) return true;
@@ -1455,9 +1526,9 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
           <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-4">
             <div className="overflow-x-auto rounded-lg border border-slate-200">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[11px] uppercase">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-mono text-[11px] uppercase tracking-wider sticky top-0 z-10 whitespace-nowrap">
                   <tr>
-                    <th className="py-2.5 px-3 w-8">
+                    <th className="py-2.5 px-3 w-8 sticky left-0 bg-slate-50 z-20">
                       <input
                         type="checkbox"
                         checked={filtered.length > 0 && selectedContIds.length === filtered.length}
@@ -1468,172 +1539,323 @@ export default function ShipmentLifecycleHubView({ jobs = [], initialSection = '
                         className="rounded border-slate-300 text-blue-600 cursor-pointer"
                       />
                     </th>
-                    <th className="py-2.5 px-3">Container No</th>
-                    <th className="py-2.5 px-3">Job / Shipper</th>
-                    <th className="py-2.5 px-3">Consignee &amp; Route</th>
-                    <th className="py-2.5 px-3 font-bold text-blue-700">Shipping Bill (SB)</th>
-                    <th className="py-2.5 px-3">Party Invoice</th>
-                    <th className="py-2.5 px-3">Weight &amp; Seal</th>
-                    <th className="py-2.5 px-3 font-bold text-emerald-700">EDI / ICEGATE Status</th>
+                    <th className="py-2.5 px-3">Shipper</th>
+                    <th className="py-2.5 px-3">Consignee</th>
+                    <th className="py-2.5 px-3">Notify</th>
+                    <th className="py-2.5 px-3 font-bold text-slate-800">LINE</th>
+                    <th className="py-2.5 px-3 font-bold text-blue-700">Cont No</th>
+                    <th className="py-2.5 px-3">Allotment Date</th>
+                    <th className="py-2.5 px-3">TYPE</th>
+                    <th className="py-2.5 px-3">Cont Size</th>
+                    <th className="py-2.5 px-3">Cont Type</th>
+                    <th className="py-2.5 px-3">CFS</th>
+                    <th className="py-2.5 px-3">Commodity Gross Wt.</th>
+                    <th className="py-2.5 px-3">Commodity Net Wt.</th>
+                    <th className="py-2.5 px-3">REF Id</th>
+                    <th className="py-2.5 px-3">Health Cert.No</th>
+                    <th className="py-2.5 px-3">Package Type</th>
+                    <th className="py-2.5 px-3">No of PCS.</th>
+                    <th className="py-2.5 px-3">Commodity</th>
+                    <th className="py-2.5 px-3">Invoice No</th>
+                    <th className="py-2.5 px-3">Invoice Date</th>
+                    <th className="py-2.5 px-3 font-bold text-blue-700">SB No.</th>
+                    <th className="py-2.5 px-3">SB Date</th>
+                    <th className="py-2.5 px-3">Consignment Type</th>
+                    <th className="py-2.5 px-3 font-bold text-emerald-700">FOB Value</th>
+                    <th className="py-2.5 px-3 font-bold text-blue-700">POD</th>
+                    <th className="py-2.5 px-3">CHA</th>
+                    <th className="py-2.5 px-3 font-bold text-slate-800">JOB No</th>
+                    <th className="py-2.5 px-3">JOB Date</th>
+                    <th className="py-2.5 px-3">Remarks</th>
+                    <th className="py-2.5 px-3 font-bold text-indigo-700">EDI Status</th>
                     <th className="py-2.5 px-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody className="divide-y divide-slate-100 bg-white whitespace-nowrap">
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="p-8 text-center text-slate-400 font-sans">
+                      <td colSpan={31} className="p-8 text-center text-slate-400 font-sans">
                         No containers found pending EDI Icegate Update.
                       </td>
                     </tr>
                   ) : (
-                    pagedRows.map((r, idx) => (
-                      <tr
-                        key={idx}
-                        className="hover:bg-blue-50/70 transition group"
-                      >
-                        <td className="py-3 px-3">
-                          <input
-                            type="checkbox"
-                            checked={selectedContIds.includes(r.id || r.containerNo)}
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => {
-                              const cid = r.id || r.containerNo;
-                              if (e.target.checked) setSelectedContIds([...selectedContIds, cid]);
-                              else setSelectedContIds(selectedContIds.filter(id => id !== cid));
-                            }}
-                            className="rounded border-slate-300 text-blue-600 cursor-pointer"
-                          />
-                        </td>
-                        <td className="py-3 px-3">
-                          <div className="font-mono font-bold text-blue-700 text-xs">{r.containerNo}</div>
-                          <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                            {r.size}
-                          </span>
-                        </td>
-                        <td className="py-3 px-3 max-w-[200px]">
-                          <div className="font-semibold text-slate-800 truncate" title={r.customer}>{r.customer}</div>
-                          <div className="font-mono text-[10px] text-blue-600 font-medium">{r.jobNo}</div>
-                        </td>
-                        <td className="py-3 px-3 max-w-[180px]">
-                          <div className="font-medium text-slate-700 truncate" title={r.consignee}>{r.consignee}</div>
-                          <div className="text-[10.5px] font-mono text-slate-500">
-                            {r.origin} &rarr; <span className="font-bold text-blue-700">{r.destination}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-3">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono font-bold text-blue-800 text-xs">{r.sbNo || 'Pending'}</span>
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); setDossierCont(r); }}
-                              className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 cursor-pointer transition shadow-2xs inline-flex items-center gap-0.5"
-                              title="View Customs & Shipping Bill Details"
-                            >
-                              <FileText className="w-2.5 h-2.5 text-indigo-600" />
-                              <span>SB Details 📄</span>
-                            </button>
-                          </div>
-                          <div className="text-[10px] text-slate-500 flex items-center gap-1 font-mono mt-0.5">
-                            <Calendar className="w-3 h-3 text-slate-400" />
-                            <span>{r.sbDate || '—'}</span>
-                            {r.tradeScheme && (
-                              <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 rounded border border-emerald-200">
-                                FTA
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-3 px-3">
-                          <div className="font-mono font-semibold text-slate-800 text-[11px]">{r.invoiceNo || '—'}</div>
-                          <div className="text-[10px] text-slate-400 font-mono">{r.invoiceDate || '—'}</div>
-                        </td>
-                        <td className="py-3 px-3">
-                          <div className="font-mono text-slate-800 font-medium text-[11px]">
-                            {Number(r.grossWeight || 29120).toLocaleString()} KGS <span className="text-[10px] text-slate-400">Gross</span>
-                          </div>
-                          <div className="text-[10px] text-slate-500 font-mono">
-                            Net: {Number(r.netWeight || 28008).toLocaleString()} KGS &bull; {r.sealNumber || r.customSeal || 'SEAL-88910'}
-                          </div>
-                        </td>
-                        <td className="py-3 px-3">
-                          <div>
-                            <select
-                              value={
-                                String(r.ediStatus).includes('PASSED') || String(r.ediStatus).includes('CLEARED') ? 'LEO_PASSED' :
-                                String(r.ediStatus).includes('GENERATED') ? 'LEO_GENERATED' :
-                                String(r.ediStatus).includes('EXAM') ? 'CUSTOMS_EXAM' : 'SB_FILED'
-                              }
-                              onChange={async (e) => {
-                                const newSt = e.target.value;
+                    pagedRows.map((r, idx) => {
+                      const contSize = (r.size || '40').includes('20') ? '20' : (r.size || '40').includes('45') ? '45' : '40';
+                      const rawSize = String(r.size || '').toUpperCase();
+                      const contType = rawSize.includes('RF') || rawSize.includes('REEFER') ? 'RF'
+                        : rawSize.includes('GP') || rawSize.includes('DRY') || rawSize.includes('STD') ? 'GP'
+                        : rawSize.includes('OT') ? 'OT'
+                        : rawSize.includes('FR') ? 'FR'
+                        : 'HC';
+                      const grossWt = Number(r.grossWeight || 29120);
+                      const netWt = Number(r.netWeight || (grossWt > 1500 ? grossWt - 1112 : grossWt * 0.96));
+                      const noPcs = Number(r.noOfPcs || r.packages || 1472);
+                      const fobFormatted = r.fobValue
+                        ? (String(r.fobValue).startsWith('₹') ? r.fobValue : `₹ ${Number(r.fobValue).toLocaleString('en-IN')}`)
+                        : (r.customsDossier?.fobValue ? `₹ ${Number(r.customsDossier.fobValue).toLocaleString('en-IN')}` : '₹ 45,20,000');
+                      const refIdFormatted = r.refId || r.customsDossier?.refId || (r.jobNo ? `REF-${String(r.jobNo).replace(/[^0-9]/g, '') || '94289'}` : 'REF-94289');
+                      const healthCertFormatted = r.healthCertNo || r.customsDossier?.healthCertNo || (r.id ? `EIC/DEL/2026/${r.id}` : 'EIC/DEL/2026/8841');
+
+                      return (
+                        <tr
+                          key={idx}
+                          className="hover:bg-blue-50/70 transition group"
+                        >
+                          {/* Checkbox */}
+                          <td className="py-2.5 px-3 sticky left-0 bg-white group-hover:bg-blue-50/70 z-10">
+                            <input
+                              type="checkbox"
+                              checked={selectedContIds.includes(r.id || r.containerNo)}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => {
                                 const cid = r.id || r.containerNo;
-                                try {
-                                  await api.updateEdi({
-                                    containerId: cid,
-                                    ediSbStatus: newSt
-                                  });
-                                  r.ediStatus = newSt;
-                                  setNotice(`✓ Container ${r.containerNo} updated to ${newSt} in PostgreSQL!`);
-                                  setTimeout(() => setNotice(''), 2500);
-                                  loadLiveData();
-                                } catch (err) {
-                                  alert('Error updating status: ' + err.message);
-                                }
+                                if (e.target.checked) setSelectedContIds([...selectedContIds, cid]);
+                                else setSelectedContIds(selectedContIds.filter(id => id !== cid));
                               }}
-                              className={`px-2 py-1 rounded-lg text-[10.5px] font-mono font-bold border cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs transition ${
-                                String(r.ediStatus).includes('PASSED') || String(r.ediStatus).includes('CLEARED')
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                                  : String(r.ediStatus).includes('GENERATED')
-                                  ? 'bg-sky-50 text-sky-800 border-sky-300'
-                                  : String(r.ediStatus).includes('EXAM')
-                                  ? 'bg-amber-50 text-amber-800 border-amber-300'
-                                  : 'bg-indigo-50 text-indigo-800 border-indigo-300'
-                              }`}
-                            >
-                              <option value="LEO_PASSED">✓ LEO PASSED</option>
-                              <option value="LEO_GENERATED">⚡ LEO GENERATED</option>
-                              <option value="CUSTOMS_EXAM">🔍 CUSTOMS EXAM</option>
-                              <option value="SB_FILED">⏳ PENDING LEO</option>
-                            </select>
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                            Filing: {r.ediFilingDate ? String(r.ediFilingDate).split('T')[0] : (r.sbDate ? String(r.sbDate).split('T')[0] : '—')}
-                          </div>
-                        </td>
-                        <td className="py-3 px-3 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => setDossierCont(r)}
-                              className="px-2 py-1 rounded-lg bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 font-bold text-[10.5px] shadow-2xs cursor-pointer inline-flex items-center gap-1 transition"
-                              title="Customs & Shipping Bill Details"
-                            >
-                              <FileCheck className="w-3 h-3 text-indigo-600" />
-                              <span>Customs Details</span>
-                            </button>
+                              className="rounded border-slate-300 text-blue-600 cursor-pointer"
+                            />
+                          </td>
 
-                            <button
-                              type="button"
-                              onClick={() => handleOpenManualEdi(r)}
-                              className="px-2 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-[10.5px] shadow-2xs cursor-pointer inline-flex items-center gap-1 transition"
-                              title="Manual EDI Edit"
-                            >
-                              <Edit2 className="w-3 h-3 text-blue-600" />
-                              <span>Edit</span>
-                            </button>
+                          {/* 1. Shipper */}
+                          <td className="py-2.5 px-3 font-semibold text-slate-800 max-w-[220px] truncate" title={r.customer || r.shipper}>
+                            {r.customer || r.shipper || '—'}
+                          </td>
 
-                            <button
-                              type="button"
-                              onClick={() => handleOpenSbUpload(r)}
-                              className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10.5px] shadow-xs cursor-pointer inline-flex items-center gap-1 whitespace-nowrap transition"
-                              title="Upload .sb ICEGATE Flat File for this container"
-                            >
-                              <Upload className="w-3 h-3 text-blue-200" />
-                              <span>Upload .sb</span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                          {/* 2. Consignee */}
+                          <td className="py-2.5 px-3 font-medium text-slate-700 max-w-[200px] truncate" title={r.consignee}>
+                            {r.consignee || '—'}
+                          </td>
+
+                          {/* 3. Notify */}
+                          <td className="py-2.5 px-3 text-slate-600 max-w-[180px] truncate" title={r.notify || 'SAME AS CONSIGNEE'}>
+                            {r.notify || 'SAME AS CONSIGNEE'}
+                          </td>
+
+                          {/* 4. LINE */}
+                          <td className="py-2.5 px-3 font-bold text-slate-700">
+                            {r.line || r.shippingLine || '—'}
+                          </td>
+
+                          {/* 5. Cont No */}
+                          <td className="py-2.5 px-3 font-mono font-bold text-blue-700">
+                            {r.containerNo || '—'}
+                          </td>
+
+                          {/* 6. Allotment Date */}
+                          <td className="py-2.5 px-3 font-mono text-slate-600">
+                            {r.allotmentDate || '—'}
+                          </td>
+
+                          {/* 7. TYPE */}
+                          <td className="py-2.5 px-3 font-medium text-slate-700">
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                              {r.joType || 'Export FCL'}
+                            </span>
+                          </td>
+
+                          {/* 8. Cont Size */}
+                          <td className="py-2.5 px-3 font-mono font-bold text-slate-800">
+                            {contSize}
+                          </td>
+
+                          {/* 9. Cont Type */}
+                          <td className="py-2.5 px-3 font-mono font-bold text-indigo-700">
+                            <span className="px-1.5 py-0.5 rounded text-[10.5px] font-mono font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                              {contType}
+                            </span>
+                          </td>
+
+                          {/* 10. CFS */}
+                          <td className="py-2.5 px-3 font-medium text-slate-700">
+                            {r.origin || r.cfs || 'ACTL CFS DADRI'}
+                          </td>
+
+                          {/* 11. Commodity Gross Wt. */}
+                          <td className="py-2.5 px-3 font-mono font-bold text-slate-800">
+                            {grossWt.toLocaleString()} KGS
+                          </td>
+
+                          {/* 12. Commodity Net Wt. */}
+                          <td className="py-2.5 px-3 font-mono text-slate-600">
+                            {netWt.toLocaleString()} KGS
+                          </td>
+
+                          {/* 13. REF Id */}
+                          <td className="py-2.5 px-3 font-mono text-slate-600">
+                            {refIdFormatted}
+                          </td>
+
+                          {/* 14. Health Cert.No */}
+                          <td className="py-2.5 px-3 font-mono text-slate-600">
+                            {healthCertFormatted}
+                          </td>
+
+                          {/* 15. Package Type */}
+                          <td className="py-2.5 px-3 font-medium text-slate-700">
+                            {r.packageType || 'CARTONS'}
+                          </td>
+
+                          {/* 16. No of PCS. */}
+                          <td className="py-2.5 px-3 font-mono font-bold text-slate-800">
+                            {noPcs.toLocaleString()}
+                          </td>
+
+                          {/* 17. Commodity */}
+                          <td className="py-2.5 px-3 font-medium text-slate-800 max-w-[200px] truncate" title={r.commodity || r.itemDescription}>
+                            {r.commodity || r.itemDescription || '—'}
+                          </td>
+
+                          {/* 18. Invoice No */}
+                          <td className="py-2.5 px-3 font-mono font-semibold text-slate-800">
+                            {r.invoiceNo || '—'}
+                          </td>
+
+                          {/* 19. Invoice Date */}
+                          <td className="py-2.5 px-3 font-mono text-slate-600">
+                            {r.invoiceDate || '—'}
+                          </td>
+
+                          {/* 20. SB No. */}
+                          <td className="py-2.5 px-3">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono font-bold text-blue-800">{r.sbNo || 'Pending'}</span>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setDossierCont(r); }}
+                                className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 cursor-pointer transition shadow-2xs inline-flex items-center gap-0.5"
+                                title="View Customs & Shipping Bill Details"
+                              >
+                                <FileText className="w-2.5 h-2.5 text-indigo-600" />
+                                <span>SB Details 📄</span>
+                              </button>
+                            </div>
+                          </td>
+
+                          {/* 21. SB Date */}
+                          <td className="py-2.5 px-3 font-mono text-slate-600">
+                            {r.sbDate || '—'}
+                          </td>
+
+                          {/* 22. Consignment Type */}
+                          <td className="py-2.5 px-3 font-semibold text-slate-700">
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                              {r.consignmentType || 'FCL'}
+                            </span>
+                          </td>
+
+                          {/* 23. FOB Value */}
+                          <td className="py-2.5 px-3 font-mono font-bold text-emerald-700">
+                            {fobFormatted}
+                          </td>
+
+                          {/* 24. POD */}
+                          <td className="py-2.5 px-3 font-bold text-blue-700">
+                            {r.pod || r.destination || '—'}
+                          </td>
+
+                          {/* 25. CHA */}
+                          <td className="py-2.5 px-3 font-medium text-slate-700 max-w-[180px] truncate" title={r.cha}>
+                            {r.cha || 'SPJ LOGISTICS CHA'}
+                          </td>
+
+                          {/* 26. JOB No */}
+                          <td className="py-2.5 px-3 font-mono font-bold text-slate-800">
+                            {r.jobNo || '—'}
+                          </td>
+
+                          {/* 27. JOB Date */}
+                          <td className="py-2.5 px-3 font-mono text-slate-600">
+                            {r.joDate || '—'}
+                          </td>
+
+                          {/* 28. Remarks */}
+                          <td className="py-2.5 px-3 text-slate-600 max-w-[200px] truncate" title={r.remarks}>
+                            {r.remarks || '—'}
+                          </td>
+
+                          {/* EDI Status Dropdown */}
+                          <td className="py-2.5 px-3">
+                            <div>
+                              <select
+                                value={
+                                  String(r.ediStatus).includes('PASSED') || String(r.ediStatus).includes('CLEARED') ? 'LEO_PASSED' :
+                                  String(r.ediStatus).includes('GENERATED') ? 'LEO_GENERATED' :
+                                  String(r.ediStatus).includes('EXAM') ? 'CUSTOMS_EXAM' : 'SB_FILED'
+                                }
+                                onChange={async (e) => {
+                                  const newSt = e.target.value;
+                                  const cid = r.id || r.containerNo;
+                                  try {
+                                    await api.updateEdi({
+                                      containerId: cid,
+                                      ediSbStatus: newSt
+                                    });
+                                    r.ediStatus = newSt;
+                                    setNotice(`✓ Container ${r.containerNo} updated to ${newSt} in PostgreSQL!`);
+                                    setTimeout(() => setNotice(''), 2500);
+                                    loadLiveData();
+                                  } catch (err) {
+                                    alert('Error updating status: ' + err.message);
+                                  }
+                                }}
+                                className={`px-2 py-1 rounded-lg text-[10.5px] font-mono font-bold border cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs transition ${
+                                  String(r.ediStatus).includes('PASSED') || String(r.ediStatus).includes('CLEARED')
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                    : String(r.ediStatus).includes('GENERATED')
+                                    ? 'bg-sky-50 text-sky-800 border-sky-300'
+                                    : String(r.ediStatus).includes('EXAM')
+                                    ? 'bg-amber-50 text-amber-800 border-amber-300'
+                                    : 'bg-indigo-50 text-indigo-800 border-indigo-300'
+                                }`}
+                              >
+                                <option value="LEO_PASSED">✓ LEO PASSED</option>
+                                <option value="LEO_GENERATED">⚡ LEO GENERATED</option>
+                                <option value="CUSTOMS_EXAM">🔍 CUSTOMS EXAM</option>
+                                <option value="SB_FILED">⏳ PENDING LEO</option>
+                              </select>
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                              Filing: {r.ediFilingDate ? String(r.ediFilingDate).split('T')[0] : (r.sbDate ? String(r.sbDate).split('T')[0] : '—')}
+                            </div>
+                          </td>
+
+                          {/* Action Buttons */}
+                          <td className="py-2.5 px-3 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setDossierCont(r)}
+                                className="px-2 py-1 rounded-lg bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 font-bold text-[10.5px] shadow-2xs cursor-pointer inline-flex items-center gap-1 transition"
+                                title="Customs & Shipping Bill Details"
+                              >
+                                <FileCheck className="w-3 h-3 text-indigo-600" />
+                                <span>Customs Details</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleOpenManualEdi(r)}
+                                className="px-2 py-1 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-[10.5px] shadow-2xs cursor-pointer inline-flex items-center gap-1 transition"
+                                title="Manual EDI Edit"
+                              >
+                                <Edit2 className="w-3 h-3 text-blue-600" />
+                                <span>Edit</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleOpenSbUpload(r)}
+                                className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10.5px] shadow-xs cursor-pointer inline-flex items-center gap-1 whitespace-nowrap transition"
+                                title="Upload .sb ICEGATE Flat File for this container"
+                              >
+                                <Upload className="w-3 h-3 text-blue-200" />
+                                <span>Upload .sb</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>

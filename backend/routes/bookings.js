@@ -56,7 +56,7 @@ router.get('/', async (req, res) => {
         joDate: job.jo_date ? (typeof job.jo_date === 'string' && job.jo_date.includes('T') ? job.jo_date.split('T')[0] : job.jo_date) : (job.booking_date ? (typeof job.booking_date === 'string' && job.booking_date.includes('T') ? job.booking_date.split('T')[0] : job.booking_date) : (job.created_at ? new Date(job.created_at).toISOString().split('T')[0] : '')),
         joType: job.jo_type || 'Export FCL',
         modeOfShipment: job.mode_of_shipment || 'Multimodal (Rail + Road)',
-        servicesRequired: job.services_required || 'Transport, Clearance, Rail, Forwarding',
+        servicesRequired: job.services_required || '',
         equipmentBreakdown: job.equipment_breakdown || [],
         bookingNo: job.booking_no,
         consignor: job.customer_name,
@@ -223,7 +223,7 @@ router.post('/', async (req, res) => {
     const etaVal = b.etaDate || '';
     const siCutVal = b.siCutDate || '';
     const portCutVal = b.portCutDate || '';
-    const servicesReq = Array.isArray(b.servicesRequired) ? b.servicesRequired.join(', ') : (b.servicesRequired || 'Transport, Clearance, Rail, Forwarding');
+    const servicesReq = Array.isArray(b.servicesRequired) ? b.servicesRequired.join(', ') : (b.servicesRequired || '');
     const eqBreakdown = b.equipmentBreakdown ? JSON.stringify(b.equipmentBreakdown) : null;
 
     let savedJob;
