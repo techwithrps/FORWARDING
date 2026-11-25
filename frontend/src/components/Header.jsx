@@ -183,7 +183,7 @@ export default function Header({
           <span>All</span>
         </button>
 
-        {/* Brand: SPJ GROUP OF COMPANIES Logo + Apple-Style Version 2.O Badge */}
+        {/* Brand: Company Logo + Apple-Style Version 2.O Badge */}
         <div className="flex items-center gap-2 pr-3 sm:pr-4 border-r border-slate-200 shrink-0">
           <button
             type="button"
@@ -191,12 +191,12 @@ export default function Header({
               if (onSelectView) onSelectView('Dashboard');
             }}
             className="flex items-center select-none cursor-pointer hover:opacity-85 active:scale-95 transition shrink-0"
-            title="SPJ Group of Companies - Go to Dashboard"
+            title="Go to Dashboard"
           >
             <img
               src={spjLogo}
-              alt="SPJ Group of Companies"
-              className="h-9 sm:h-10 md:h-11 w-auto object-contain max-w-[210px] sm:max-w-[260px] drop-shadow-2xs mix-blend-multiply"
+              alt="ELOGISOL TECHNOLOGIES"
+              className="h-8 sm:h-9 md:h-10 w-auto object-contain max-w-[210px] sm:max-w-[260px] drop-shadow-2xs"
             />
           </button>
 

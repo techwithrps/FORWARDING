@@ -1,5 +1,6 @@
 import React from 'react';
 import { Printer, QrCode } from 'lucide-react';
+import spjLogo from '../assets/spjLogoBase64.js';
 
 export default function TaxDocumentPdfView({
   docType = 'TAX INVOICE', // 'TAX INVOICE', 'CREDIT NOTE', 'DEBIT NOTE'
@@ -8,6 +9,7 @@ export default function TaxDocumentPdfView({
   origInvoiceNo,
   origInvoiceDate,
   irnStatus,
+  company = null,
   customer = {},
   shipment = {},
   items = [],
@@ -101,27 +103,34 @@ export default function TaxDocumentPdfView({
       {/* ================= AUTHENTIC SPJ-2 PRINTABLE SHEET ================= */}
       <div className="bg-white border-2 border-slate-400 p-6 sm:p-8 space-y-3 print:border-0 print:p-0 print:m-0 text-slate-900 leading-normal text-[11px] font-sans">
         
-        {/* SPJ-2 TOP HEADER */}
+        {/* TOP HEADER */}
         <div className="border-b-2 border-slate-900 pb-3 flex flex-col sm:flex-row justify-between items-start gap-4">
           {/* Logo / Company Identity */}
-          <div className="text-center sm:text-left flex-1">
-            <h1 className="text-2xl font-bold uppercase tracking-tight text-slate-950 font-serif">
-              {docType}
-            </h1>
-            <h2 className="text-lg font-black tracking-tight text-blue-950 font-sans mt-0.5">
-              SPJ CARGO PVT. LTD.
-            </h2>
-            <p className="text-[11px] font-medium text-slate-600">
-              Complete Logistics Solution Provider &bull; Multimodal Transport Operator
-            </p>
-            <p className="text-[11px] text-slate-700">
-              D-9/3, Okhla Industrial Area Phase-1, New Delhi-110020
-            </p>
-            <div className="flex flex-wrap gap-x-4 text-[11px] font-mono font-bold text-slate-800 mt-1">
-              <span>GSTIN: 07AAFPB3130K1Z5</span>
-              <span>PAN: AAFPB3130K</span>
-              <span>Tel: +91 - 11-41062143-2147</span>
-              <span>Email: accounts@spjcargo.com</span>
+          <div className="flex flex-col sm:flex-row items-start gap-4 flex-1">
+            <img
+              src={company?.logo || spjLogo}
+              alt="Logo"
+              className="h-12 sm:h-14 w-auto object-contain max-w-[200px] shrink-0"
+            />
+            <div className="text-center sm:text-left flex-1">
+              <h1 className="text-2xl font-bold uppercase tracking-tight text-slate-950 font-serif">
+                {docType}
+              </h1>
+              <h2 className="text-lg font-black tracking-tight text-blue-950 font-sans mt-0.5">
+                {company?.name || 'ELOGISOL TECHNOLOGIES PVT. LTD. / SPJ LOGISTICS'}
+              </h2>
+              <p className="text-[11px] font-medium text-slate-600">
+                Complete Logistics Solution Provider &bull; Multimodal Transport Operator
+              </p>
+              <p className="text-[11px] text-slate-700">
+                {company?.address || 'D-9/3, Okhla Industrial Area Phase-1, New Delhi-110020'}
+              </p>
+              <div className="flex flex-wrap gap-x-4 text-[11px] font-mono font-bold text-slate-800 mt-1">
+                <span>GSTIN: {company?.gstin || '07AAFPB3130K1Z5'}</span>
+                <span>PAN: {company?.pan || 'AAFPB3130K'}</span>
+                <span>Tel: +91 - 11-41062143-2147</span>
+                <span>Email: accounts@elogisol.com</span>
+              </div>
             </div>
           </div>
 
@@ -339,36 +348,46 @@ export default function TaxDocumentPdfView({
             </thead>
             <tbody className="divide-y divide-slate-300 font-mono text-[10px]">
               {items.map((item, idx) => {
-                const taxRate = isLut && item.sac === '996511' ? 0 : (item.taxRate || 0);
-                const taxable = (item.qty || 1) * (item.rate || 0);
-                const cgstRate = taxRate > 0 ? (taxRate / 2) : 0;
-                const sgstRate = taxRate > 0 ? (taxRate / 2) : 0;
-                const cgstAmt = (taxable * cgstRate) / 100;
-                const sgstAmt = (taxable * sgstRate) / 100;
-                const lineTotal = taxable + cgstAmt + sgstAmt;
+                const sac = item.sacCode || item.sac_code || item.sac || '996511';
+                const head = item.chargeName || item.charge_name || item.head || item.description || 'Service Charge';
+                const qty = Number(item.quantity || item.qty) || 1;
+                const rate = Number(item.rate) || 0;
+                const isItemLut = isLut && (sac === '996511' || item.is_lut);
+                const taxRate = isItemLut ? 0 : (Number(item.gstRate || item.gst_rate || item.taxRate) || 0);
+                const taxable = Number(item.amount) || (qty * rate);
+                const isInterState = Number(item.igstAmount || item.igst_amount || 0) > 0 || (customer.state && !String(customer.state).toLowerCase().includes('delhi') && String(customer.state).length > 0);
+
+                const cgstRate = isInterState ? 0 : (taxRate / 2);
+                const sgstRate = isInterState ? 0 : (taxRate / 2);
+                const igstRate = isInterState ? taxRate : 0;
+
+                const cgstAmt = Number(item.cgstAmount || item.cgst_amount) || ((taxable * cgstRate) / 100);
+                const sgstAmt = Number(item.sgstAmount || item.sgst_amount) || ((taxable * sgstRate) / 100);
+                const igstAmt = Number(item.igstAmount || item.igst_amount) || ((taxable * igstRate) / 100);
+                const lineTotal = Number(item.totalAmount || item.total_amount) || (taxable + cgstAmt + sgstAmt + igstAmt);
 
                 return (
                   <tr key={item.id || idx} className="hover:bg-slate-50">
                     <td className="border border-slate-400 py-1.5 px-1 text-center">{idx + 1}</td>
                     <td className="border border-slate-400 py-1.5 px-2 font-sans font-bold text-slate-900">
-                      {item.head || item.description}
-                      {item.sac === '996511' && isLut && (
+                      {head}
+                      {isItemLut && (
                         <span className="block text-[8px] text-emerald-800 font-mono">
                           Zero Rated Export Freight (LUT Rule 96A)
                         </span>
                       )}
                     </td>
-                    <td className="border border-slate-400 py-1.5 px-1 text-center">{item.sac || '996511'}</td>
-                    <td className="border border-slate-400 py-1.5 px-1 text-center font-bold">{item.qty || 1}</td>
+                    <td className="border border-slate-400 py-1.5 px-1 text-center">{sac}</td>
+                    <td className="border border-slate-400 py-1.5 px-1 text-center font-bold">{qty}</td>
                     <td className="border border-slate-400 py-1.5 px-1 text-center">INR</td>
-                    <td className="border border-slate-400 py-1.5 px-2 text-right">{(item.rate || 0).toLocaleString('en-IN')}</td>
+                    <td className="border border-slate-400 py-1.5 px-2 text-right">{(rate).toLocaleString('en-IN')}</td>
                     <td className="border border-slate-400 py-1.5 px-2 text-right font-bold">{(taxable).toLocaleString('en-IN')}</td>
                     <td className="border border-slate-400 py-1.5 px-1 text-center">{cgstRate}%</td>
                     <td className="border border-slate-400 py-1.5 px-1.5 text-right">{cgstAmt.toLocaleString('en-IN')}</td>
                     <td className="border border-slate-400 py-1.5 px-1 text-center">{sgstRate}%</td>
                     <td className="border border-slate-400 py-1.5 px-1.5 text-right">{sgstAmt.toLocaleString('en-IN')}</td>
-                    <td className="border border-slate-400 py-1.5 px-1 text-center">0%</td>
-                    <td className="border border-slate-400 py-1.5 px-1.5 text-right">0.00</td>
+                    <td className="border border-slate-400 py-1.5 px-1 text-center">{igstRate}%</td>
+                    <td className="border border-slate-400 py-1.5 px-1.5 text-right">{igstAmt.toLocaleString('en-IN')}</td>
                     <td className="border border-slate-400 py-1.5 px-2 text-right font-bold text-slate-950">
                       {(lineTotal).toLocaleString('en-IN')}
                     </td>

@@ -470,12 +470,12 @@ export function AppleWelcomeModal({ isOpen, onClose }) {
           <X className="w-4 h-4" />
         </button>
 
-        {/* Official SPJ Group of Companies Logo (Seamless & Clean) */}
+        {/* Official Company Logo */}
         <div className="flex justify-center items-center pt-2 pb-1 relative z-10">
           <img
             src={spjLogo}
-            alt="SPJ Group of Companies"
-            className="h-14 sm:h-16 w-auto max-w-[320px] object-contain select-none mix-blend-multiply"
+            alt="ELOGISOL TECHNOLOGIES"
+            className="h-12 sm:h-14 w-auto max-w-[320px] object-contain select-none"
           />
         </div>
 

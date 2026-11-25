@@ -596,7 +596,22 @@ router.post('/tax-heads', async (req, res) => {
 // 7. SERVICE MASTER
 router.get('/service-master', async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT * FROM service_master ORDER BY service_code ASC');
+    const { rows } = await db.query(`
+      SELECT s.*, 
+        th.head_name AS tax_head_name, 
+        th.hsn_sac_code AS tax_head_sac,
+        th.cgst_rate, 
+        th.sgst_rate, 
+        th.igst_rate, 
+        th.cess_rate,
+        thg.group_name AS tax_group_name,
+        thg.gst_category,
+        thg.is_exempt
+      FROM service_master s
+      LEFT JOIN tax_heads th ON s.tax_head_id = th.id
+      LEFT JOIN tax_head_groups thg ON th.group_id = thg.id
+      ORDER BY s.service_code ASC
+    `);
     res.json({ success: true, count: rows.length, data: rows });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

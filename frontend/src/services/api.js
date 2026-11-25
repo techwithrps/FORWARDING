@@ -186,6 +186,15 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data)
     }),
+  updateInvoicePaymentStatus: (id, status) =>
+    request(`/commercial/invoices/${id}/payment-status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    }),
+  deleteInvoice: (id) =>
+    request(`/commercial/invoices/${id}`, {
+      method: 'DELETE'
+    }),
   getNotes: () => request('/commercial/notes'),
   createNote: (data) =>
     request('/commercial/notes', {
