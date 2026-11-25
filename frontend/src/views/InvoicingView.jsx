@@ -861,11 +861,14 @@ export default function InvoicingView({ jobs = [], job = null, triggerGenerateIn
                       ackDate: invoiceDate
                     },
                     customer: {
-                      name: partyName,
+                      name: partyName || 'Customer Party',
                       address: partyAddress,
                       gstin: partyGstin,
                       state: `${partyStateCode} - ${partyState}`,
-                      pos: placeOfSupply
+                      pos: placeOfSupply,
+                      contactPerson: partiesList.find(p => p.id === selectedPartyId || (p.name && p.name.toLowerCase() === partyName.toLowerCase()))?.contact_person || 'Billing Manager',
+                      mobile: partiesList.find(p => p.id === selectedPartyId || (p.name && p.name.toLowerCase() === partyName.toLowerCase()))?.mobile || '',
+                      email: partiesList.find(p => p.id === selectedPartyId || (p.name && p.name.toLowerCase() === partyName.toLowerCase()))?.email_comm || ''
                     },
                     shipment: {
                       jobNo: jobNumber,

@@ -200,6 +200,20 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
+  updateInvoicePaymentStatus: (id, status) =>
+    request(`/commercial/invoices/${id}/payment-status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    }),
+  deleteInvoice: (id) =>
+    request(`/commercial/invoices/${id}`, {
+      method: 'DELETE'
+    }),
+  dispatchDemoInvoice: (id, payload) =>
+    request(`/commercial/invoices/${id}/dispatch-demo`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
   getNotes: () => request('/commercial/notes'),
   createNote: (data) =>
     request('/commercial/notes', {

@@ -63,6 +63,11 @@ export default function TaxDocumentPdfView({
 
   const isCreditDebit = docType === 'CREDIT NOTE' || docType === 'DEBIT NOTE';
 
+  const rawCompName = company?.company_name || company?.name;
+  const cleanCompName = (rawCompName && !rawCompName.toUpperCase().includes('SPJ'))
+    ? rawCompName
+    : 'ELOGISOL TECHNOLOGIES PVT. LTD.';
+
   // Sample or live container movements
   const contList = containers.length > 0 ? containers : [
     {
@@ -115,7 +120,7 @@ export default function TaxDocumentPdfView({
         </div>
       </div>
 
-      {/* ================= AUTHENTIC SPJ-2 PRINTABLE SHEET ================= */}
+      {/* ================= AUTHENTIC TAX INVOICE PRINTABLE SHEET ================= */}
       <div className="bg-white border-2 border-slate-400 p-6 sm:p-8 space-y-3 print:border-0 print:p-0 print:m-0 text-slate-900 leading-normal text-[11px] font-sans">
         
         {/* TOP HEADER */}
@@ -132,7 +137,7 @@ export default function TaxDocumentPdfView({
                 {docType}
               </h1>
               <h2 className="text-lg font-black tracking-tight text-blue-950 font-sans mt-0.5">
-                {company?.name || 'ELOGISOL TECHNOLOGIES PVT. LTD. / SPJ LOGISTICS'}
+                {cleanCompName}
               </h2>
               <p className="text-[11px] font-medium text-slate-600">
                 Complete Logistics Solution Provider &bull; Multimodal Transport Operator
@@ -169,7 +174,7 @@ export default function TaxDocumentPdfView({
           </div>
         </div>
 
-        {/* TWO-COLUMN FRAME BOX (EXACT SPJ-2 FIELD LAYOUT) */}
+        {/* TWO-COLUMN FRAME BOX (STANDARD FIELD LAYOUT) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
           {/* Left Frame: Customer / Shipper Details */}
           <div className="border border-slate-400 p-3 bg-white space-y-1">
@@ -296,7 +301,7 @@ export default function TaxDocumentPdfView({
           </div>
         </div>
 
-        {/* SPJ-2 SECTION 1: MOVEMENT DETAILS (CONTAINER WISE) */}
+        {/* SECTION 1: MOVEMENT DETAILS (CONTAINER WISE) */}
         <div>
           <div className="text-center font-bold text-xs uppercase tracking-wide border-t border-b border-slate-900 py-1 bg-slate-100">
             MOVEMENT DETAILS
@@ -337,7 +342,7 @@ export default function TaxDocumentPdfView({
           </table>
         </div>
 
-        {/* SPJ-2 SECTION 2: CHARGE DETAILS (TAX INVOICE GRID) */}
+        {/* SECTION 2: CHARGE DETAILS (TAX INVOICE GRID) */}
         <div>
           <div className="text-center font-bold text-xs uppercase tracking-wide border-t border-b border-slate-900 py-1 bg-slate-100">
             CHARGE DETAILS &bull; GST SPECIFICATIONS
@@ -465,9 +470,9 @@ export default function TaxDocumentPdfView({
           </div>
         </div>
 
-        {/* SPJ-2 FOOTER: TERMS & CONDITIONS + BANK DETAILS + AUTHORIZED SIGNATORY */}
+        {/* FOOTER: TERMS & CONDITIONS + BANK DETAILS + AUTHORIZED SIGNATORY */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-          {/* Terms & Conditions (Exact 4 Points from SPJ-2) */}
+          {/* Terms & Conditions */}
           <div className="border border-slate-400 p-2.5 bg-white text-[10px] space-y-1">
             <h4 className="font-bold text-xs uppercase text-slate-900 border-b border-slate-300 pb-1">
               Terms &amp; Conditions
@@ -480,11 +485,11 @@ export default function TaxDocumentPdfView({
             </ol>
           </div>
 
-          {/* Bank Details & Signature Block (Exact from SPJ-2) */}
+          {/* Bank Details & Signature Block */}
           <div className="border border-slate-400 p-2.5 bg-white flex flex-col justify-between">
             <div className="text-[10px] font-mono space-y-0.5 border-b border-slate-300 pb-2">
               <h4 className="font-bold text-xs uppercase text-slate-900 font-sans">
-                Bank Details &bull; SPJ CARGO PVT. LTD.
+                Bank Details &bull; {cleanCompName}
               </h4>
               <p><strong>A/C No. :</strong> 50200084920194</p>
               <p><strong>IFSC Code:</strong> HDFC0000128 &bull; <strong>SWIFT Code:</strong> HDFCINBB</p>
@@ -495,7 +500,7 @@ export default function TaxDocumentPdfView({
               <div className="h-9 flex items-center justify-end text-slate-400 text-[10px] italic">
                 [ Digitally Signed &amp; Approved ]
               </div>
-              <p className="font-bold text-slate-950 text-xs">For SPJ CARGO PVT. LTD.</p>
+              <p className="font-bold text-slate-950 text-xs">For {cleanCompName}</p>
               <p className="text-[10px] text-slate-600 font-sans font-bold">Authorized Signatory</p>
             </div>
           </div>
