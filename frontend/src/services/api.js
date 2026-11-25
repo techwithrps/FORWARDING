@@ -96,6 +96,11 @@ export const api = {
     }),
 
   // Masters
+  uploadDocument: (data) =>
+    request('/masters/upload', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
   getCustomers: () => request('/masters/customers'),
   getOilVendors: () => request('/masters/oil-vendors'),
   getWorkshops: () => request('/masters/workshops'),

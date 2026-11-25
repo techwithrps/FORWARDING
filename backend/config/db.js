@@ -48,6 +48,12 @@ pool.on('error', (err) => {
       ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS dbk_code VARCHAR(50);
       ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS trade_scheme VARCHAR(100);
       ALTER TABLE job_containers ADD COLUMN IF NOT EXISTS producer_plant VARCHAR(255);
+      ALTER TABLE parties ADD COLUMN IF NOT EXISTS documents JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE drivers ADD COLUMN IF NOT EXISTS documents JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS documents JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE company_profile ADD COLUMN IF NOT EXISTS documents JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE company_profile ADD COLUMN IF NOT EXISTS logo_doc TEXT;
+      ALTER TABLE company_profile ADD COLUMN IF NOT EXISTS msme_doc TEXT;
     `);
   } catch (e) {}
 })();

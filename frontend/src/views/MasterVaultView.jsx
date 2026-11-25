@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import {
   Building2,
@@ -17,8 +17,219 @@ import {
   X,
   FileText,
   AlertCircle,
-  Box
+  Box,
+  UploadCloud,
+  Eye,
+  Download,
+  ExternalLink,
+  Paperclip,
+  FileCheck
 } from 'lucide-react';
+
+// -------------------------------------------------------------
+// REUSABLE DOCUMENT UPLOADER & STATUS COMPONENTS
+// -------------------------------------------------------------
+function DocumentUploaderCard({
+  title,
+  docKey,
+  required = false,
+  description = '',
+  document,
+  category = 'masters',
+  onUpload,
+  onRemove,
+  onPreview
+}) {
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Normalize document object or string
+  let docObj = null;
+  if (document) {
+    if (typeof document === 'object' && (document.url || document.name)) {
+      docObj = document;
+    } else if (typeof document === 'string' && document.trim()) {
+      docObj = { name: document, url: document, size: 'Attached' };
+    }
+  }
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 25 * 1024 * 1024) {
+      alert('File size exceeds 25MB limit. Please choose a smaller file.');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64Data = reader.result;
+        try {
+          const res = await api.uploadDocument({
+            fileName: file.name,
+            fileData: base64Data,
+            category
+          });
+          const uploadedUrl = res.url || res.data?.url || base64Data;
+          const formattedSize = res.size || res.data?.size || `${(file.size / 1024).toFixed(1)} KB`;
+          onUpload(docKey, {
+            name: file.name,
+            url: uploadedUrl,
+            size: formattedSize,
+            type: file.type,
+            uploadedAt: new Date().toISOString()
+          });
+        } catch (apiErr) {
+          console.warn('Backend file save fallback to base64 data:', apiErr);
+          onUpload(docKey, {
+            name: file.name,
+            url: base64Data,
+            size: `${(file.size / 1024).toFixed(1)} KB`,
+            type: file.type,
+            uploadedAt: new Date().toISOString()
+          });
+        } finally {
+          setUploading(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      alert('Failed to read file: ' + err.message);
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className={`p-3.5 rounded-xl border transition-all ${docObj ? 'bg-emerald-50/40 border-emerald-300' : 'bg-slate-50/60 border-dashed border-slate-300 hover:border-blue-400'}`}>
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-bold text-xs text-slate-800">{title}</span>
+            {required ? (
+              <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-100 text-rose-700 font-mono">REQUIRED</span>
+            ) : (
+              <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-200 text-slate-600 font-mono">OPTIONAL</span>
+            )}
+          </div>
+          {description && <p className="text-[11px] text-slate-500 mt-0.5">{description}</p>}
+        </div>
+
+        {docObj && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Attached
+          </span>
+        )}
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {docObj ? (
+        <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white border border-emerald-200 text-xs shadow-2xs">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+              <FileCheck className="w-4 h-4" />
+            </div>
+            <div className="truncate">
+              <div className="font-medium text-slate-900 truncate max-w-[200px]" title={docObj.name}>{docObj.name}</div>
+              <div className="text-[10px] text-slate-400 font-mono">{docObj.size || 'Verified'} &bull; Ready</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => onPreview && onPreview({ title, url: docObj.url, name: docObj.name })}
+              className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 hover:text-blue-600 transition cursor-pointer"
+              title="Preview / View Document"
+            >
+              <Eye className="w-3.5 h-3.5" />
+            </button>
+            <a
+              href={docObj.url}
+              download={docObj.name}
+              target="_blank"
+              rel="noreferrer"
+              className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 hover:text-emerald-600 transition cursor-pointer"
+              title="Download Document"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </a>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 hover:text-amber-600 transition cursor-pointer"
+              title="Replace File"
+            >
+              <UploadCloud className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onRemove(docKey)}
+              className="p-1.5 rounded-md hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+              title="Remove File"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full py-3 px-4 rounded-lg border border-slate-200 bg-white hover:bg-blue-50/50 hover:border-blue-400 text-slate-600 hover:text-blue-700 transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs group"
+        >
+          {uploading ? (
+            <div className="flex items-center gap-2 text-xs font-semibold text-blue-600">
+              <span className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <span>Uploading document...</span>
+            </div>
+          ) : (
+            <>
+              <UploadCloud className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-semibold">Upload {title.split('(')[0]} (PDF / Image)</span>
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function DocumentsStatusBadge({ documents = {}, requiredKeys = [], onOpenModal }) {
+  const attachedCount = requiredKeys.filter(k => !!documents[k]).length;
+  const isAllAttached = attachedCount === requiredKeys.length && requiredKeys.length > 0;
+  const hasAnyAttached = attachedCount > 0;
+
+  return (
+    <button
+      type="button"
+      onClick={onOpenModal}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border transition cursor-pointer ${
+        isAllAttached
+          ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+          : hasAnyAttached
+          ? 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+          : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+      }`}
+      title="Click to view/manage attached documents"
+    >
+      <Paperclip className="w-3 h-3" />
+      <span>Docs ({attachedCount}/{requiredKeys.length})</span>
+      {isAllAttached && <CheckCircle2 className="w-3 h-3 text-emerald-600" />}
+    </button>
+  );
+}
 
 export default function MasterVaultView({
   parties = [],
@@ -29,6 +240,8 @@ export default function MasterVaultView({
   const [activeSubTab, setActiveSubTab] = useState(initialTab);
   const [noticeMsg, setNoticeMsg] = useState('');
   const [gstValidating, setGstValidating] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [rowDocModal, setRowDocModal] = useState(null);
 
   useEffect(() => {
     if (initialTab) setActiveSubTab(initialTab);
@@ -74,7 +287,8 @@ export default function MasterVaultView({
     isExport: true,
     isImport: false,
     isDomestic: true,
-    status: 'ACTIVE'
+    status: 'ACTIVE',
+    documents: {}
   };
 
   const [customerForm, setCustomerForm] = useState(emptyCustomerForm);
@@ -148,7 +362,8 @@ export default function MasterVaultView({
           isExport: c.is_export !== false,
           isImport: c.is_import === true,
           isDomestic: c.is_domestic !== false,
-          status: c.status || 'ACTIVE'
+          status: c.status || 'ACTIVE',
+          documents: (c.documents && typeof c.documents === 'object') ? c.documents : {}
         })));
       }
 
@@ -168,7 +383,8 @@ export default function MasterVaultView({
           salary: d.salary || '28,000',
           transporter: d.transporter || 'Dadri Express Logistics',
           address: d.address || '',
-          status: d.status || 'ACTIVE'
+          status: d.status || 'ACTIVE',
+          documents: (d.documents && typeof d.documents === 'object') ? d.documents : {}
         })));
       }
 
@@ -191,7 +407,8 @@ export default function MasterVaultView({
           fitnessExpiry: v.fitness_expiry ? v.fitness_expiry.split('T')[0] : '',
           transporter: v.transporter,
           terminal: v.terminal,
-          status: v.status || 'ACTIVE'
+          status: v.status || 'ACTIVE',
+          documents: (v.documents && typeof v.documents === 'object') ? v.documents : {}
         })));
       }
 
@@ -221,7 +438,13 @@ export default function MasterVaultView({
             pan: c.pan || prev.pan,
             tallyName: c.tally_name || prev.tallyName,
             financeMapCode: c.finance_map_code || prev.financeMapCode,
-            address: c.address || prev.address
+            address: c.address || prev.address,
+            gstDoc: c.gst_doc || prev.gstDoc,
+            panDoc: c.pan_doc || prev.panDoc,
+            incorpDoc: c.incorp_doc || prev.incorpDoc,
+            logoDoc: c.logo_doc || prev.logoDoc || '',
+            msmeDoc: c.msme_doc || prev.msmeDoc || '',
+            documents: (c.documents && typeof c.documents === 'object') ? c.documents : (prev.documents || {})
           }));
         }
       }
@@ -241,14 +464,19 @@ export default function MasterVaultView({
     setCustomerForm({
       ...emptyCustomerForm,
       code: nextCode,
-      mapCode: 'MAP-' + nextCode
+      mapCode: 'MAP-' + nextCode,
+      documents: {}
     });
     setEditingCustomerId(null);
     setCustomerMode('FORM');
   };
 
   const handleEditCustomer = (cust) => {
-    setCustomerForm({ ...cust });
+    setCustomerForm({
+      ...emptyCustomerForm,
+      ...cust,
+      documents: cust.documents || {}
+    });
     setEditingCustomerId(cust.id);
     setCustomerMode('FORM');
   };
@@ -313,7 +541,8 @@ export default function MasterVaultView({
     salary: '28,000',
     transporter: 'Dadri Express Logistics',
     address: '',
-    status: 'ACTIVE'
+    status: 'ACTIVE',
+    documents: {}
   };
 
   const [driverForm, setDriverForm] = useState(emptyDriverForm);
@@ -322,14 +551,19 @@ export default function MasterVaultView({
     const nextId = 'DRV-' + String(driverList.length + 1).padStart(3, '0');
     setDriverForm({
       ...emptyDriverForm,
-      id: nextId
+      id: nextId,
+      documents: {}
     });
     setEditingDriverId(null);
     setDriverMode('FORM');
   };
 
   const handleEditDriver = (drv) => {
-    setDriverForm({ ...drv });
+    setDriverForm({
+      ...emptyDriverForm,
+      ...drv,
+      documents: drv.documents || {}
+    });
     setEditingDriverId(drv.id);
     setDriverMode('FORM');
   };
@@ -400,7 +634,8 @@ export default function MasterVaultView({
     fitnessExpiry: '2028-06-30',
     transporter: 'Dadri Express Logistics',
     terminal: 'Dadri ICD (INICD6)',
-    status: 'ACTIVE'
+    status: 'ACTIVE',
+    documents: {}
   };
 
   const [vehicleForm, setVehicleForm] = useState(emptyVehicleForm);
@@ -409,14 +644,19 @@ export default function MasterVaultView({
     const nextId = 'VEH-' + String(vehicleList.length + 1).padStart(3, '0');
     setVehicleForm({
       ...emptyVehicleForm,
-      id: nextId
+      id: nextId,
+      documents: {}
     });
     setEditingVehicleId(null);
     setVehicleMode('FORM');
   };
 
   const handleEditVehicle = (veh) => {
-    setVehicleForm({ ...veh });
+    setVehicleForm({
+      ...emptyVehicleForm,
+      ...veh,
+      documents: veh.documents || {}
+    });
     setEditingVehicleId(veh.id);
     setVehicleMode('FORM');
   };
@@ -547,10 +787,23 @@ export default function MasterVaultView({
     tallyName: 'SPJ LOGISTICS DEL 2026-27',
     financeMapCode: 'FIN-SPJ-01',
     address: 'Dadri ICD Complex, Gautam Buddha Nagar, Greater Noida, UP - 201306',
-    gstDoc: 'GST_Certificate_2026.pdf',
-    panDoc: 'Company_PAN.pdf',
-    incorpDoc: 'Incorporation_Certificate_COI.pdf'
+    gstDoc: null,
+    panDoc: null,
+    incorpDoc: null,
+    logoDoc: null,
+    msmeDoc: null,
+    documents: {}
   });
+
+  const handleSaveCompany = async () => {
+    try {
+      await api.updateCompany(companyProfile);
+      showNotice('Company Legal Profile & Documents Saved to PostgreSQL Successfully!');
+      await loadAllMasters();
+    } catch (err) {
+      alert('Error saving company profile: ' + err.message);
+    }
+  };
 
   // TABS NAVIGATION CONFIG FOR ALL 13 MASTERS (Pages 2-14)
   const vendorList = customerList.filter(c => ['TRANSPORTER', 'SHIPPING_LINE', 'CFS', 'VENDOR'].includes(c.type));
@@ -1057,6 +1310,99 @@ export default function MasterVaultView({
                 </div>
               </div>
 
+              {/* SECTION 6: Customer Statutory Compliance & KYC Documents */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1">
+                  <div className="text-xs font-bold uppercase font-mono tracking-wider text-slate-500 flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5 text-blue-600" />
+                    <span>6. Customer Statutory Compliance &amp; KYC Document Uploads</span>
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-mono">PDF, PNG, JPG up to 25MB</span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <DocumentUploaderCard
+                    title="GSTIN Registration Certificate (REG-06)"
+                    docKey="gstDoc"
+                    required={true}
+                    description="Official 3-page GST registration certificate"
+                    document={customerForm.documents?.gstDoc}
+                    category="customers"
+                    onUpload={(k, doc) => setCustomerForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                    onRemove={(k) => setCustomerForm(prev => {
+                      const nextDocs = { ...(prev.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, documents: nextDocs };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+
+                  <DocumentUploaderCard
+                    title="Customer Company / Firm PAN Card"
+                    docKey="panDoc"
+                    required={true}
+                    description="Clear scanned copy of entity PAN card"
+                    document={customerForm.documents?.panDoc}
+                    category="customers"
+                    onUpload={(k, doc) => setCustomerForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                    onRemove={(k) => setCustomerForm(prev => {
+                      const nextDocs = { ...(prev.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, documents: nextDocs };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+
+                  <DocumentUploaderCard
+                    title="IEC Certificate (DGFT Import Export Code)"
+                    docKey="iecDoc"
+                    required={customerForm.isExport || customerForm.isImport}
+                    description="DGFT IEC certificate for shipping bill & LEO"
+                    document={customerForm.documents?.iecDoc}
+                    category="customers"
+                    onUpload={(k, doc) => setCustomerForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                    onRemove={(k) => setCustomerForm(prev => {
+                      const nextDocs = { ...(prev.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, documents: nextDocs };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+
+                  <DocumentUploaderCard
+                    title="Cancelled Cheque / Bank Details Letter"
+                    docKey="chequeDoc"
+                    required={false}
+                    description="Bank proof for credit limit & refund settlements"
+                    document={customerForm.documents?.chequeDoc}
+                    category="customers"
+                    onUpload={(k, doc) => setCustomerForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                    onRemove={(k) => setCustomerForm(prev => {
+                      const nextDocs = { ...(prev.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, documents: nextDocs };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+
+                  <DocumentUploaderCard
+                    title="Customer Agreement / KYC Mandate Form"
+                    docKey="agreementDoc"
+                    required={false}
+                    description="Signed freight terms, SOP or commercial contract"
+                    document={customerForm.documents?.agreementDoc}
+                    category="customers"
+                    onUpload={(k, doc) => setCustomerForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                    onRemove={(k) => setCustomerForm(prev => {
+                      const nextDocs = { ...(prev.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, documents: nextDocs };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                </div>
+              </div>
+
               {/* Form Bottom Actions */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
                 <button
@@ -1109,6 +1455,7 @@ export default function MasterVaultView({
                       <th className="py-2.5 px-3">City / State</th>
                       <th className="py-2.5 px-3">Tally Name</th>
                       <th className="py-2.5 px-3">Credit Limit</th>
+                      <th className="py-2.5 px-3">KYC Docs</th>
                       <th className="py-2.5 px-3 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -1153,6 +1500,13 @@ export default function MasterVaultView({
                           </td>
                           <td className="py-3 px-3 font-mono text-emerald-700 font-semibold">
                             ₹ {c.creditLimit || '10,00,000'}
+                          </td>
+                          <td className="py-3 px-3">
+                            <DocumentsStatusBadge
+                              documents={c.documents}
+                              requiredKeys={['gstDoc', 'panDoc', 'iecDoc', 'chequeDoc', 'agreementDoc']}
+                              onOpenModal={() => setRowDocModal({ type: 'CUSTOMER', entity: c })}
+                            />
                           </td>
                           <td className="py-3 px-3 text-right">
                             <div className="flex items-center justify-end gap-1.5">
@@ -1428,6 +1782,83 @@ export default function MasterVaultView({
                 </div>
               </div>
 
+              {/* SECTION 3: Driver License, Photo & KYC Documents */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1">
+                  <div className="text-xs font-bold uppercase font-mono tracking-wider text-slate-500 flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5 text-blue-600" />
+                    <span>3. Driver License, Photo &amp; Statutory KYC Documents</span>
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-mono">PDF, PNG, JPG up to 25MB</span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <DocumentUploaderCard
+                    title="Commercial Driving License (DL - Front & Back)"
+                    docKey="dlDoc"
+                    required={true}
+                    description="Valid heavy transport commercial license"
+                    document={driverForm.documents?.dlDoc}
+                    category="drivers"
+                    onUpload={(k, doc) => setDriverForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                    onRemove={(k) => setDriverForm(prev => {
+                      const nextDocs = { ...(prev.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, documents: nextDocs };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+
+                  <DocumentUploaderCard
+                    title="Driver Passport Photograph"
+                    docKey="photoDoc"
+                    required={true}
+                    description="Clear passport-sized photo for driver badge"
+                    document={driverForm.documents?.photoDoc}
+                    category="drivers"
+                    onUpload={(k, doc) => setDriverForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                    onRemove={(k) => setDriverForm(prev => {
+                      const nextDocs = { ...(prev.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, documents: nextDocs };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+
+                  <DocumentUploaderCard
+                    title="Aadhaar Card / National ID Proof"
+                    docKey="aadhaarDoc"
+                    required={true}
+                    description="Government ID for security & terminal gate entry"
+                    document={driverForm.documents?.aadhaarDoc}
+                    category="drivers"
+                    onUpload={(k, doc) => setDriverForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                    onRemove={(k) => setDriverForm(prev => {
+                      const nextDocs = { ...(prev.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, documents: nextDocs };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+
+                  <DocumentUploaderCard
+                    title="Police Verification / Medical Fitness"
+                    docKey="policeDoc"
+                    required={false}
+                    description="Police clearance or medical fitness certificate"
+                    document={driverForm.documents?.policeDoc}
+                    category="drivers"
+                    onUpload={(k, doc) => setDriverForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                    onRemove={(k) => setDriverForm(prev => {
+                      const nextDocs = { ...(prev.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, documents: nextDocs };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                </div>
+              </div>
+
               {/* Form Bottom Actions */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
                 <button
@@ -1480,6 +1911,7 @@ export default function MasterVaultView({
                       <th className="py-2.5 px-3">Blood</th>
                       <th className="py-2.5 px-3">Assigned Vehicle</th>
                       <th className="py-2.5 px-3">Transporter</th>
+                      <th className="py-2.5 px-3">KYC Docs</th>
                       <th className="py-2.5 px-3 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -1508,6 +1940,13 @@ export default function MasterVaultView({
                             {d.vehicle || <span className="text-slate-400">Unassigned</span>}
                           </td>
                           <td className="py-3 px-3 text-slate-700">{d.transporter}</td>
+                          <td className="py-3 px-3">
+                            <DocumentsStatusBadge
+                              documents={d.documents}
+                              requiredKeys={['dlDoc', 'photoDoc', 'aadhaarDoc', 'policeDoc']}
+                              onOpenModal={() => setRowDocModal({ type: 'DRIVER', entity: d })}
+                            />
+                          </td>
                           <td className="py-3 px-3 text-right">
                             <div className="flex items-center justify-end gap-1.5">
                               <button
@@ -1798,6 +2237,99 @@ export default function MasterVaultView({
                 </div>
               </div>
 
+              {/* SECTION 3: Fleet Compliance & Permit Documents */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1">
+                  <div className="text-xs font-bold uppercase font-mono tracking-wider text-slate-500 flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5 text-blue-600" />
+                    <span>3. Fleet Compliance, RC &amp; Statutory Permits</span>
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-mono">PDF, PNG, JPG up to 25MB</span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <DocumentUploaderCard
+                    title="Registration Certificate (RC Book Copy)"
+                    docKey="rcDoc"
+                    required={true}
+                    description="Official RTO Vehicle Registration Certificate"
+                    document={vehicleForm.documents?.rcDoc}
+                    category="vehicles"
+                    onUpload={(k, doc) => setVehicleForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                    onRemove={(k) => setVehicleForm(prev => {
+                      const nextDocs = { ...(prev.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, documents: nextDocs };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+
+                  <DocumentUploaderCard
+                    title="Commercial Vehicle Insurance Policy"
+                    docKey="insuranceDoc"
+                    required={true}
+                    description="Active commercial third-party or comprehensive policy"
+                    document={vehicleForm.documents?.insuranceDoc}
+                    category="vehicles"
+                    onUpload={(k, doc) => setVehicleForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                    onRemove={(k) => setVehicleForm(prev => {
+                      const nextDocs = { ...(prev.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, documents: nextDocs };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+
+                  <DocumentUploaderCard
+                    title="Fitness Certificate (Form 38)"
+                    docKey="fitnessDoc"
+                    required={true}
+                    description="RTO inspection fitness valid certificate"
+                    document={vehicleForm.documents?.fitnessDoc}
+                    category="vehicles"
+                    onUpload={(k, doc) => setVehicleForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                    onRemove={(k) => setVehicleForm(prev => {
+                      const nextDocs = { ...(prev.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, documents: nextDocs };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+
+                  <DocumentUploaderCard
+                    title="National / State Goods Carriage Permit"
+                    docKey="permitDoc"
+                    required={true}
+                    description="Form 46/47 National or All-India Permit"
+                    document={vehicleForm.documents?.permitDoc}
+                    category="vehicles"
+                    onUpload={(k, doc) => setVehicleForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                    onRemove={(k) => setVehicleForm(prev => {
+                      const nextDocs = { ...(prev.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, documents: nextDocs };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+
+                  <DocumentUploaderCard
+                    title="Pollution Under Control (PUC) Certificate"
+                    docKey="pucDoc"
+                    required={false}
+                    description="Valid emission & pollution compliance test certificate"
+                    document={vehicleForm.documents?.pucDoc}
+                    category="vehicles"
+                    onUpload={(k, doc) => setVehicleForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                    onRemove={(k) => setVehicleForm(prev => {
+                      const nextDocs = { ...(prev.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, documents: nextDocs };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                </div>
+              </div>
+
               {/* Form Bottom Actions */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
                 <button
@@ -1850,6 +2382,7 @@ export default function MasterVaultView({
                       <th className="py-2.5 px-3">Fitness Expiry</th>
                       <th className="py-2.5 px-3">Transporter</th>
                       <th className="py-2.5 px-3">Condition</th>
+                      <th className="py-2.5 px-3">Fleet Docs</th>
                       <th className="py-2.5 px-3 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -1880,6 +2413,13 @@ export default function MasterVaultView({
                             <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
                               {v.condition}
                             </span>
+                          </td>
+                          <td className="py-3 px-3">
+                            <DocumentsStatusBadge
+                              documents={v.documents}
+                              requiredKeys={['rcDoc', 'insuranceDoc', 'fitnessDoc', 'permitDoc', 'pucDoc']}
+                              onOpenModal={() => setRowDocModal({ type: 'VEHICLE', entity: v })}
+                            />
                           </td>
                           <td className="py-3 px-3 text-right">
                             <div className="flex items-center justify-end gap-1.5">
@@ -2299,13 +2839,126 @@ export default function MasterVaultView({
             </div>
           </div>
 
+          {/* Company Legal & Compliance Document Uploads */}
+          <div className="space-y-3 pt-3 border-t border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-1">
+              <div className="text-xs font-bold uppercase font-mono tracking-wider text-slate-500 flex items-center gap-2">
+                <FileText className="w-3.5 h-3.5 text-blue-600" />
+                <span>Statutory Incorporation, GST &amp; Corporate Documents</span>
+              </div>
+              <span className="text-[11px] text-slate-400 font-mono">PDF, PNG, JPG up to 25MB</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <DocumentUploaderCard
+                title="Company GST Registration Certificate"
+                docKey="gstDoc"
+                required={true}
+                description="3-page Form GST REG-06 Certificate"
+                document={companyProfile.documents?.gstDoc || companyProfile.gstDoc}
+                category="company"
+                onUpload={(k, doc) => setCompanyProfile(prev => ({
+                  ...prev,
+                  gstDoc: doc.url,
+                  documents: { ...(prev.documents || {}), [k]: doc }
+                }))}
+                onRemove={(k) => setCompanyProfile(prev => {
+                  const nextDocs = { ...(prev.documents || {}) };
+                  delete nextDocs[k];
+                  return { ...prev, gstDoc: null, documents: nextDocs };
+                })}
+                onPreview={setPreviewDoc}
+              />
+
+              <DocumentUploaderCard
+                title="Company Permanent Account Number (PAN)"
+                docKey="panDoc"
+                required={true}
+                description="Entity PAN card scanned copy"
+                document={companyProfile.documents?.panDoc || companyProfile.panDoc}
+                category="company"
+                onUpload={(k, doc) => setCompanyProfile(prev => ({
+                  ...prev,
+                  panDoc: doc.url,
+                  documents: { ...(prev.documents || {}), [k]: doc }
+                }))}
+                onRemove={(k) => setCompanyProfile(prev => {
+                  const nextDocs = { ...(prev.documents || {}) };
+                  delete nextDocs[k];
+                  return { ...prev, panDoc: null, documents: nextDocs };
+                })}
+                onPreview={setPreviewDoc}
+              />
+
+              <DocumentUploaderCard
+                title="Certificate of Incorporation (COI / MOA)"
+                docKey="incorpDoc"
+                required={true}
+                description="MCA Certificate of Incorporation & Articles"
+                document={companyProfile.documents?.incorpDoc || companyProfile.incorpDoc}
+                category="company"
+                onUpload={(k, doc) => setCompanyProfile(prev => ({
+                  ...prev,
+                  incorpDoc: doc.url,
+                  documents: { ...(prev.documents || {}), [k]: doc }
+                }))}
+                onRemove={(k) => setCompanyProfile(prev => {
+                  const nextDocs = { ...(prev.documents || {}) };
+                  delete nextDocs[k];
+                  return { ...prev, incorpDoc: null, documents: nextDocs };
+                })}
+                onPreview={setPreviewDoc}
+              />
+
+              <DocumentUploaderCard
+                title="Official Company Logo (High-Res)"
+                docKey="logoDoc"
+                required={true}
+                description="Company logo for Tax Invoices, Quotations & GRs"
+                document={companyProfile.documents?.logoDoc || companyProfile.logoDoc}
+                category="company"
+                onUpload={(k, doc) => setCompanyProfile(prev => ({
+                  ...prev,
+                  logoDoc: doc.url,
+                  documents: { ...(prev.documents || {}), [k]: doc }
+                }))}
+                onRemove={(k) => setCompanyProfile(prev => {
+                  const nextDocs = { ...(prev.documents || {}) };
+                  delete nextDocs[k];
+                  return { ...prev, logoDoc: null, documents: nextDocs };
+                })}
+                onPreview={setPreviewDoc}
+              />
+
+              <DocumentUploaderCard
+                title="MSME / Udyam Registration Certificate"
+                docKey="msmeDoc"
+                required={false}
+                description="Ministry of MSME enterprise registration"
+                document={companyProfile.documents?.msmeDoc || companyProfile.msmeDoc}
+                category="company"
+                onUpload={(k, doc) => setCompanyProfile(prev => ({
+                  ...prev,
+                  msmeDoc: doc.url,
+                  documents: { ...(prev.documents || {}), [k]: doc }
+                }))}
+                onRemove={(k) => setCompanyProfile(prev => {
+                  const nextDocs = { ...(prev.documents || {}) };
+                  delete nextDocs[k];
+                  return { ...prev, msmeDoc: null, documents: nextDocs };
+                })}
+                onPreview={setPreviewDoc}
+              />
+            </div>
+          </div>
+
           <div className="pt-2 border-t border-slate-100 flex items-center justify-end">
             <button
-              onClick={() => showNotice('Company Profile Saved Successfully!')}
-              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-2 shadow-xs transition"
+              onClick={handleSaveCompany}
+              className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-2 shadow-xs transition cursor-pointer"
             >
               <Save className="w-4 h-4" />
-              <span>Save Company Profile</span>
+              <span>Save Company Profile &amp; Documents</span>
             </button>
           </div>
         </div>
@@ -2546,13 +3199,15 @@ export default function MasterVaultView({
                   <th className="py-2.5 px-3">GSTIN</th>
                   <th className="py-2.5 px-3">City / Hub</th>
                   <th className="py-2.5 px-3">Contact</th>
+                  <th className="py-2.5 px-3">KYC &amp; Agreement Docs</th>
                   <th className="py-2.5 px-3 text-right">Status</th>
+                  <th className="py-2.5 px-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white font-sans">
                 {vendorList.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-400">
+                    <td colSpan={9} className="p-8 text-center text-slate-400">
                       No vendors found. Add a transporter, shipping line, or CFS vendor above.
                     </td>
                   </tr>
@@ -2565,7 +3220,25 @@ export default function MasterVaultView({
                       <td className="py-3 px-3 font-mono text-slate-700">{v.gstin}</td>
                       <td className="py-3 px-3 text-slate-600">{v.city}</td>
                       <td className="py-3 px-3 font-mono text-slate-600">{v.mobile || v.contactNo || 'Verified'}</td>
+                      <td className="py-3 px-3">
+                        <DocumentsStatusBadge
+                          documents={v.documents}
+                          requiredKeys={['agreementDoc', 'gstDoc', 'panDoc', 'chequeDoc']}
+                          onOpenModal={() => setRowDocModal({ type: 'VENDOR', entity: v })}
+                        />
+                      </td>
                       <td className="py-3 px-3 text-right font-mono font-bold text-emerald-700">ACTIVE</td>
+                      <td className="py-3 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleEditCustomer(v)}
+                            className="p-1.5 rounded-md hover:bg-blue-50 text-blue-600 border border-slate-200 transition cursor-pointer"
+                            title="Edit Vendor & Documents"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -3008,27 +3681,87 @@ export default function MasterVaultView({
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 mt-1"
                     />
                   </div>
-                  <div>
-                    <label className="font-semibold text-slate-700">Vendor Type</label>
-                    <select
-                      value={quickMasterForm.type || 'TRANSPORTER'}
-                      onChange={(e) => setQuickMasterForm({ ...quickMasterForm, type: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 mt-1"
-                    >
-                      <option value="TRANSPORTER">Transporter (Fleet)</option>
-                      <option value="SHIPPING_LINE">Shipping Line (Ocean Carrier)</option>
-                      <option value="CFS">CFS / Yard Operator</option>
-                      <option value="VENDOR">Other Vendor / Broker</option>
-                    </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="font-semibold text-slate-700">Vendor Type</label>
+                      <select
+                        value={quickMasterForm.type || 'TRANSPORTER'}
+                        onChange={(e) => setQuickMasterForm({ ...quickMasterForm, type: e.target.value })}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 mt-1"
+                      >
+                        <option value="TRANSPORTER">Transporter (Fleet)</option>
+                        <option value="SHIPPING_LINE">Shipping Line (Ocean Carrier)</option>
+                        <option value="CFS">CFS / Yard Operator</option>
+                        <option value="VENDOR">Other Vendor / Broker</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-semibold text-slate-700">GSTIN</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 24AAACG1920F1ZX"
+                        value={quickMasterForm.gstin || ''}
+                        onChange={(e) => setQuickMasterForm({ ...quickMasterForm, gstin: e.target.value.toUpperCase() })}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 mt-1 font-mono"
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className="font-semibold text-slate-700">GSTIN</label>
+                    <label className="font-semibold text-slate-700">City / Operating Hub</label>
                     <input
                       type="text"
-                      placeholder="e.g. 24AAACG1920F1ZX"
-                      value={quickMasterForm.gstin || ''}
-                      onChange={(e) => setQuickMasterForm({ ...quickMasterForm, gstin: e.target.value.toUpperCase() })}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 mt-1 font-mono"
+                      placeholder="e.g. Mundra, Gujarat"
+                      value={quickMasterForm.city || ''}
+                      onChange={(e) => setQuickMasterForm({ ...quickMasterForm, city: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 mt-1"
+                    />
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 space-y-2">
+                    <label className="font-bold text-xs text-slate-700 block">Vendor Compliance &amp; KYC Documents</label>
+                    <DocumentUploaderCard
+                      title="Transporter / Vendor Agreement"
+                      docKey="agreementDoc"
+                      required={false}
+                      description="Signed freight / vendor contract"
+                      document={quickMasterForm.documents?.agreementDoc}
+                      category="vendors"
+                      onUpload={(k, doc) => setQuickMasterForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                      onRemove={(k) => setQuickMasterForm(prev => {
+                        const nextDocs = { ...(prev.documents || {}) };
+                        delete nextDocs[k];
+                        return { ...prev, documents: nextDocs };
+                      })}
+                      onPreview={setPreviewDoc}
+                    />
+                    <DocumentUploaderCard
+                      title="Vendor GST Registration Certificate"
+                      docKey="gstDoc"
+                      required={false}
+                      description="GSTIN registration proof"
+                      document={quickMasterForm.documents?.gstDoc}
+                      category="vendors"
+                      onUpload={(k, doc) => setQuickMasterForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                      onRemove={(k) => setQuickMasterForm(prev => {
+                        const nextDocs = { ...(prev.documents || {}) };
+                        delete nextDocs[k];
+                        return { ...prev, documents: nextDocs };
+                      })}
+                      onPreview={setPreviewDoc}
+                    />
+                    <DocumentUploaderCard
+                      title="Bank Cancelled Cheque / Payout Info"
+                      docKey="chequeDoc"
+                      required={false}
+                      description="For bank payouts & NEFT/RTGS"
+                      document={quickMasterForm.documents?.chequeDoc}
+                      category="vendors"
+                      onUpload={(k, doc) => setQuickMasterForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                      onRemove={(k) => setQuickMasterForm(prev => {
+                        const nextDocs = { ...(prev.documents || {}) };
+                        delete nextDocs[k];
+                        return { ...prev, documents: nextDocs };
+                      })}
+                      onPreview={setPreviewDoc}
                     />
                   </div>
                 </>
@@ -3255,6 +3988,23 @@ export default function MasterVaultView({
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 mt-1"
                     />
                   </div>
+                  <div className="pt-2 border-t border-slate-100">
+                    <DocumentUploaderCard
+                      title="Bank Cancelled Cheque / Mandate Letter"
+                      docKey="chequeDoc"
+                      required={false}
+                      description="Official bank proof with printed account & IFSC"
+                      document={quickMasterForm.documents?.chequeDoc}
+                      category="banks"
+                      onUpload={(k, doc) => setQuickMasterForm(prev => ({ ...prev, documents: { ...(prev.documents || {}), [k]: doc } }))}
+                      onRemove={(k) => setQuickMasterForm(prev => {
+                        const nextDocs = { ...(prev.documents || {}) };
+                        delete nextDocs[k];
+                        return { ...prev, documents: nextDocs };
+                      })}
+                      onPreview={setPreviewDoc}
+                    />
+                  </div>
                 </>
               )}
 
@@ -3263,6 +4013,473 @@ export default function MasterVaultView({
                 <button type="submit" className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer">Save to PostgreSQL</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= INLINE DOCUMENT PREVIEW MODAL ================= */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-[200] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <div className="overflow-hidden pr-2">
+                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span className="truncate">{previewDoc.title || 'Document Preview'}</span>
+                </h3>
+                <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">{previewDoc.name || previewDoc.url}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={previewDoc.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Open in New Tab</span>
+                </a>
+                <a
+                  href={previewDoc.url}
+                  download={previewDoc.name || 'document'}
+                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 transition"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewDoc(null)}
+                  className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-800 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="p-4 overflow-auto flex-1 bg-slate-100/60 flex items-center justify-center min-h-[450px]">
+              {previewDoc.url?.match(/\.(jpeg|jpg|png|gif|webp)$/i) || previewDoc.url?.startsWith('data:image/') ? (
+                <img src={previewDoc.url} alt={previewDoc.title} className="max-h-[75vh] object-contain rounded-lg shadow-md mx-auto" />
+              ) : (
+                <iframe
+                  src={previewDoc.url}
+                  title={previewDoc.title}
+                  className="w-full h-[75vh] rounded-lg border border-slate-200 bg-white shadow-xs"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= ROW DOCUMENT MANAGER MODAL ================= */}
+      {rowDocModal && (
+        <div className="fixed inset-0 z-[160] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Paperclip className="w-4 h-4 text-blue-600" />
+                  <h3 className="font-bold text-slate-900 text-sm font-heading">
+                    {rowDocModal.type === 'CUSTOMER' && 'Customer KYC & Statutory Documents'}
+                    {rowDocModal.type === 'VENDOR' && 'Vendor KYC & Agreement Documents'}
+                    {rowDocModal.type === 'DRIVER' && 'Driver License & Identity Documents'}
+                    {rowDocModal.type === 'VEHICLE' && 'Vehicle Fleet Compliance & Permit Documents'}
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  <span className="font-mono font-bold text-blue-700">{rowDocModal.entity.code || rowDocModal.entity.id || rowDocModal.entity.truckNo}</span> &bull; {rowDocModal.entity.name || rowDocModal.entity.model}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRowDocModal(null)}
+                className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto space-y-3 flex-1 text-xs">
+              {rowDocModal.type === 'CUSTOMER' && (
+                <>
+                  <DocumentUploaderCard
+                    title="GSTIN Registration Certificate (REG-06)"
+                    docKey="gstDoc"
+                    required={true}
+                    description="Official 3-page GST registration certificate"
+                    document={rowDocModal.entity.documents?.gstDoc}
+                    category="customers"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                  <DocumentUploaderCard
+                    title="Customer Company / Firm PAN Card"
+                    docKey="panDoc"
+                    required={true}
+                    description="Clear scanned copy of entity PAN card"
+                    document={rowDocModal.entity.documents?.panDoc}
+                    category="customers"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                  <DocumentUploaderCard
+                    title="IEC Certificate (DGFT Import Export Code)"
+                    docKey="iecDoc"
+                    required={rowDocModal.entity.isExport || rowDocModal.entity.isImport}
+                    description="DGFT IEC certificate for shipping bill & LEO"
+                    document={rowDocModal.entity.documents?.iecDoc}
+                    category="customers"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                  <DocumentUploaderCard
+                    title="Cancelled Cheque / Bank Details Letter"
+                    docKey="chequeDoc"
+                    required={false}
+                    description="Bank proof for credit limit & refund settlements"
+                    document={rowDocModal.entity.documents?.chequeDoc}
+                    category="customers"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                  <DocumentUploaderCard
+                    title="Customer Agreement / KYC Mandate Form"
+                    docKey="agreementDoc"
+                    required={false}
+                    description="Signed freight terms, SOP or commercial contract"
+                    document={rowDocModal.entity.documents?.agreementDoc}
+                    category="customers"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                </>
+              )}
+
+              {rowDocModal.type === 'VENDOR' && (
+                <>
+                  <DocumentUploaderCard
+                    title="Transporter / Vendor Agreement"
+                    docKey="agreementDoc"
+                    required={true}
+                    description="Signed service agreement / transporter contract"
+                    document={rowDocModal.entity.documents?.agreementDoc}
+                    category="vendors"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                  <DocumentUploaderCard
+                    title="Vendor GST Registration Certificate"
+                    docKey="gstDoc"
+                    required={true}
+                    description="3-page Form GST REG-06 registration certificate"
+                    document={rowDocModal.entity.documents?.gstDoc}
+                    category="vendors"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                  <DocumentUploaderCard
+                    title="Vendor PAN Card Copy"
+                    docKey="panDoc"
+                    required={true}
+                    description="Clear scanned copy of vendor PAN"
+                    document={rowDocModal.entity.documents?.panDoc}
+                    category="vendors"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                  <DocumentUploaderCard
+                    title="Bank Cancelled Cheque / Payout Info"
+                    docKey="chequeDoc"
+                    required={true}
+                    description="Bank proof for freight NEFT/RTGS payments"
+                    document={rowDocModal.entity.documents?.chequeDoc}
+                    category="vendors"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                </>
+              )}
+
+              {rowDocModal.type === 'DRIVER' && (
+                <>
+                  <DocumentUploaderCard
+                    title="Commercial Driving License (DL - Front & Back)"
+                    docKey="dlDoc"
+                    required={true}
+                    description="Valid heavy transport commercial license"
+                    document={rowDocModal.entity.documents?.dlDoc}
+                    category="drivers"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                  <DocumentUploaderCard
+                    title="Driver Passport Photograph"
+                    docKey="photoDoc"
+                    required={true}
+                    description="Clear passport-sized photo for driver badge"
+                    document={rowDocModal.entity.documents?.photoDoc}
+                    category="drivers"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                  <DocumentUploaderCard
+                    title="Aadhaar Card / National ID Proof"
+                    docKey="aadhaarDoc"
+                    required={true}
+                    description="Government ID for security & terminal gate entry"
+                    document={rowDocModal.entity.documents?.aadhaarDoc}
+                    category="drivers"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                  <DocumentUploaderCard
+                    title="Police Verification / Medical Fitness"
+                    docKey="policeDoc"
+                    required={false}
+                    description="Police clearance or medical fitness certificate"
+                    document={rowDocModal.entity.documents?.policeDoc}
+                    category="drivers"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                </>
+              )}
+
+              {rowDocModal.type === 'VEHICLE' && (
+                <>
+                  <DocumentUploaderCard
+                    title="Registration Certificate (RC Book Copy)"
+                    docKey="rcDoc"
+                    required={true}
+                    description="Official RTO Vehicle Registration Certificate"
+                    document={rowDocModal.entity.documents?.rcDoc}
+                    category="vehicles"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                  <DocumentUploaderCard
+                    title="Commercial Vehicle Insurance Policy"
+                    docKey="insuranceDoc"
+                    required={true}
+                    description="Active commercial third-party or comprehensive policy"
+                    document={rowDocModal.entity.documents?.insuranceDoc}
+                    category="vehicles"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                  <DocumentUploaderCard
+                    title="Fitness Certificate (Form 38)"
+                    docKey="fitnessDoc"
+                    required={true}
+                    description="RTO inspection fitness valid certificate"
+                    document={rowDocModal.entity.documents?.fitnessDoc}
+                    category="vehicles"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                  <DocumentUploaderCard
+                    title="National / State Goods Carriage Permit"
+                    docKey="permitDoc"
+                    required={true}
+                    description="Form 46/47 National or All-India Permit"
+                    document={rowDocModal.entity.documents?.permitDoc}
+                    category="vehicles"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                  <DocumentUploaderCard
+                    title="Pollution Under Control (PUC) Certificate"
+                    docKey="pucDoc"
+                    required={false}
+                    description="Valid emission & pollution compliance test certificate"
+                    document={rowDocModal.entity.documents?.pucDoc}
+                    category="vehicles"
+                    onUpload={(k, doc) => setRowDocModal(prev => ({
+                      ...prev,
+                      entity: { ...prev.entity, documents: { ...(prev.entity.documents || {}), [k]: doc } }
+                    }))}
+                    onRemove={(k) => setRowDocModal(prev => {
+                      const nextDocs = { ...(prev.entity.documents || {}) };
+                      delete nextDocs[k];
+                      return { ...prev, entity: { ...prev.entity, documents: nextDocs } };
+                    })}
+                    onPreview={setPreviewDoc}
+                  />
+                </>
+              )}
+            </div>
+
+            <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setRowDocModal(null)}
+                className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const ent = rowDocModal.entity;
+                    if (rowDocModal.type === 'CUSTOMER' || rowDocModal.type === 'VENDOR') {
+                      await api.updateCustomer(ent.id, ent);
+                      showNotice(`Documents saved for ${ent.name}!`);
+                    } else if (rowDocModal.type === 'DRIVER') {
+                      await api.updateDriver(ent.id, ent);
+                      showNotice(`Documents saved for Driver ${ent.name}!`);
+                    } else if (rowDocModal.type === 'VEHICLE') {
+                      await api.updateVehicle(ent.id, ent);
+                      showNotice(`Documents saved for Vehicle ${ent.truckNo}!`);
+                    }
+                    await loadAllMasters();
+                    setRowDocModal(null);
+                  } catch (err) {
+                    alert('Error saving documents: ' + err.message);
+                  }
+                }}
+                className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>Save Documents to PostgreSQL</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

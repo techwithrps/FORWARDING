@@ -1,6 +1,62 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const fs = require('fs');
+const path = require('path');
+
+const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+// 0. UNIVERSAL DOCUMENT UPLOAD ENDPOINT
+router.post('/upload', async (req, res) => {
+  try {
+    const { fileName, fileData, category = 'masters' } = req.body;
+    if (!fileName || !fileData) {
+      return res.status(400).json({ success: false, error: 'File name and file data are required' });
+    }
+
+    const cleanCat = category.replace(/[^a-zA-Z0-9_-]/g, '') || 'masters';
+    const catDir = path.join(UPLOADS_DIR, cleanCat);
+    if (!fs.existsSync(catDir)) {
+      fs.mkdirSync(catDir, { recursive: true });
+    }
+
+    // Process base64 data
+    const matches = fileData.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+    let buffer;
+    let mimeType = 'application/octet-stream';
+    if (matches && matches.length === 3) {
+      mimeType = matches[1];
+      buffer = Buffer.from(matches[2], 'base64');
+    } else {
+      buffer = Buffer.from(fileData, 'base64');
+    }
+
+    const timestamp = Date.now();
+    const safeClean = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const safeName = `${timestamp}_${safeClean}`;
+    const filePath = path.join(catDir, safeName);
+    fs.writeFileSync(filePath, buffer);
+
+    const publicUrl = `/uploads/${cleanCat}/${safeName}`;
+    const sizeKB = (buffer.length / 1024).toFixed(1);
+    const sizeFormatted = buffer.length > 1048576 ? `${(buffer.length / 1048576).toFixed(2)} MB` : `${sizeKB} KB`;
+
+    res.json({
+      success: true,
+      url: publicUrl,
+      fileName,
+      size: sizeFormatted,
+      mimeType,
+      uploadedAt: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('Error uploading master document:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // 1. CUSTOMERS MASTER
 router.get('/customers', async (req, res) => {
@@ -24,10 +80,10 @@ router.post('/customers', async (req, res) => {
         id, code, name, party_type, contact_person, contact_no, mobile,
         email_comm, email_ops, address, city, state, country, pin,
         gstin, pan, tan, tally_tpt_name, tally_frt_name, map_code,
-        payment_terms, credit_limit, credit_period, is_export, is_import, is_domestic, status
+        payment_terms, credit_limit, credit_period, is_export, is_import, is_domestic, status, documents
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-        $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27
+        $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28
       ) RETURNING *;
     `;
     const values = [
@@ -35,7 +91,8 @@ router.post('/customers', async (req, res) => {
       c.emailComm || '', c.emailOps || '', c.address || '', c.city || '', c.state || '', c.country || 'India', c.pin || '',
       c.gstin || '', c.pan || '', c.tan || '', c.tallyTptName || '', c.tallyFrtName || '', c.mapCode || '',
       c.paymentTerms || '30 Days', c.creditLimit || '10,00,000', c.creditPeriod || '30',
-      c.isExport !== false, c.isImport === true, c.isDomestic !== false, c.status || 'ACTIVE'
+      c.isExport !== false, c.isImport === true, c.isDomestic !== false, c.status || 'ACTIVE',
+      JSON.stringify(c.documents || {})
     ];
     const { rows } = await db.query(query, values);
     res.status(201).json({ success: true, data: rows[0] });
@@ -75,8 +132,9 @@ router.put('/customers/:id', async (req, res) => {
         is_import = COALESCE($22, is_import),
         is_domestic = COALESCE($23, is_domestic),
         status = COALESCE($24, status),
+        documents = COALESCE($25, documents),
         updated_at = NOW()
-      WHERE id = $25 OR code = $25
+      WHERE id = $26 OR code = $26
       RETURNING *;
     `;
     const values = [
@@ -84,7 +142,7 @@ router.put('/customers/:id', async (req, res) => {
       c.emailComm, c.emailOps, c.address, c.city, c.state, c.pin,
       c.gstin, c.pan, c.tan, c.tallyTptName, c.tallyFrtName, c.mapCode,
       c.paymentTerms, c.creditLimit, c.creditPeriod, c.isExport, c.isImport, c.isDomestic,
-      c.status, id
+      c.status, c.documents ? JSON.stringify(c.documents) : null, id
     ];
     const { rows } = await db.query(query, values);
     if (rows.length === 0) return res.status(404).json({ success: false, message: 'Customer not found' });
@@ -111,7 +169,7 @@ router.get('/drivers', async (req, res) => {
   try {
     const { rows } = await db.query(`
       SELECT DISTINCT ON (UPPER(TRIM(name)))
-        id, name, vehicle, dl_no, validity, mobile, transporter, status
+        id, name, vehicle, dl_no, validity, mobile, transporter, status, documents
       FROM (
         SELECT 
           'DRV-' || "DRIVER_ID" AS id,
@@ -121,11 +179,13 @@ router.get('/drivers', async (req, res) => {
           TO_CHAR("DL_RENEWABLE_DATE", 'YYYY-MM-DD') AS validity,
           COALESCE("MOBILE_NO", "CONTACT_NO", '') AS mobile,
           'Dadri Express Logistics' AS transporter,
-          'ACTIVE' AS status
+          'ACTIVE' AS status,
+          '{}'::jsonb AS documents
         FROM spjlive."FLEET_DRIVER_MASTER"
         WHERE "DRIVER_NAME" IS NOT NULL AND TRIM("DRIVER_NAME") != ''
         UNION ALL
-        SELECT id, name, vehicle, dl_no, validity::text, mobile, transporter, status
+        SELECT id, name, vehicle, dl_no, validity::text, mobile, transporter, status,
+               COALESCE(documents, '{}'::jsonb) AS documents
         FROM public.drivers
       ) all_drv
       ORDER BY UPPER(TRIM(name)) ASC
@@ -144,16 +204,17 @@ router.post('/drivers', async (req, res) => {
     const query = `
       INSERT INTO drivers (
         id, name, vehicle, dl_no, validity, mobile, personal_contact,
-        emergency, blood, email, joining, salary, transporter, address, status
+        emergency, blood, email, joining, salary, transporter, address, status, documents
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
       ) RETURNING *;
     `;
     const values = [
       id, d.name, d.vehicle || '', d.dlNo, d.validity || null, d.mobile,
       d.personalContact || '', d.emergency || '', d.blood || 'B+', d.email || '',
       d.joining || new Date().toISOString().split('T')[0], d.salary || '28,000',
-      d.transporter || 'Dadri Express Logistics', d.address || '', d.status || 'ACTIVE'
+      d.transporter || 'Dadri Express Logistics', d.address || '', d.status || 'ACTIVE',
+      JSON.stringify(d.documents || {})
     ];
     const { rows } = await db.query(query, values);
     res.status(201).json({ success: true, data: rows[0] });
@@ -182,14 +243,15 @@ router.put('/drivers/:id', async (req, res) => {
         transporter = COALESCE($11, transporter),
         address = COALESCE($12, address),
         status = COALESCE($13, status),
+        documents = COALESCE($14, documents),
         updated_at = NOW()
-      WHERE id = $14
+      WHERE id = $15
       RETURNING *;
     `;
     const values = [
       d.name, d.vehicle, d.dlNo, d.validity || null, d.mobile,
       d.personalContact, d.emergency, d.blood, d.email, d.salary,
-      d.transporter, d.address, d.status, id
+      d.transporter, d.address, d.status, d.documents ? JSON.stringify(d.documents) : null, id
     ];
     const { rows } = await db.query(query, values);
     if (rows.length === 0) return res.status(404).json({ success: false, message: 'Driver not found' });
@@ -215,7 +277,7 @@ router.get('/vehicles', async (req, res) => {
   try {
     const { rows } = await db.query(`
       SELECT DISTINCT ON (UPPER(TRIM(truck_no)))
-        id, truck_no, type, model, transporter, status, driver_name, driver_mobile, license_validity
+        id, truck_no, type, model, transporter, status, driver_name, driver_mobile, license_validity, documents
       FROM (
         SELECT 
           'VEH-' || EM."EQUIPMENT_ID" AS id,
@@ -226,7 +288,8 @@ router.get('/vehicles', async (req, res) => {
           'ACTIVE' AS status,
           TRIM(DM."DRIVER_NAME") AS driver_name,
           COALESCE(DM."MOBILE_NO", DM."CONTACT_NO", '') AS driver_mobile,
-          TO_CHAR(DM."DL_RENEWABLE_DATE", 'YYYY-MM-DD') AS license_validity
+          TO_CHAR(DM."DL_RENEWABLE_DATE", 'YYYY-MM-DD') AS license_validity,
+          '{}'::jsonb AS documents
         FROM spjlive."FLEET_EQUIPMENT_MASTER" EM
         LEFT JOIN spjlive."FLEET_DRIVER_MASTER" DM 
           ON UPPER(TRIM(DM."VEHICLE_NO")) = UPPER(TRIM(EM."EQUIPMENT_NO"))
@@ -237,7 +300,8 @@ router.get('/vehicles', async (req, res) => {
         UNION ALL
         SELECT 
           id, truck_no, type, model, transporter, status,
-          NULL as driver_name, '' as driver_mobile, NULL as license_validity
+          NULL as driver_name, '' as driver_mobile, NULL as license_validity,
+          COALESCE(documents, '{}'::jsonb) AS documents
         FROM public.vehicles
       ) all_veh
       ORDER BY UPPER(TRIM(truck_no)) ASC
@@ -257,9 +321,9 @@ router.post('/vehicles', async (req, res) => {
       INSERT INTO vehicles (
         id, truck_no, type, model, year, engine_no, vin_no,
         license_plate, tare_weight, gross_weight, changeable_bed,
-        condition, fuel_type, fuel_card_no, fitness_expiry, transporter, terminal, status
+        condition, fuel_type, fuel_card_no, fitness_expiry, transporter, terminal, status, documents
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
       ) RETURNING *;
     `;
     const values = [
@@ -268,7 +332,8 @@ router.post('/vehicles', async (req, res) => {
       v.tareWeight || '12500', v.grossWeight || '44500', v.changeableBed || 'YES',
       v.condition || 'Excellent', v.fuelType || 'Diesel', v.fuelCardNo || '',
       v.fitnessExpiry || null, v.transporter || 'Dadri Express Logistics',
-      v.terminal || 'Dadri ICD (INICD6)', v.status || 'ACTIVE'
+      v.terminal || 'Dadri ICD (INICD6)', v.status || 'ACTIVE',
+      JSON.stringify(v.documents || {})
     ];
     const { rows } = await db.query(query, values);
     res.status(201).json({ success: true, data: rows[0] });
@@ -299,14 +364,16 @@ router.put('/vehicles/:id', async (req, res) => {
         transporter = COALESCE($13, transporter),
         terminal = COALESCE($14, terminal),
         status = COALESCE($15, status),
+        documents = COALESCE($16, documents),
         updated_at = NOW()
-      WHERE id = $16 OR truck_no = $16
+      WHERE id = $17 OR truck_no = $17
       RETURNING *;
     `;
     const values = [
       v.truckNo, v.type, v.model, v.year, v.engineNo, v.vinNo,
       v.tareWeight, v.grossWeight, v.changeableBed, v.condition,
-      v.fuelCardNo, v.fitnessExpiry || null, v.transporter, v.terminal, v.status, id
+      v.fuelCardNo, v.fitnessExpiry || null, v.transporter, v.terminal, v.status,
+      v.documents ? JSON.stringify(v.documents) : null, id
     ];
     const { rows } = await db.query(query, values);
     if (rows.length === 0) return res.status(404).json({ success: false, message: 'Vehicle not found' });
@@ -417,19 +484,44 @@ router.put('/company', async (req, res) => {
   try {
     const c = req.body;
     const query = `
-      UPDATE company_profile SET
-        company_name = COALESCE($1, company_name),
-        website = COALESCE($2, website),
-        gstin = COALESCE($3, gstin),
-        pan = COALESCE($4, pan),
-        tally_name = COALESCE($5, tally_name),
-        finance_map_code = COALESCE($6, finance_map_code),
-        address = COALESCE($7, address),
+      INSERT INTO company_profile (
+        id, company_name, website, gstin, pan, tally_name, finance_map_code, address,
+        gst_doc, pan_doc, incorp_doc, logo_doc, msme_doc, documents, updated_at
+      ) VALUES (
+        'MAIN', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW()
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        company_name = COALESCE(EXCLUDED.company_name, company_profile.company_name),
+        website = COALESCE(EXCLUDED.website, company_profile.website),
+        gstin = COALESCE(EXCLUDED.gstin, company_profile.gstin),
+        pan = COALESCE(EXCLUDED.pan, company_profile.pan),
+        tally_name = COALESCE(EXCLUDED.tally_name, company_profile.tally_name),
+        finance_map_code = COALESCE(EXCLUDED.finance_map_code, company_profile.finance_map_code),
+        address = COALESCE(EXCLUDED.address, company_profile.address),
+        gst_doc = COALESCE(EXCLUDED.gst_doc, company_profile.gst_doc),
+        pan_doc = COALESCE(EXCLUDED.pan_doc, company_profile.pan_doc),
+        incorp_doc = COALESCE(EXCLUDED.incorp_doc, company_profile.incorp_doc),
+        logo_doc = COALESCE(EXCLUDED.logo_doc, company_profile.logo_doc),
+        msme_doc = COALESCE(EXCLUDED.msme_doc, company_profile.msme_doc),
+        documents = COALESCE(EXCLUDED.documents, company_profile.documents),
         updated_at = NOW()
-      WHERE id = 'MAIN'
       RETURNING *;
     `;
-    const values = [c.name, c.website, c.gstin, c.pan, c.tallyName, c.financeMapCode, c.address];
+    const values = [
+      c.name || 'SPJ Freight Logistics Pvt Ltd',
+      c.website || '',
+      c.gstin || '',
+      c.pan || '',
+      c.tallyName || '',
+      c.financeMapCode || '',
+      c.address || '',
+      c.gstDoc || c.gst_doc || null,
+      c.panDoc || c.pan_doc || null,
+      c.incorpDoc || c.incorp_doc || null,
+      c.logoDoc || c.logo_doc || null,
+      c.msmeDoc || c.msme_doc || null,
+      JSON.stringify(c.documents || {})
+    ];
     const { rows } = await db.query(query, values);
     res.json({ success: true, data: rows[0] });
   } catch (err) {
