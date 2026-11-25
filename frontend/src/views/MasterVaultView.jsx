@@ -519,7 +519,7 @@ export default function MasterVaultView({
   };
 
   // -------------------------------------------------------------
-  // 2. DRIVER MASTER STATE & REPOSITORY (DriverMaster.aspx - AFTO/OCPL)
+  // 2. DRIVER MASTER STATE & REPOSITORY
   // -------------------------------------------------------------
   const [driverMode, setDriverMode] = useState('LIST'); // 'LIST' or 'FORM'
   const [driverSearch, setDriverSearch] = useState('');
@@ -609,7 +609,7 @@ export default function MasterVaultView({
   };
 
   // -------------------------------------------------------------
-  // 3. VEHICLE MASTER STATE & REPOSITORY (VehicleMaster.aspx)
+  // 3. VEHICLE MASTER STATE & REPOSITORY
   // -------------------------------------------------------------
   const [vehicleMode, setVehicleMode] = useState('LIST'); // 'LIST' or 'FORM'
   const [vehicleSearch, setVehicleSearch] = useState('');
@@ -698,7 +698,7 @@ export default function MasterVaultView({
   };
 
   // -------------------------------------------------------------
-  // 4. PORT MASTER STATE & REPOSITORY (PortMaster.aspx - UN/LOCODE)
+  // 4. PORT / LOCATION MASTER STATE & REPOSITORY
   // -------------------------------------------------------------
   const [portMode, setPortMode] = useState('LIST'); // 'LIST' or 'FORM'
   const [portSearch, setPortSearch] = useState('');
@@ -808,19 +808,19 @@ export default function MasterVaultView({
   // TABS NAVIGATION CONFIG FOR ALL 13 MASTERS (Pages 2-14)
   const vendorList = customerList.filter(c => ['TRANSPORTER', 'SHIPPING_LINE', 'CFS', 'VENDOR'].includes(c.type));
   const tabs = [
-    { id: 'COMPANY', label: '2. Company Master', icon: Building2 },
-    { id: 'TAX_HEAD', label: '3. Tax Head', icon: Receipt, count: taxHeadList.length },
-    { id: 'TAX_GROUP', label: '4. Tax Head Group', icon: FileText, count: taxGroupList.length },
-    { id: 'SERVICES', label: '5. Service Master', icon: Receipt, count: serviceMasterList.length },
-    { id: 'CUSTOMERS', label: '6. Customer Master', icon: UserCheck, count: customerList.length },
-    { id: 'VENDORS', label: '7. Vendor Master', icon: Building2, count: vendorList.length },
-    { id: 'TERMINALS', label: '8. Terminal Master', icon: MapPin, count: terminalList.length },
-    { id: 'UOM', label: '9. UOM (Unit of Measurement)', icon: Box, count: uomList.length },
-    { id: 'COMMODITIES', label: '10. Commodity Master', icon: ShieldCheck, count: commodityList.length },
-    { id: 'BANKS', label: '11. Bank Master', icon: Building2, count: bankList.length },
-    { id: 'PORTS', label: '12. Location Master', icon: MapPin, count: portList.length },
-    { id: 'DRIVERS', label: '13. Driver Master', icon: UserCheck, count: driverList.length },
-    { id: 'VEHICLES', label: '14. Vehicle Master', icon: Truck, count: vehicleList.length }
+    { id: 'COMPANY', label: 'Company Master', icon: Building2 },
+    { id: 'TAX_HEAD', label: 'Tax Head', icon: Receipt, count: taxHeadList.length },
+    { id: 'TAX_GROUP', label: 'Tax Head Group', icon: FileText, count: taxGroupList.length },
+    { id: 'SERVICES', label: 'Service Master', icon: Receipt, count: serviceMasterList.length },
+    { id: 'CUSTOMERS', label: 'Customer Master', icon: UserCheck, count: customerList.length },
+    { id: 'VENDORS', label: 'Vendor Master', icon: Building2, count: vendorList.length },
+    { id: 'TERMINALS', label: 'Terminal Master', icon: MapPin, count: terminalList.length },
+    { id: 'UOM', label: 'UOM (Unit of Measure)', icon: Box, count: uomList.length },
+    { id: 'COMMODITIES', label: 'Commodity Master', icon: ShieldCheck, count: commodityList.length },
+    { id: 'BANKS', label: 'Bank Master', icon: Building2, count: bankList.length },
+    { id: 'PORTS', label: 'Location Master', icon: MapPin, count: portList.length },
+    { id: 'DRIVERS', label: 'Driver Master', icon: UserCheck, count: driverList.length },
+    { id: 'VEHICLES', label: 'Vehicle Master', icon: Truck, count: vehicleList.length }
   ];
 
   return (
@@ -890,7 +890,7 @@ export default function MasterVaultView({
       </div>
 
       {/* ========================================================= */}
-      {/* TAB 1: CUSTOMER MASTER (CustomerMaster.aspx)              */}
+      {/* TAB 1: CUSTOMER MASTER */}
       {/* ========================================================= */}
       {activeSubTab === 'CUSTOMERS' && (
         <div className="space-y-4">
@@ -900,7 +900,7 @@ export default function MasterVaultView({
               <div className="flex items-center gap-2">
                 <UserCheck className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold font-heading text-[rgb(25,40,57)]">
-                  eLOGiFleet:: Customer Master (CustomerMaster.aspx)
+                  Customer Master
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
@@ -1537,7 +1537,7 @@ export default function MasterVaultView({
       )}
 
       {/* ========================================================= */}
-      {/* TAB 2: DRIVER MASTER (DriverMaster.aspx - AFTO/OCPL)      */}
+      {/* TAB 2: DRIVER MASTER */}
       {/* ========================================================= */}
       {activeSubTab === 'DRIVERS' && (
         <div className="space-y-4">
@@ -1547,7 +1547,7 @@ export default function MasterVaultView({
               <div className="flex items-center gap-2">
                 <UserCheck className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold font-heading text-[rgb(25,40,57)]">
-                  eLOGiFleet:: Driver Master (DriverMaster.aspx - AFTO/OCPL)
+                  Driver Master
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
@@ -1976,7 +1976,7 @@ export default function MasterVaultView({
       )}
 
       {/* ========================================================= */}
-      {/* TAB 3: VEHICLE MASTER (VehicleMaster.aspx)                */}
+      {/* TAB 3: VEHICLE MASTER */}
       {/* ========================================================= */}
       {activeSubTab === 'VEHICLES' && (
         <div className="space-y-4">
@@ -1986,7 +1986,7 @@ export default function MasterVaultView({
               <div className="flex items-center gap-2">
                 <Truck className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold font-heading text-[rgb(25,40,57)]">
-                  eLOGiFleet:: Vehicle Master (VehicleMaster.aspx)
+                  Vehicle Master
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
@@ -2450,7 +2450,7 @@ export default function MasterVaultView({
       )}
 
       {/* ========================================================= */}
-      {/* TAB 4: PORT MASTER (PortMaster.aspx - UN/LOCODE)          */}
+      {/* TAB 4: PORT / LOCATION MASTER */}
       {/* ========================================================= */}
       {activeSubTab === 'PORTS' && (
         <div className="space-y-4">
@@ -2460,7 +2460,7 @@ export default function MasterVaultView({
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold font-heading text-[rgb(25,40,57)]">
-                  eLOGiFleet:: Port Master (PortMaster.aspx - UN/LOCODE)
+                  Location / Port Master
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
@@ -2740,7 +2740,7 @@ export default function MasterVaultView({
               <div className="flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold font-heading text-[rgb(25,40,57)]">
-                  Company Master &amp; Legal Profile (Doc Item 2)
+                  Company Master
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
@@ -2974,7 +2974,7 @@ export default function MasterVaultView({
               <div className="flex items-center gap-2">
                 <Receipt className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold font-heading text-[rgb(25,40,57)]">
-                  5. Service Heads, SAC Codes &amp; GST Rates
+                  Service Master
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
@@ -3043,7 +3043,7 @@ export default function MasterVaultView({
               <div className="flex items-center gap-2">
                 <Receipt className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold font-heading text-[rgb(25,40,57)]">
-                  3. Tax Head Master
+                  Tax Head Master
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
@@ -3108,7 +3108,7 @@ export default function MasterVaultView({
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold font-heading text-[rgb(25,40,57)]">
-                  4. Tax Head Group Master
+                  Tax Head Group Master
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
@@ -3169,7 +3169,7 @@ export default function MasterVaultView({
               <div className="flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold font-heading text-[rgb(25,40,57)]">
-                  7. Vendor Master (Transporters, Shipping Lines &amp; Yards)
+                  Vendor Master
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
@@ -3256,7 +3256,7 @@ export default function MasterVaultView({
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold font-heading text-[rgb(25,40,57)]">
-                  8. Terminal Master (ICD, CFS &amp; Port Gateways)
+                  Terminal Master
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
@@ -3319,7 +3319,7 @@ export default function MasterVaultView({
               <div className="flex items-center gap-2">
                 <Box className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold font-heading text-[rgb(25,40,57)]">
-                  9. Unit of Measurement (UOM Master)
+                  UOM (Unit of Measure) Master
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
@@ -3376,7 +3376,7 @@ export default function MasterVaultView({
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold font-heading text-[rgb(25,40,57)]">
-                  10. Commodity Master
+                  Commodity Master
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
@@ -3439,7 +3439,7 @@ export default function MasterVaultView({
               <div className="flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold font-heading text-[rgb(25,40,57)]">
-                  11. Bank Master
+                  Bank Master
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-sans mt-0.5">

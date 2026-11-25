@@ -425,7 +425,7 @@ export function AppleHelloPageTransition({ activeView }) {
         <div className="relative z-10 pt-1">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/[0.05] border border-slate-300/60 text-[10.5px] font-mono font-extrabold text-slate-700 tracking-wide uppercase shadow-2xs">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
-            Version 2.O &bull; SPJ Group of Companies
+            Version 2.O &bull; Elogisol Technologies
           </span>
         </div>
       </div>

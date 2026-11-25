@@ -149,7 +149,7 @@ export default function GrSearchingView({ onExit, onSelectGr }) {
             </span>
           )}
           <span className="hidden lg:inline-block text-[11px] font-medium text-slate-500 border-l border-slate-200 pl-2">
-            eLOGiFleet &bull; Goods Receipt Tracking &amp; Vehicle Status
+            Goods Receipt Tracking &amp; Vehicle Status
           </span>
         </div>
 

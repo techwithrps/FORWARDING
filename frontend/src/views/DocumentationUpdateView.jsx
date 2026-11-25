@@ -50,12 +50,12 @@ export default function DocumentationUpdateView({ jobs = [], onUpdateJob }) {
               <div className="flex items-center gap-3">
                 <img
                   src={spjLogo}
-                  alt="SPJ Group of Companies"
-                  className="h-12 w-auto object-contain select-none mix-blend-multiply"
+                  alt="Elogisol Technologies"
+                  className="h-12 w-auto object-contain select-none"
                 />
                 <div>
                   <h1 className="text-lg font-black tracking-tight text-slate-900 uppercase">
-                    SPJ GROUP OF COMPANIES
+                    ELOGISOL TECHNOLOGIES
                   </h1>
                   <p className="text-[10px] text-slate-600 font-medium leading-tight">
                     Multi-Modal Logistics Operating System &bull; Licensed Customs Broker (CHA) &bull; DTO / MTO Fleet

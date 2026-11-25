@@ -174,7 +174,7 @@ export default function Sidebar({
                 Hello, Rishabh
               </div>
               <div className="text-[10px] text-slate-300 font-mono mt-0.5 leading-none">
-                SPJ Group of Companies
+                Elogisol Technologies
               </div>
             </div>
           </div>
