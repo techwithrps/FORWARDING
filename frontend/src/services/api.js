@@ -195,6 +195,11 @@ export const api = {
     request(`/commercial/invoices/${id}`, {
       method: 'DELETE'
     }),
+  dispatchDemoInvoice: (id, payload) =>
+    request(`/commercial/invoices/${id}/dispatch-demo`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
   getNotes: () => request('/commercial/notes'),
   createNote: (data) =>
     request('/commercial/notes', {

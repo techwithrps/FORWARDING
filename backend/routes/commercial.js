@@ -9,6 +9,9 @@ router.get('/invoices', async (req, res) => {
   try {
     const { rows } = await db.query(`
       SELECT i.*, 
+        p.contact_person AS party_contact_person,
+        COALESCE(p.mobile, p.contact_no) AS party_mobile,
+        COALESCE(p.email_comm, p.email_ops) AS party_email,
         COALESCE(
           (
             SELECT json_agg(it.* ORDER BY it.id ASC)
@@ -18,6 +21,13 @@ router.get('/invoices', async (req, res) => {
           '[]'::json
         ) AS items
       FROM invoices i
+      LEFT JOIN LATERAL (
+        SELECT contact_person, mobile, contact_no, email_comm, email_ops 
+        FROM parties p 
+        WHERE (i.party_id IS NOT NULL AND i.party_id = p.id) 
+           OR LOWER(TRIM(i.party_name)) = LOWER(TRIM(p.name)) 
+        LIMIT 1
+      ) p ON true
       ORDER BY i.created_at DESC
     `);
     res.json({ success: true, count: rows.length, data: rows });
@@ -30,7 +40,21 @@ router.get('/invoices', async (req, res) => {
 router.get('/invoices/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const invRes = await db.query('SELECT * FROM invoices WHERE id = $1 OR invoice_number = $1', [id]);
+    const invRes = await db.query(`
+      SELECT i.*,
+        p.contact_person AS party_contact_person,
+        COALESCE(p.mobile, p.contact_no) AS party_mobile,
+        COALESCE(p.email_comm, p.email_ops) AS party_email
+      FROM invoices i
+      LEFT JOIN LATERAL (
+        SELECT contact_person, mobile, contact_no, email_comm, email_ops 
+        FROM parties p 
+        WHERE (i.party_id IS NOT NULL AND i.party_id = p.id) 
+           OR LOWER(TRIM(i.party_name)) = LOWER(TRIM(p.name)) 
+        LIMIT 1
+      ) p ON true
+      WHERE i.id = $1 OR i.invoice_number = $1
+    `, [id]);
     if (invRes.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Invoice not found' });
     }
@@ -75,6 +99,39 @@ router.delete('/invoices/:id', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   } finally {
     client.release();
+  }
+});
+
+router.post('/invoices/:id/dispatch-demo', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { channel, recipient, contactPerson } = req.body;
+    const dispatchRecord = {
+      channel: channel || 'WHATSAPP',
+      recipient: recipient,
+      contactPerson: contactPerson,
+      sentAt: new Date().toISOString(),
+      status: 'DEMO_DELIVERED',
+      simulatedGatewayId: channel === 'WHATSAPP' 
+        ? `wamid.HBgL${Date.now()}==` 
+        : `msg_${Date.now()}@relay.elogisol.internal`
+    };
+
+    // Update raw_data on invoice if exists
+    await db.query(`
+      UPDATE invoices
+      SET raw_data = COALESCE(raw_data, '{}'::jsonb) || jsonb_build_object('last_dispatch', $1::jsonb)
+      WHERE id = $2 OR invoice_number = $2
+    `, [JSON.stringify(dispatchRecord), id]);
+
+    res.json({
+      success: true,
+      message: `Demo dispatch simulated successfully via ${channel}`,
+      data: dispatchRecord
+    });
+  } catch (err) {
+    console.error('Error recording demo dispatch:', err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

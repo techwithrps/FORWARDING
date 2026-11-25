@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, QrCode } from 'lucide-react';
+import { Printer, QrCode, Send } from 'lucide-react';
 import spjLogo from '../assets/spjLogoBase64.js';
 
 export default function TaxDocumentPdfView({
@@ -19,7 +19,8 @@ export default function TaxDocumentPdfView({
   grandTotal = 0,
   isLut = true,
   reason = '',
-  onPrint = () => window.print()
+  onPrint = () => window.print(),
+  onSend = null
 }) {
   // Convert number to Indian currency words
   const numberToWords = (num) => {
@@ -85,19 +86,33 @@ export default function TaxDocumentPdfView({
       <div className="no-print flex items-center justify-between pb-2 mb-2 border-b border-slate-300">
         <div className="flex items-center gap-2">
           <span className="px-3 py-1 rounded bg-slate-900 text-white font-mono font-bold text-xs uppercase tracking-wide">
-            SPJ-2 Standard &bull; {docType}
+            Elogisol &bull; {docType}
           </span>
           <span className="text-xs font-mono font-bold text-slate-700">{docNumber}</span>
         </div>
 
-        <button
-          type="button"
-          onClick={onPrint}
-          className="px-4 py-1.5 rounded bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs shadow flex items-center gap-1.5 transition cursor-pointer"
-        >
-          <Printer className="w-4 h-4" />
-          <span>Print / Save PDF</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {onSend && (
+            <button
+              type="button"
+              onClick={onSend}
+              className="px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow flex items-center gap-1.5 transition cursor-pointer"
+              title="Dispatch via WhatsApp or Email"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Send Invoice</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onPrint}
+            className="px-4 py-1.5 rounded bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs shadow flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Save as PDF</span>
+          </button>
+        </div>
       </div>
 
       {/* ================= AUTHENTIC SPJ-2 PRINTABLE SHEET ================= */}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
 import TaxDocumentPdfView from '../components/TaxDocumentPdfView.jsx';
+import SendInvoiceModal from '../components/SendInvoiceModal.jsx';
 import spjLogo from '../assets/spjLogoBase64.js';
 import {
   Receipt,
@@ -35,6 +36,7 @@ import {
   Layers,
   FileSpreadsheet,
   Save,
+  Send,
   Clock
 } from 'lucide-react';
 
@@ -55,6 +57,11 @@ export default function InvoicingView({ jobs = [], job = null, triggerGenerateIn
   // Form Notice & Action Feedback
   const [notice, setNotice] = useState(null);
   const [copiedIrn, setCopiedIrn] = useState('');
+
+  // Send Modal States (WhatsApp & Email Demo Dispatch)
+  const [sendModalInvoice, setSendModalInvoice] = useState(null);
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+  const [createdBannerInvoice, setCreatedBannerInvoice] = useState(null);
 
   // Selected / Linked Job Order
   const [selectedJobId, setSelectedJobId] = useState(job?.id || (jobs[0]?.id || ''));
@@ -490,22 +497,46 @@ export default function InvoicingView({ jobs = [], job = null, triggerGenerateIn
         showNotice(`✓ Invoice ${res.data.invoice_number} created & saved to PostgreSQL!`);
         await loadPastInvoices();
 
-        // Prepare preview object
-        setActiveInvoicePreview({
+        // Enriched Customer Contact Details from Customer Master
+        const matchedParty = partiesList.find(p => 
+          (selectedPartyId && String(p.id) === String(selectedPartyId)) || 
+          (p.name && partyName && p.name.trim().toLowerCase() === partyName.trim().toLowerCase())
+        );
+        const customerObj = {
+          name: partyName,
+          address: partyAddress,
+          gstin: partyGstin,
+          state: `${partyStateCode} - ${partyState}`,
+          pos: placeOfSupply,
+          contactPerson: matchedParty?.contact_person || 'Billing & Accounts Manager',
+          mobile: matchedParty?.mobile || matchedParty?.contact_no || '',
+          email: matchedParty?.email_comm || matchedParty?.email_ops || ''
+        };
+
+        // Prepare preview & dispatch object
+        const previewData = {
+          id: res.data.id || res.data.invoice_number,
           docNumber: res.data.invoice_number,
           docDate: res.data.invoice_date || invoiceDate,
+          invoice_number: res.data.invoice_number,
+          invoice_date: res.data.invoice_date || invoiceDate,
+          dueDate: dueDate,
+          grandTotal: totals.grandTotal,
+          grand_total: totals.grandTotal,
+          taxableTotal: totals.taxable,
+          taxable_amount: totals.taxable,
+          totalTax: totals.totalTax,
+          total_tax: totals.totalTax,
+          irn_number: res.data.irn_number,
+          ack_no: res.data.ack_no,
+          party_name: partyName,
+          party_id: selectedPartyId,
           irnStatus: {
             irn: res.data.irn_number,
             ackNo: res.data.ack_no,
             ackDate: res.data.ack_date || invoiceDate
           },
-          customer: {
-            name: partyName,
-            address: partyAddress,
-            gstin: partyGstin,
-            state: `${partyStateCode} - ${partyState}`,
-            pos: placeOfSupply
-          },
+          customer: customerObj,
           shipment: {
             jobNo: jobNumber,
             origin: origin,
@@ -527,11 +558,11 @@ export default function InvoicingView({ jobs = [], job = null, triggerGenerateIn
             taxRate: it.gstRate,
             is_lut: it.isLut
           })),
-          taxableTotal: totals.taxable,
-          taxTotal: totals.totalTax,
-          grandTotal: totals.grandTotal,
           isLut: lutEligible
-        });
+        };
+
+        setActiveInvoicePreview(previewData);
+        setCreatedBannerInvoice(previewData);
 
         // Auto-switch to PDF preview
         setActiveTab('pdf');
@@ -544,9 +575,67 @@ export default function InvoicingView({ jobs = [], job = null, triggerGenerateIn
     }
   };
 
+  // Open Send Modal (WhatsApp & Email Demo Dispatch) for active preview
+  const openSendModalForPreview = () => {
+    if (activeInvoicePreview) {
+      setSendModalInvoice(activeInvoicePreview);
+      setIsSendModalOpen(true);
+    }
+  };
+
+  // Open Send Modal for past invoice from ledger
+  const openSendModalForPastInvoice = (inv) => {
+    const matchedParty = partiesList.find(p => 
+      (inv.party_id && String(p.id) === String(inv.party_id)) || 
+      (p.name && inv.party_name && p.name.trim().toLowerCase() === inv.party_name.trim().toLowerCase())
+    );
+    const formattedInv = {
+      ...inv,
+      id: inv.id,
+      docNumber: inv.invoice_number,
+      docDate: inv.invoice_date || (inv.created_at ? new Date(inv.created_at).toLocaleDateString('en-GB') : new Date().toISOString().slice(0, 10)),
+      grandTotal: Number(inv.grand_total || 0),
+      grand_total: Number(inv.grand_total || 0),
+      taxableTotal: Number(inv.taxable_amount || 0),
+      taxable_amount: Number(inv.taxable_amount || 0),
+      totalTax: Number(inv.total_tax || 0),
+      total_tax: Number(inv.total_tax || 0),
+      irn_number: inv.irn_number,
+      ack_no: inv.ack_no,
+      irnStatus: {
+        irn: inv.irn_number,
+        ackNo: inv.ack_no,
+        ackDate: inv.ack_date || inv.invoice_date
+      },
+      customer: {
+        name: inv.party_name,
+        address: inv.party_address || '',
+        gstin: inv.party_gstin || '',
+        state: inv.party_state || '',
+        pos: inv.place_of_supply || '',
+        contactPerson: inv.party_contact_person || matchedParty?.contact_person || 'Billing & Accounts Manager',
+        mobile: inv.party_mobile || matchedParty?.mobile || matchedParty?.contact_no || '',
+        email: inv.party_email || matchedParty?.email_comm || matchedParty?.email_ops || ''
+      },
+      shipment: {
+        jobNo: inv.job_number || inv.job_id || 'N/A',
+        origin: inv.origin || '',
+        pod: inv.pod || '',
+        containersCount: inv.container_count || 1
+      }
+    };
+    setSendModalInvoice(formattedInv);
+    setIsSendModalOpen(true);
+  };
+
   // Load a Past Invoice into Form or Preview
   const handleLoadPastInvoice = (inv, mode = 'preview') => {
+    const matchedParty = partiesList.find(p => 
+      (inv.party_id && String(p.id) === String(inv.party_id)) || 
+      (p.name && inv.party_name && p.name.trim().toLowerCase() === inv.party_name.trim().toLowerCase())
+    );
     const previewObj = {
+      id: inv.id,
       docNumber: inv.invoice_number,
       docDate: inv.invoice_date || new Date(inv.created_at).toLocaleDateString('en-GB'),
       irnStatus: {
@@ -559,7 +648,10 @@ export default function InvoicingView({ jobs = [], job = null, triggerGenerateIn
         address: inv.party_address || 'Registered Commercial Address, India',
         gstin: inv.party_gstin || '09AAACF9128M1Z8',
         state: inv.party_state || '09-Uttar Pradesh',
-        pos: inv.place_of_supply || inv.party_state || '09-Uttar Pradesh'
+        pos: inv.place_of_supply || inv.party_state || '09-Uttar Pradesh',
+        contactPerson: inv.party_contact_person || matchedParty?.contact_person || 'Billing & Accounts Manager',
+        mobile: inv.party_mobile || matchedParty?.mobile || matchedParty?.contact_no || '',
+        email: inv.party_email || matchedParty?.email_comm || matchedParty?.email_ops || ''
       },
       shipment: {
         jobNo: inv.job_number || 'JO-2026-0001',
@@ -1656,6 +1748,16 @@ export default function InvoicingView({ jobs = [], job = null, triggerGenerateIn
                                 <Eye className="w-3.5 h-3.5" />
                               </button>
 
+                              {/* Send via WhatsApp / Email (Demo Dispatch) */}
+                              <button
+                                type="button"
+                                onClick={() => openSendModalForPastInvoice(inv)}
+                                className="p-1.5 rounded-lg border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition cursor-pointer"
+                                title="Send via WhatsApp or Email (Demo Dispatch)"
+                              >
+                                <Send className="w-3.5 h-3.5" />
+                              </button>
+
                               {/* Load in Form / Edit */}
                               <button
                                 type="button"
@@ -1703,6 +1805,49 @@ export default function InvoicingView({ jobs = [], job = null, triggerGenerateIn
       {/* ========================================================================= */}
       {activeTab === 'pdf' && (
         <div className="space-y-4">
+          {/* JUST CREATED CELEBRATION & DISPATCH QUICK ACTIONS BANNER */}
+          {createdBannerInvoice && (
+            <div className="no-print bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-300 rounded-xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-scale-up">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black shadow-sm shrink-0">
+                  <Check className="w-6 h-6 stroke-[3]" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <span>Tax Invoice Generated &amp; Saved Successfully!</span>
+                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-extrabold border border-emerald-300">
+                      {createdBannerInvoice.docNumber}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Billed to: <strong className="text-slate-800">{createdBannerInvoice.customer?.name}</strong> &bull; Grand Total: <strong className="text-emerald-800 font-mono">₹{createdBannerInvoice.grandTotal?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={openSendModalForPreview}
+                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+                  title="Dispatch via WhatsApp or Email"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Send (WhatsApp / Mail)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-3.5 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 active:scale-95 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+                  title="Print or Save PDF"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Save as PDF</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="no-print flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200 shadow-xs">
             <div className="flex items-center gap-2">
               <span className="font-bold text-slate-800 text-xs">Printable Document View:</span>
@@ -1730,11 +1875,22 @@ export default function InvoicingView({ jobs = [], job = null, triggerGenerateIn
 
               <button
                 type="button"
+                onClick={openSendModalForPreview}
+                className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition cursor-pointer"
+                title="Send via WhatsApp or Email"
+              >
+                <Send className="w-4 h-4" />
+                <span>Send Invoice</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => window.print()}
-                className="px-4 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition cursor-pointer"
+                className="px-4 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-800 active:scale-95 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition cursor-pointer"
+                title="Print or Save PDF"
               >
                 <Printer className="w-4 h-4" />
-                <span>Print / Save PDF</span>
+                <span>Save as PDF</span>
               </button>
             </div>
           </div>
@@ -1754,6 +1910,7 @@ export default function InvoicingView({ jobs = [], job = null, triggerGenerateIn
               grandTotal={activeInvoicePreview.grandTotal}
               isLut={activeInvoicePreview.isLut}
               onPrint={() => window.print()}
+              onSend={openSendModalForPreview}
             />
           ) : (
             <div className="p-12 text-center text-slate-400 bg-white rounded-xl border border-slate-200">
@@ -1762,6 +1919,15 @@ export default function InvoicingView({ jobs = [], job = null, triggerGenerateIn
           )}
         </div>
       )}
+
+      {/* SEND INVOICE MODAL (WHATSAPP & EMAIL DEMO DISPATCH) */}
+      <SendInvoiceModal
+        isOpen={isSendModalOpen}
+        onClose={() => setIsSendModalOpen(false)}
+        invoice={sendModalInvoice}
+        partiesList={partiesList}
+        onSavePdf={() => window.print()}
+      />
     </div>
   );
 }
