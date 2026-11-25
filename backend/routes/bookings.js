@@ -421,7 +421,11 @@ router.post('/', async (req, res) => {
           grossWeight: Number(c.gross_weight),
           cargoWeight: Number(c.cargo_weight),
           sealNo: c.seal_number,
-          status: c.current_status
+          status: c.current_status,
+          vehicleNo: c.truck_number,
+          truckNo: c.truck_number,
+          grNo: c.gr_number,
+          grDate: c.gr_date
         }))
       }
     });

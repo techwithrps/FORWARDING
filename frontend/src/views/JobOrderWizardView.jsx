@@ -1037,6 +1037,10 @@ export default function JobOrderWizardView({
         updated[idx].grossWeight = '';
       }
     }
+    // If user enters GR No and GR Date is empty, auto-populate today's date
+    if (field === 'grNo' && value && value.trim() !== '' && !updated[idx].grDate) {
+      updated[idx].grDate = todayStr;
+    }
     setContainers(updated);
   };
 
@@ -1200,6 +1204,8 @@ export default function JobOrderWizardView({
           truckNo: c.vehicleNo || '',
           vehicleNo: c.vehicleNo || '',
           grNo: c.grNo || '',
+          grDate: c.grDate || '',
+          gr_date: c.grDate || '',
           commodity: contCommodity,
           handoverLocation: form.handoverLocation || '',
           fromLocation: form.fromLocation || '',
@@ -1947,6 +1953,7 @@ export default function JobOrderWizardView({
                   <th className="py-2 px-2.5 min-w-[95px]">Gross (Auto)</th>
                   <th className="py-2 px-2.5 min-w-[130px]">Vehicle No (Optional)</th>
                   <th className="py-2 px-2.5 min-w-[130px]">GR No (Optional)</th>
+                  <th className="py-2 px-2.5 min-w-[135px]">GR Date (Optional)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white font-mono text-xs">
@@ -2017,6 +2024,20 @@ export default function JobOrderWizardView({
                         className={`w-full px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold uppercase text-emerald-700 outline-none ${getFieldClass(c.grNo)}`}
                         placeholder="e.g. GR-2026-084"
                         title="GR / Consignment Note No (Optional)"
+                      />
+                    </td>
+
+                    <td className="py-1.5 px-2.5">
+                      <input
+                        type="date"
+                        value={c.grDate ? (typeof c.grDate === 'string' && c.grDate.includes('T') ? c.grDate.split('T')[0] : c.grDate) : ''}
+                        onChange={(e) => handleContainerRowChange(idx, 'grDate', e.target.value)}
+                        className={`w-full px-2 py-1.5 rounded-lg text-xs font-mono font-bold outline-none transition ${
+                          c.grNo
+                            ? 'bg-emerald-50 text-emerald-900 border border-emerald-300 focus:border-emerald-500 shadow-2xs'
+                            : 'bg-white text-slate-700 border border-slate-200 focus:border-blue-500'
+                        }`}
+                        title={c.grNo ? "GR Consignment Date" : "GR Date (Optional)"}
                       />
                     </td>
                   </tr>
